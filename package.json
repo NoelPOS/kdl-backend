@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Nest Starter with Postgres",
   "scripts": {
-    "build": "nest build",
+    "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
