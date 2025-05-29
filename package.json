@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Nest Starter with Postgres",
   "scripts": {
-    "build": "node node_modules/@nestjs/cli/bin/nest.js build",
+    "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
