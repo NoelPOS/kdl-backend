@@ -24,7 +24,7 @@ import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { UserEntity } from '../entities/user.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from 'src/app/common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/roles.decorator';
 
 @ApiTags('Users')
 @Controller('users')
