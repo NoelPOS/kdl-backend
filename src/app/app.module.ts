@@ -6,7 +6,7 @@ import { SharedModule } from './modules/shared/shared.module';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import configuration from '../config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { typeOrmAsyncConfig } from 'src/database/data-source';
+import { typeOrmAsyncConfig } from '../database/data-source';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { HttpExceptionFilter } from './common/exception/http-exception.filter';
 import { CommonModule } from './common/common.module';
