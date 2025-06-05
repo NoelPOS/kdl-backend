@@ -156,7 +156,7 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -165,41 +165,5 @@ export class AuthController {
   async logout(@GetUser() user: UserEntity) {
     await this.authService.logout(user.id);
     return { message: 'Logout successful' };
-  }
-
-  @Post('2fa/enable')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Enable two-factor authentication' })
-  @ApiResponse({
-    status: 200,
-    description: 'It returns the 2FA secret to be used to generate OTP',
-  })
-  enable2FA(@GetUser() user: UserEntity) {
-    console.log('Enabling 2FA for user:', user.id);
-    return this.authService.enable2FA(user.id);
-  }
-
-  @Post('2fa/validate')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiResponse({
-    status: 200,
-    description:
-      'It returns verified as true or false based on whether the token is valid',
-  })
-  validate2FA(
-    @Body() validateTokenDTO: ValidateTokenDTO,
-    @GetUser() user: UserEntity,
-  ) {
-    return this.authService.validate2FAToken(user.id, validateTokenDTO.token);
-  }
-
-  @Get('env')
-  @Public()
-  getEnvs() {
-    console.log('Fetching environment variables');
-
-    return this.authService.getEnvVariables();
   }
 }

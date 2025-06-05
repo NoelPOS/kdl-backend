@@ -11,7 +11,6 @@ import { Repository, UpdateResult } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { v4 as uuid4 } from 'uuid';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { EncryptionService } from '../../../common/services/encryption.service';
 import { ConfigService } from '@nestjs/config';
@@ -41,9 +40,6 @@ export class UserService {
       const existingUser = await this.userRepository.findOneBy({
         email: userDto.email,
       });
-      //   const existingUser = await this.userRepository.findOne({
-      //     where: { email: userDto.email },
-      //   });
       if (existingUser) {
         throw new BadRequestException('User with this email already exists');
       }
@@ -51,7 +47,6 @@ export class UserService {
       const user = new UserEntity();
       user.userName = userDto.userName;
       user.email = userDto.email;
-      user.apiKey = uuid4();
       const salt = await bcrypt.genSalt();
       user.password = await bcrypt.hash(userDto.password, salt);
 
@@ -120,23 +115,6 @@ export class UserService {
     }
   }
 
-  async findByApiKey(apiKey: string): Promise<UserEntity> {
-    try {
-      const user = await this.userRepository.findOneBy({ apiKey });
-      if (!user) {
-        throw new UnauthorizedException('Invalid API key');
-      }
-      return user;
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new BadRequestException(
-        'Failed to authenticate with API key: ' + error.message,
-      );
-    }
-  }
-
   async findById(id: number): Promise<UserEntity> {
     try {
       const user = await this.userRepository.findOneBy({ id });
@@ -144,15 +122,6 @@ export class UserService {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
       delete user.password;
-
-      // Decrypt 2FA secret if it exists
-      if (user.twoFASecret) {
-        try {
-          user.twoFASecret = this.encryptionService.decrypt(user.twoFASecret);
-        } catch (error) {
-          console.error('Failed to decrypt 2FA secret:', error.message);
-        }
-      }
 
       return user;
     } catch (error) {
@@ -218,47 +187,6 @@ export class UserService {
       throw new BadRequestException(
         `Failed to delete user with ID ${id}: ${error.message}`,
       );
-    }
-  }
-
-  async updateSecretKey(userId: number, secret: string): Promise<UpdateResult> {
-    if (!this.databaseEnabled) {
-      throw new BadRequestException('Database functionality is disabled');
-    }
-
-    try {
-      // Encrypt the 2FA secret before storing it
-      const encryptedSecret = this.encryptionService.encrypt(secret);
-
-      return this.userRepository.update(
-        {
-          id: userId,
-        },
-        {
-          twoFASecret: encryptedSecret,
-          enable2FA: true,
-        },
-      );
-    } catch (error) {
-      throw new BadRequestException(
-        `Failed to update 2FA secret: ${error.message}`,
-      );
-    }
-  }
-
-  async disable2FA(userId: number): Promise<UpdateResult> {
-    try {
-      return this.userRepository.update(
-        {
-          id: userId,
-        },
-        {
-          enable2FA: false,
-          twoFASecret: null,
-        },
-      );
-    } catch (error) {
-      throw new BadRequestException(`Failed to disable 2FA: ${error.message}`);
     }
   }
 

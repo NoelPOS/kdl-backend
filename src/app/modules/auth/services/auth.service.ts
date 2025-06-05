@@ -59,7 +59,6 @@ export class AuthService {
       const user = new UserEntity();
       user.userName = userDto.userName;
       user.email = userDto.email;
-      user.apiKey = uuid4();
       const salt = await bcrypt.genSalt();
       user.password = await bcrypt.hash(userDto.password, salt);
 
@@ -345,62 +344,6 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-    };
-  }
-
-  async enable2FA(userId: number): Promise<Enable2FAType> {
-    try {
-      const user = await this.usersService.findById(userId);
-
-      if (user.enable2FA) {
-        // If 2FA is already enabled, return the decrypted secret
-        return { secret: user.twoFASecret };
-      }
-
-      // Generate a new 2FA secret - will be encrypted by the UserService
-      const secret = speakeasy.generateSecret();
-      await this.usersService.updateSecretKey(user.id, secret.base32);
-
-      return { secret: secret.base32 };
-    } catch (error) {
-      this.logger.error(`Failed to enable 2FA: ${error.message}`);
-      throw new BadRequestException(`Failed to enable 2FA: ${error.message}`);
-    }
-  }
-
-  async validate2FAToken(
-    userId: number,
-    token: string,
-  ): Promise<{ verified: boolean }> {
-    try {
-      const user = await this.usersService.findById(userId);
-
-      // The secret is already decrypted in findById
-      const verified = speakeasy.totp.verify({
-        secret: user.twoFASecret,
-        token: token,
-        encoding: 'base32',
-      });
-
-      return { verified: verified };
-    } catch (error) {
-      this.logger.error(`Error verifying token: ${error.message}`);
-      throw new UnauthorizedException('Error verifying token');
-    }
-  }
-
-  async validateUserByApiKey(apiKey: string): Promise<UserEntity> {
-    return this.usersService.findByApiKey(apiKey);
-  }
-
-  async disable2FA(userId: number): Promise<UpdateResult> {
-    return this.usersService.disable2FA(userId);
-  }
-
-  getEnvVariables() {
-    return {
-      port: this.configService.get<number>('PORT'),
-      nodeEnv: this.configService.get<string>('NODE_ENV'),
     };
   }
 }

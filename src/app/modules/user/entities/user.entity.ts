@@ -29,26 +29,6 @@ export class UserEntity extends BaseEntity {
   password: string;
 
   @ApiProperty({
-    description: 'Secret for two-factor authentication',
-    required: false,
-  })
-  @Column({ nullable: true, type: 'text' })
-  twoFASecret: string;
-
-  @ApiProperty({
-    description: 'Whether two-factor authentication is enabled',
-    default: false,
-  })
-  @Column({ default: false, type: 'boolean' })
-  enable2FA: boolean;
-
-  @ApiProperty({
-    description: 'API key for accessing protected resources',
-  })
-  @Column({ type: 'text' })
-  apiKey: string;
-
-  @ApiProperty({
     description: 'User role for authorization',
     enum: ['user', 'admin'],
     default: 'user',
