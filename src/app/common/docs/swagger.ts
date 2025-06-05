@@ -24,7 +24,7 @@ export const setupSwagger = (app: INestApplication): void => {
       `http://localhost:${configService.get('PORT')}`,
       'Local Development',
     )
-    .addServer(`https://kdl-baackend.onrender.com`, 'Production Server')
+    .addServer(`https://kdl-backend.onrender.com`, 'Production Server')
     .addTag('Authentication', 'User authentication and authorization endpoints')
     .addTag('Users', 'User management endpoints')
     .addBearerAuth(
