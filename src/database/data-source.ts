@@ -19,13 +19,6 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     return {
       type: 'postgres',
       url: configService.get<string>('DATABASE_URL'),
-
-      // Uncomment the following lines if you want to use individual DB settings
-      // host: configService.get<string>('DB_HOST'),
-      // port: configService.get<number>('DB_PORT'),
-      // username: configService.get<string>('DB_USERNAME'),
-      // database: configService.get<string>('DB_NAME'),
-      // password: configService.get<string>('DB_PASSWORD'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       synchronize: configService.get<string>('NODE_ENV') === 'development',
       logging: configService.get<string>('NODE_ENV') === 'development',

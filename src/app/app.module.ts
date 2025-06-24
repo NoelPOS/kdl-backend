@@ -1,17 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthModule } from './modules/auth/auth.module';
-import { UserModule } from './modules/user/user.module';
-import { SharedModule } from './modules/shared/shared.module';
+import { AuthModule } from '../auth/auth.module';
+import { UserModule } from 'src/user/user.module';
+
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import configuration from '../config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmAsyncConfig } from '../database/data-source';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { HttpExceptionFilter } from './common/exception/http-exception.filter';
-import { CommonModule } from './common/common.module';
+import { HttpExceptionFilter } from 'src/common/exception/http-exception.filter';
+import { CommonModule } from 'src/common/common.module';
 import * as Joi from 'joi';
 import { ResendModule } from 'nestjs-resend';
+import { SharedModule } from '../shared/shared.module';
+import { CourseModule } from 'src/course/course.module';
+import { ScheduleModule } from 'src/schedule/schedule.module';
+import { RoomModule } from 'src/room/room.module';
+import { DiscountModule } from 'src/discount/discount.module';
+import { SessionModule } from 'src/session/session.module';
 
 @Module({
   imports: [
@@ -34,27 +40,6 @@ import { ResendModule } from 'nestjs-resend';
           then: Joi.required(),
           otherwise: Joi.optional(),
         }),
-        // DB_HOST: Joi.string().when('DATABASE_ENABLED', {
-        //   is: true,
-        //   then: Joi.required(),
-        //   otherwise: Joi.optional(),
-        // }),
-        // DB_PORT: Joi.number().default(5432),
-        // DB_USERNAME: Joi.string().when('DATABASE_ENABLED', {
-        //   is: true,
-        //   then: Joi.required(),
-        //   otherwise: Joi.optional(),
-        // }),
-        // DB_PASSWORD: Joi.string().when('DATABASE_ENABLED', {
-        //   is: true,
-        //   then: Joi.required(),
-        //   otherwise: Joi.optional(),
-        // }),
-        // DB_NAME: Joi.string().when('DATABASE_ENABLED', {
-        //   is: true,
-        //   then: Joi.required(),
-        //   otherwise: Joi.optional(),
-        // }),
         JWT_SECRET: Joi.string().required(),
         JWT_EXPIRATION: Joi.string().default('1h'),
         JWT_REFRESH_SECRET: Joi.string().required(),
@@ -92,6 +77,11 @@ import { ResendModule } from 'nestjs-resend';
     AuthModule,
     UserModule,
     SharedModule,
+    CourseModule,
+    ScheduleModule,
+    RoomModule,
+    DiscountModule,
+    SessionModule,
   ],
   providers: [
     // Global Guards

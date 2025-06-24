@@ -6,8 +6,8 @@ import {
   ValidationError,
   BadRequestException,
 } from '@nestjs/common';
-import { setupSwagger } from './app/common/docs/swagger';
-import { HttpExceptionFilter } from './app/common/exception/http-exception.filter';
+import { setupSwagger } from './common/docs/swagger';
+import { HttpExceptionFilter } from './common/exception/http-exception.filter';
 import { ConfigService } from '@nestjs/config';
 
 declare const module: any;
@@ -18,7 +18,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Get configuration values with defaults
-  const port = configService.get<number>('PORT', 3000);
+  const port = configService.get<number>('PORT', 3001);
   const environment = configService.get<string>('NODE_ENV', 'development');
   const swaggerEnabled = configService.get<boolean>(
     'SWAGGER_ENABLED',
@@ -36,6 +36,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       forbidUnknownValues: true,
       stopAtFirstError: false,
+      transformOptions: {
+        enableImplicitConversion: true, // Automatically convert primitive types
+      },
       exceptionFactory: (validationErrors: ValidationError[] = []) => {
         const errors = validationErrors.map((error) => {
           const constraints = error.constraints
@@ -73,6 +76,7 @@ async function bootstrap() {
   });
 
   await app.listen(port);
+  console.log('🔥🔥 SERVER RESTARTED 🔥🔥');
 
   logger.log(`Application is running in ${environment} mode on port ${port}`);
   logger.log(`Listening on http://localhost:${port}`);

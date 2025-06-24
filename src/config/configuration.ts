@@ -18,11 +18,6 @@ export default () => ({
   JWT_REFRESH_EXPIRATION: process.env.JWT_REFRESH_EXPIRATION || '7d',
 
   // Database settings
-  // DB_HOST: process.env.DB_HOST || 'localhost',
-  // DB_PORT: parseInt(process.env.DB_PORT, 10) || 5432,
-  // DB_USERNAME: process.env.DB_USERNAME || 'postgres',
-  // DB_PASSWORD: process.env.DB_PASSWORD || 'postgres',
-  // DB_NAME: process.env.DB_NAME || 'nest_starter',
   DATABASE_URL: process.env.DATABASE_URL || '',
 
   // Throttling settings

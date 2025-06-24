@@ -1,0 +1,93 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+} from '@nestjs/common';
+import { DiscountService } from './discount.service';
+import { CreateDiscountDto } from './dto/create-discount.dto';
+import { UpdateDiscountDto } from './dto/update-discount.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
+import { DiscountEntity } from './entities/discount.entity';
+
+@ApiTags('Discounts')
+@Controller('discounts')
+export class DiscountController {
+  constructor(private readonly discountService: DiscountService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new discount' })
+  @ApiBody({ type: CreateDiscountDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The discount has been successfully created.',
+    type: DiscountEntity,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  create(@Body() createDiscountDto: CreateDiscountDto) {
+    return this.discountService.create(createDiscountDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all discounts' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all discounts',
+    type: [DiscountEntity],
+  })
+  findAll() {
+    return this.discountService.findAll();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a discount by ID' })
+  @ApiParam({ name: 'id', description: 'The ID of the discount' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the discount with the specified ID',
+    type: DiscountEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Discount not found' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.discountService.findOne(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a discount' })
+  @ApiParam({ name: 'id', description: 'The ID of the discount' })
+  @ApiBody({ type: UpdateDiscountDto })
+  @ApiResponse({
+    status: 200,
+    description: 'The discount has been successfully updated.',
+    type: DiscountEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Discount not found' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDiscountDto: UpdateDiscountDto,
+  ) {
+    return this.discountService.update(id, updateDiscountDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a discount' })
+  @ApiParam({ name: 'id', description: 'The ID of the discount' })
+  @ApiResponse({
+    status: 200,
+    description: 'The discount has been successfully deleted.',
+  })
+  @ApiResponse({ status: 404, description: 'Discount not found' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.discountService.remove(id);
+  }
+}
