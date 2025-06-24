@@ -1,5 +1,5 @@
-import { CourseEntity } from 'src/course/entities/course.entity';
-import { TeacherEntity } from 'src/user/entities/teacher.entity';
+import { CourseEntity } from '../../course/entities/course.entity';
+import { TeacherEntity } from './teacher.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,

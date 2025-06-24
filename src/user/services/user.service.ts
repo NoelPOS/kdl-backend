@@ -18,7 +18,7 @@ import { StudentEntity } from '../entities/student.entity';
 import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { TeacherEntity } from '../entities/teacher.entity';
 import { TeacherCourseEntity } from '../entities/teacher-course.entity';
-import { CourseEntity } from 'src/course/entities/course.entity';
+import { CourseEntity } from '../../course/entities/course.entity';
 
 @Injectable()
 export class UserService {

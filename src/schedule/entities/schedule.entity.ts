@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { StudentEntity } from 'src/user/entities/student.entity';
-import { TeacherEntity } from 'src/user/entities/teacher.entity';
-import { CourseEntity } from 'src/course/entities/course.entity';
-import { Session } from 'src/session/entities/session.entity';
+import { StudentEntity } from '../../user/entities/student.entity';
+import { TeacherEntity } from '../../user/entities/teacher.entity';
+import { CourseEntity } from '../../course/entities/course.entity';
+import { Session } from '../../session/entities/session.entity';
 import {
   Column,
   CreateDateColumn,

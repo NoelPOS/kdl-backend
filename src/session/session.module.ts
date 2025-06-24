@@ -3,7 +3,7 @@ import { SessionService } from './session.service';
 import { SessionController } from './session.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
-import { Schedule } from 'src/schedule/entities/schedule.entity';
+import { Schedule } from '../schedule/entities/schedule.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Session, Schedule])],

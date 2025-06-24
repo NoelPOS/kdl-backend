@@ -34,7 +34,7 @@ import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { AssignCoursesToTeacherDto } from '../dto/assign-course-teacher.dto';
 import { StudentEntity } from '../entities/student.entity';
 import { TeacherEntity } from '../entities/teacher.entity';
-import { CourseEntity } from 'src/course/entities/course.entity';
+import { CourseEntity } from '../../course/entities/course.entity';
 
 @Controller('users')
 export class UserController {

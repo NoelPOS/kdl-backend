@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { CourseEntity } from 'src/course/entities/course.entity';
+import { CourseEntity } from '../../course/entities/course.entity';
 
 @Entity('sessions')
 export class Session {

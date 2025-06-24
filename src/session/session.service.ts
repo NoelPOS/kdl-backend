@@ -4,7 +4,7 @@ import { UpdateSessionDto } from './dto/update-session.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
 import { Repository } from 'typeorm';
-import { Schedule } from 'src/schedule/entities/schedule.entity';
+import { Schedule } from '../schedule/entities/schedule.entity';
 
 @Injectable()
 export class SessionService {

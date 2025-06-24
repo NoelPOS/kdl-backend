@@ -1,23 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
-import { UserModule } from 'src/user/user.module';
+import { UserModule } from '../user/user.module';
 
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import configuration from '../config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmAsyncConfig } from '../database/data-source';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { HttpExceptionFilter } from 'src/common/exception/http-exception.filter';
-import { CommonModule } from 'src/common/common.module';
+import { HttpExceptionFilter } from '../common/exception/http-exception.filter';
+import { CommonModule } from '../common/common.module';
 import * as Joi from 'joi';
 import { ResendModule } from 'nestjs-resend';
 import { SharedModule } from '../shared/shared.module';
-import { CourseModule } from 'src/course/course.module';
-import { ScheduleModule } from 'src/schedule/schedule.module';
-import { RoomModule } from 'src/room/room.module';
-import { DiscountModule } from 'src/discount/discount.module';
-import { SessionModule } from 'src/session/session.module';
+import { CourseModule } from '../course/course.module';
+import { ScheduleModule } from '../schedule/schedule.module';
+import { RoomModule } from '../room/room.module';
+import { DiscountModule } from '../discount/discount.module';
+import { SessionModule } from '../session/session.module';
 
 @Module({
   imports: [

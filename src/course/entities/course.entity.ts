@@ -1,10 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Schedule } from 'src/schedule/entities/schedule.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
