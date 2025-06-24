@@ -19,7 +19,7 @@ import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { TeacherEntity } from '../entities/teacher.entity';
 import { TeacherCourseEntity } from '../entities/teacher-course.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
-import { Session } from 'src/session/entities/session.entity';
+import { Session } from '../../session/entities/session.entity';
 
 @Injectable()
 export class UserService {
