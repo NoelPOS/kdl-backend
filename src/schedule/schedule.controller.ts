@@ -84,7 +84,11 @@ export class ScheduleController {
 
   @Get('today')
   @ApiOperation({ summary: `Get today's schedule grouped by course` })
-  @ApiResponse({ status: 200, description: 'Todays schedules', type: [Schedule] })
+  @ApiResponse({
+    status: 200,
+    description: 'Todays schedules',
+    type: [Schedule],
+  })
   getTodaySchedules() {
     return this.scheduleService.getTodaySchedules();
   }
@@ -123,7 +127,11 @@ export class ScheduleController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a schedule by ID' })
   @ApiParam({ name: 'id', type: 'number' })
-  @ApiResponse({ status: 200, description: 'The found schedule', type: Schedule })
+  @ApiResponse({
+    status: 200,
+    description: 'The found schedule',
+    type: Schedule,
+  })
   @ApiResponse({ status: 404, description: 'Schedule not found' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const schedule = await this.scheduleService.findOne(id);
@@ -145,7 +153,7 @@ export class ScheduleController {
   @ApiResponse({ status: 404, description: 'Schedule not found' })
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateScheduleDto: UpdateScheduleDto,
+    @Body() updateScheduleDto: Partial<CreateScheduleDto>,
   ) {
     return this.scheduleService.updateSchedule(id, updateScheduleDto);
   }

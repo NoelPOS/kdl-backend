@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../entities/user.entity';
-import { ILike, Repository, UpdateResult } from 'typeorm';
+import { ILike, In, Repository, UpdateResult, Not } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -19,6 +19,7 @@ import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { TeacherEntity } from '../entities/teacher.entity';
 import { TeacherCourseEntity } from '../entities/teacher-course.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
+import { Session } from 'src/session/entities/session.entity';
 
 @Injectable()
 export class UserService {
@@ -36,6 +37,9 @@ export class UserService {
 
     @InjectRepository(TeacherCourseEntity)
     private teacherCourseRepo: Repository<TeacherCourseEntity>,
+
+    @InjectRepository(Session)
+    private sessionRepo: Repository<Session>,
 
     private configService: ConfigService,
   ) {
@@ -405,5 +409,47 @@ export class UserService {
     return await this.teacherRepository.find({
       where: { name: ILike(`%${name}%`) },
     });
+  }
+
+  async findActiveStudents(): Promise<StudentEntity[]> {
+    try {
+      const pendingSessions = await this.sessionRepo.find({
+        where: { status: 'Pending' },
+      });
+      const studentIds = [
+        ...new Set(pendingSessions.map((session) => session.studentId)),
+      ];
+      if (studentIds.length === 0) return [];
+      const activeStudents = await this.studentRepository.findBy({
+        id: In(studentIds),
+      });
+      return activeStudents;
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to fetch active students: ' + error.message,
+      );
+    }
+  }
+
+  async findInactiveStudents(): Promise<StudentEntity[]> {
+    try {
+      const pendingSessions = await this.sessionRepo.find({
+        where: { status: 'Pending' },
+      });
+      const activeStudentIds = [
+        ...new Set(pendingSessions.map((session) => session.studentId)),
+      ];
+      if (activeStudentIds.length === 0) {
+        return await this.studentRepository.find();
+      }
+      const inactiveStudents = await this.studentRepository.findBy({
+        id: Not(In(activeStudentIds)),
+      });
+      return inactiveStudents;
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to fetch inactive students: ' + error.message,
+      );
+    }
   }
 }

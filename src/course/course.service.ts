@@ -46,4 +46,15 @@ export class CourseService {
     await this.courseRepository.remove(course);
     return course;
   }
+
+  async filter(ageRange: string, medium: string) {
+    const where: any = {};
+    if (ageRange !== 'all') {
+      where.ageRange = ageRange;
+    }
+    if (medium !== 'all') {
+      where.medium = medium;
+    }
+    return this.courseRepository.find({ where });
+  }
 }

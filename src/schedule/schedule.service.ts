@@ -28,7 +28,7 @@ export class ScheduleService {
     return this.scheduleRepo.findOne({ where: { id } });
   }
 
-  async updateSchedule(id: number, dto: UpdateScheduleDto) {
+  async updateSchedule(id: number, dto: Partial<CreateScheduleDto>) {
     await this.scheduleRepo.update(id, dto);
     return this.scheduleRepo.findOne({ where: { id } });
   }
@@ -313,6 +313,7 @@ export class ScheduleService {
         'schedule.feedback',
         'schedule.verifyFb',
         'schedule.warning',
+        'schedule.classNumber',
         'student.name',
         'teacher.name',
         'course.title',

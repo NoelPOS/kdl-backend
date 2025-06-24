@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { StudentEntity } from './entities/student.entity';
 import { TeacherEntity } from './entities/teacher.entity';
 import { TeacherCourseEntity } from './entities/teacher-course.entity';
+import { Session } from 'src/session/entities/session.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TeacherCourseEntity } from './entities/teacher-course.entity';
       StudentEntity,
       TeacherEntity,
       TeacherCourseEntity,
+      Session
     ]),
     CommonModule,
   ],

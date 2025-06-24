@@ -101,6 +101,35 @@ export class UserController {
   }
 
   @ApiTags('Students')
+  @Get('students/active')
+  @ApiOperation({
+    summary:
+      'Get all active students (students with at least one pending session)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all active students',
+    type: [StudentEntity],
+  })
+  findActiveStudents() {
+    return this.userService.findActiveStudents();
+  }
+
+  @ApiTags('Students')
+  @Get('students/inactive')
+  @ApiOperation({
+    summary: 'Get all inactive students (students with no pending session)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all inactive students',
+    type: [StudentEntity],
+  })
+  findInactiveStudents() {
+    return this.userService.findInactiveStudents();
+  }
+
+  @ApiTags('Students')
   @Get('students/:id')
   @ApiOperation({ summary: 'Get a student by ID' })
   @ApiParam({ name: 'id', required: true, description: 'Student ID' })

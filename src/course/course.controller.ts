@@ -64,6 +64,21 @@ export class CourseController {
     return this.courseService.search(name);
   }
 
+  
+
+  @Get('filter')
+  @ApiOperation({ summary: 'Filter courses by age range and medium' })
+  @ApiQuery({ name: 'ageRange', required: true, description: 'Age range to filter by, or "all" for any' })
+  @ApiQuery({ name: 'medium', required: true, description: 'Medium to filter by, or "all" for any' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns courses matching the filter',
+    type: [CourseEntity],
+  })
+  filter(@Query('ageRange') ageRange: string, @Query('medium') medium: string) {
+    return this.courseService.filter(ageRange, medium);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a course by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the course' })
