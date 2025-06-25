@@ -9,6 +9,7 @@ import { StudentEntity } from './entities/student.entity';
 import { TeacherEntity } from './entities/teacher.entity';
 import { TeacherCourseEntity } from './entities/teacher-course.entity';
 import { Session } from '../session/entities/session.entity';
+import { ParentEntity } from './entities/parent.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Session } from '../session/entities/session.entity';
       TeacherEntity,
       TeacherCourseEntity,
       Session,
+      ParentEntity,
     ]),
     CommonModule,
   ],

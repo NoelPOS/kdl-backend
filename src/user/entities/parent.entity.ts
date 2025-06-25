@@ -6,8 +6,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('teachers')
-export class TeacherEntity {
+@Entity('parents')
+export class ParentEntity {
   @PrimaryGeneratedColumn()
   @ApiProperty({ description: 'Unique identifier' })
   id: number;
@@ -17,26 +17,22 @@ export class TeacherEntity {
   createdAt: Date;
 
   @Column()
-  @ApiProperty({ description: 'Teacher name' })
+  @ApiProperty({ description: 'Parent name' })
   name: string;
 
   @Column()
-  @ApiProperty({ description: 'Teacher email' })
+  @ApiProperty({ description: 'Parent email' })
   email: string;
 
   @Column()
-  @ApiProperty({ description: 'Teacher contact number' })
+  @ApiProperty({ description: 'Parent contact number' })
   contactNo: string;
 
   @Column()
-  @ApiProperty({ description: 'Teacher line id' })
+  @ApiProperty({ description: 'Parent line id' })
   lineId: string;
 
   @Column()
-  @ApiProperty({ description: 'Teacher address' })
+  @ApiProperty({ description: 'Parent address' })
   address: string;
-
-  @Column()
-  @ApiProperty({ description: 'Teacher profile picture' })
-  profilePicture: string;
 }

@@ -20,6 +20,8 @@ import { TeacherEntity } from '../entities/teacher.entity';
 import { TeacherCourseEntity } from '../entities/teacher-course.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
 import { Session } from '../../session/entities/session.entity';
+import { ParentEntity } from '../entities/parent.entity';
+import { CreateParentDto } from '../dto/create-parent.dto';
 
 @Injectable()
 export class UserService {
@@ -40,6 +42,9 @@ export class UserService {
 
     @InjectRepository(Session)
     private sessionRepo: Repository<Session>,
+
+    @InjectRepository(ParentEntity)
+    private parentRepository: Repository<ParentEntity>,
 
     private configService: ConfigService,
   ) {
@@ -364,6 +369,7 @@ export class UserService {
       teacher.contactNo = createTeacherDto.contactNo;
       teacher.lineId = createTeacherDto.lineId || '';
       teacher.address = createTeacherDto.address;
+      teacher.profilePicture = createTeacherDto.profilePicture || '';
 
       const savedTeacher = await this.teacherRepository.save(teacher);
       return savedTeacher;
@@ -449,6 +455,72 @@ export class UserService {
     } catch (error) {
       throw new BadRequestException(
         'Failed to fetch inactive students: ' + error.message,
+      );
+    }
+  }
+
+  async findAllTeachers(): Promise<TeacherEntity[]> {
+    try {
+      const teachers = this.teacherRepository.find();
+      return teachers;
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to fetch teachers: ' + error.message,
+      );
+    }
+  }
+
+  async searchTeachersByName(name: string): Promise<TeacherEntity[]> {
+    try {
+      return await this.teacherRepository.find({
+        where: { name: ILike(`%${name}%`) },
+        order: { createdAt: 'DESC' },
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to search teachers: ' + error.message,
+      );
+    }
+  }
+
+  // Get all parents
+  async findAllParents(): Promise<ParentEntity[]> {
+    try {
+      return await this.parentRepository.find();
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to fetch parents: ' + error.message,
+      );
+    }
+  }
+
+  // Search parents by name using ILike
+  async searchParentsByName(name: string): Promise<ParentEntity[]> {
+    try {
+      return await this.parentRepository.find({
+        where: { name: ILike(`%${name}%`) },
+        order: { createdAt: 'DESC' },
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to search parents: ' + error.message,
+      );
+    }
+  }
+
+  async createParent(createParentDto: CreateParentDto): Promise<ParentEntity> {
+    try {
+      const parent = new ParentEntity();
+      parent.name = createParentDto.name;
+      parent.email = createParentDto.email;
+      parent.contactNo = createParentDto.contactNo;
+      parent.lineId = createParentDto.lineId;
+      parent.address = createParentDto.address;
+      const savedParent = await this.parentRepository.save(parent);
+      return savedParent;
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to create parent: ' + error.message,
       );
     }
   }

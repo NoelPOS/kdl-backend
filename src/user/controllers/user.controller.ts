@@ -35,6 +35,8 @@ import { AssignCoursesToTeacherDto } from '../dto/assign-course-teacher.dto';
 import { StudentEntity } from '../entities/student.entity';
 import { TeacherEntity } from '../entities/teacher.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
+import { ParentEntity } from '../entities/parent.entity';
+import { CreateParentDto } from '../dto/create-parent.dto';
 
 @Controller('users')
 export class UserController {
@@ -235,6 +237,82 @@ export class UserController {
   })
   getTeachersByCourse(@Param('courseId', ParseIntPipe) courseId: number) {
     return this.userService.getTeachersByCourseId(courseId);
+  }
+
+  @ApiTags('Teachers')
+  @Get('teachers')
+  @ApiOperation({ summary: 'Get all teachers' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all teachers',
+    type: [TeacherEntity],
+  })
+  findAllTeachers() {
+    return this.userService.findAllTeachers();
+  }
+
+  @ApiTags('Teachers')
+  @Get('teachers/search')
+  @ApiOperation({ summary: 'Search teachers by name' })
+  @ApiQuery({
+    name: 'name',
+    required: true,
+    description: 'Search query for teacher name',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns teachers that match the search query',
+    type: [TeacherEntity],
+  })
+  searchTeachersByName(@Query('name') name: string) {
+    return this.userService.searchTeachersByName(name);
+  }
+
+  // =================================================================================================
+  // Parents
+  // =================================================================================================
+  @ApiTags('Parents')
+  @Get('parents')
+  @ApiOperation({ summary: 'Get all parents' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all parents',
+    type: [ParentEntity],
+  })
+  findAllParents() {
+    return this.userService.findAllParents();
+  }
+
+  @ApiTags('Parents')
+  @Get('parents/search')
+  @ApiOperation({ summary: 'Search parents by name' })
+  @ApiQuery({
+    name: 'name',
+    required: true,
+    description: 'Search query for parent name',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns parents that match the search query',
+    type: [ParentEntity],
+  })
+  searchParentsByName(@Query('name') name: string) {
+    return this.userService.searchParentsByName(name);
+  }
+
+  @ApiTags('Parents')
+  @Post('parents')
+  @ApiOperation({ summary: 'Create a new parent' })
+  @ApiBody({ type: CreateParentDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Parent has been successfully created',
+    type: ParentEntity,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  createParent(@Body() createParentDto: CreateParentDto) {
+    console.log(createParentDto);
+    return this.userService.createParent(createParentDto);
   }
 
   // =================================================================================================
