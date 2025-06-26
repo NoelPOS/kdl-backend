@@ -170,14 +170,14 @@ export class ScheduleController {
     return this.scheduleService.remove(id);
   }
 
-  @Post('conflict-check')
+  @Post('conflict')
   @ApiOperation({ summary: 'Check for room/time conflict' })
   @ApiResponse({ status: 200, description: 'Conflicting schedules (if any)' })
   checkConflict(@Body() dto: CheckScheduleConflictDto) {
     return this.scheduleService.checkConflict(dto);
   }
 
-  @Post('bulk-conflict-check')
+  @Post('conflicts')
   @ApiOperation({ summary: 'Batch check for schedule conflicts' })
   @ApiBody({ type: CheckConflictBatchDto })
   checkScheduleConflicts(@Body() dto: CheckConflictBatchDto) {

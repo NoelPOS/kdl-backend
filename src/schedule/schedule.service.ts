@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
-import { UpdateScheduleDto } from './dto/update-schedule.dto';
-import { Repository, LessThan, MoreThan } from 'typeorm';
-
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Schedule } from './entities/schedule.entity';
 import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
@@ -29,17 +27,19 @@ export class ScheduleService {
   }
 
   async updateSchedule(id: number, dto: Partial<CreateScheduleDto>) {
-    await this.scheduleRepo.update(id, dto);
+    const result = await this.scheduleRepo.update(id, dto);
+    if (result.affected === 0) {
+      return null; // Schedule not found
+    }
     return this.scheduleRepo.findOne({ where: { id } });
   }
 
   async remove(id: number) {
     const schedule = await this.findOne(id);
     if (!schedule) {
-      // You might want to throw an exception here
       return null;
     }
-    await this.scheduleRepo.remove(schedule);
+    await this.scheduleRepo.delete(id); // More efficient than remove()
     return schedule;
   }
 
@@ -110,6 +110,110 @@ export class ScheduleService {
     }
     return null;
   }
+
+  // async checkConflicts(schedules: CheckScheduleConflictDto[]) {
+  //   const conflicts: {
+  //     date: string;
+  //     room: string;
+  //     startTime: string;
+  //     endTime: string;
+  //     conflictType:
+  //       | 'room'
+  //       | 'teacher'
+  //       | 'student'
+  //       | 'room_teacher'
+  //       | 'room_student'
+  //       | 'teacher_student'
+  //       | 'all';
+  //     courseTitle: string;
+  //     teacherName: string;
+  //     studentName: string;
+  //   }[] = [];
+
+  //   if (schedules.length === 0) return conflicts;
+
+  //   // Extract unique dates, teachers, students, rooms for batch query
+  //   const dates = Array.from(new Set(schedules.map((s) => s.date)));
+  //   const teacherIds = Array.from(new Set(schedules.map((s) => s.teacherId)));
+  //   const studentIds = Array.from(new Set(schedules.map((s) => s.studentId)));
+  //   const rooms = Array.from(new Set(schedules.map((s) => s.room)));
+
+  //   // Single query to get all potential conflicts
+  //   const existingSchedules = await this.scheduleRepo
+  //     .createQueryBuilder('s')
+  //     .leftJoinAndSelect('s.course', 'course')
+  //     .leftJoinAndSelect('s.teacher', 'teacher')
+  //     .leftJoinAndSelect('s.student', 'student')
+  //     .where('s.date IN (:...dates)', { dates })
+  //     .andWhere(
+  //       '(s.room IN (:...rooms) OR s.teacherId IN (:...teacherIds) OR s.studentId IN (:...studentIds))',
+  //       { rooms, teacherIds, studentIds },
+  //     )
+  //     .getMany();
+
+  //   // Check each schedule against existing ones
+  //   for (const {
+  //     date,
+  //     room,
+  //     startTime,
+  //     endTime,
+  //     teacherId,
+  //     studentId,
+  //   } of schedules) {
+  //     // Find conflicts for this specific schedule
+  //     const existing = existingSchedules.find(
+  //       (s) =>
+  //         s.date.toISOString().split('T')[0] === date &&
+  //         (s.room === room ||
+  //           s.teacher?.id === teacherId ||
+  //           s.student?.id === studentId) &&
+  //         s.startTime < endTime &&
+  //         s.endTime > startTime,
+  //     );
+
+  //     if (existing) {
+  //       const isRoomConflict = existing.room === room;
+  //       const isTeacherConflict = existing.teacher?.id === teacherId;
+  //       const isStudentConflict = existing.student?.id === studentId;
+
+  //       let conflictType:
+  //         | 'room'
+  //         | 'teacher'
+  //         | 'student'
+  //         | 'room_teacher'
+  //         | 'room_student'
+  //         | 'teacher_student'
+  //         | 'all' = 'room';
+
+  //       if (isRoomConflict && isTeacherConflict && isStudentConflict) {
+  //         conflictType = 'all';
+  //       } else if (isRoomConflict && isTeacherConflict) {
+  //         conflictType = 'room_teacher';
+  //       } else if (isRoomConflict && isStudentConflict) {
+  //         conflictType = 'room_student';
+  //       } else if (isTeacherConflict && isStudentConflict) {
+  //         conflictType = 'teacher_student';
+  //       } else if (isTeacherConflict) {
+  //         conflictType = 'teacher';
+  //       } else if (isStudentConflict) {
+  //         conflictType = 'student';
+  //       }
+
+  //       conflicts.push({
+  //         date,
+  //         room,
+  //         startTime,
+  //         endTime,
+  //         conflictType,
+  //         courseTitle: existing.course?.title || 'Unknown',
+  //         teacherName: existing.teacher?.name || 'Unknown',
+  //         studentName: existing.student?.name || 'Unknown',
+  //       });
+  //     }
+  //   }
+
+  //   return conflicts;
+  // }
 
   async checkConflicts(schedules: CheckScheduleConflictDto[]) {
     const conflicts: {
@@ -203,6 +307,8 @@ export class ScheduleService {
   }
 
   async getAllSchedules() {
+    // Add basic pagination to prevent loading massive datasets
+    // You can modify the controller later to accept page/limit parameters
     return this.scheduleRepo
       .createQueryBuilder('schedule')
       .leftJoin('schedule.student', 'student')
@@ -227,6 +333,9 @@ export class ScheduleService {
       .addSelect('student.id') // optional if you need
       .addSelect('teacher.id')
       .addSelect('course.id')
+      .orderBy('schedule.date', 'DESC')
+      .addOrderBy('schedule.startTime', 'ASC')
+      .limit(1000) // Reasonable limit to prevent memory issues
       .getRawMany();
   }
 
@@ -248,18 +357,15 @@ export class ScheduleService {
   }
 
   async getTodaySchedules(): Promise<any[]> {
-    const today = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-    });
+    const today = new Date();
+    const todayDateString = today.toLocaleDateString('en-CA');
 
     return this.scheduleRepo
       .createQueryBuilder('schedule')
       .leftJoinAndSelect('schedule.student', 'student')
       .leftJoinAndSelect('schedule.teacher', 'teacher')
       .leftJoinAndSelect('schedule.course', 'course')
-      .where('schedule.date = :today', { today })
+      .where('DATE(schedule.date) = :today', { today: todayDateString })
       .select([
         'schedule.id',
         'schedule.date',
