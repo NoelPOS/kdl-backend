@@ -1,0 +1,23 @@
+name: Keep Render Instance Alive
+
+on:
+  schedule:
+    # Runs every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Allows manual triggering for testing
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping API to keep instance alive
+        run: |
+          curl -f -s -o /dev/null -w "HTTP Status: %{http_code}, Response Time: %{time_total}s\n" \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 5 \
+            https://kdl-backend.onrender.com/users/health || echo "Ping failed, but that's okay - instance should still wake up"
+        
+      - name: Log completion
+        run: echo "Keep-alive ping completed at $(date)"
