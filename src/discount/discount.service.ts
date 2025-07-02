@@ -3,7 +3,7 @@ import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DiscountEntity } from './entities/discount.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 @Injectable()
 export class DiscountService {
@@ -49,14 +49,16 @@ export class DiscountService {
       .getMany();
   }
 
-  async findOne(name: string): Promise<DiscountEntity> {
+  async findOne(name: string): Promise<DiscountEntity[]> {
+    console.log('Finding discount with name: ', name);
     const discount = await this.discountRepository.findOne({
-      where: { title: name },
+      where: { title: ILike(`%${name}%`) },
     });
+    // console.log(discount);
     if (!discount) {
       throw new NotFoundException(`Discount with name ${name} not found.`);
     }
-    return discount;
+    return [discount];
   }
 
   async update(

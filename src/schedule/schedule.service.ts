@@ -332,7 +332,7 @@ export class ScheduleService {
       ])
       .addSelect('student.id') // optional if you need
       .addSelect('teacher.id')
-      .addSelect('course.id')
+      .addSelect('course.id AS "schedule_courseId"')
       .orderBy('schedule.date', 'DESC')
       .addOrderBy('schedule.startTime', 'ASC')
       .limit(1000) // Reasonable limit to prevent memory issues
@@ -384,8 +384,8 @@ export class ScheduleService {
         'student.profilePicture',
         'teacher.name',
         'course.title',
+        'course.id AS "schedule_courseId"',
       ])
-      .addSelect('course.id')
       .orderBy('schedule.startTime', 'ASC')
       .getRawMany();
   }
