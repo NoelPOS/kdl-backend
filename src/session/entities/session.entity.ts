@@ -1,13 +1,40 @@
 import {
-  Column,
   Entity,
-  JoinColumn,
-  ManyToOne,
   PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { CourseEntity } from '../../course/entities/course.entity';
+import { StudentEntity } from 'src/user/entities/student.entity';
 
+// --- ClassOption Entity ---
+@Entity('class_options')
+export class ClassOption {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  classMode: string;
+
+  @Column()
+  classLimit: number;
+
+  @Column('decimal')
+  tuitionFee: number;
+
+  @Column()
+  effectiveStartDate: Date;
+
+  @Column({ nullable: true })
+  effectiveEndDate: Date;
+}
+
+// --- Session Entity ---
 @Entity('sessions')
 export class Session {
   @PrimaryGeneratedColumn()
@@ -23,12 +50,10 @@ export class Session {
   courseId: number;
 
   @Column()
-  @ApiProperty({ description: 'Mode' })
-  mode: string;
-
-  @Column()
-  @ApiProperty({ description: 'Class limit' })
-  classLimit: number;
+  @ApiProperty({
+    description: 'courseOptionId',
+  })
+  classOptionId: number;
 
   @Column()
   @ApiProperty({ description: 'Class cancel' })
@@ -42,7 +67,92 @@ export class Session {
   @ApiProperty({ description: 'Status' })
   status: string;
 
+  @Column({ default: false })
+  @ApiProperty({ description: 'Invoice done' })
+  invoiceDone: boolean;
+
+  @CreateDateColumn()
+  @ApiProperty({ description: 'Session creation date' })
+  createdAt: Date;
+
   @ManyToOne(() => CourseEntity)
   @JoinColumn({ name: 'courseId' })
   course: CourseEntity;
+
+  @ManyToOne(() => StudentEntity)
+  @JoinColumn({ name: 'studentId' })
+  student: StudentEntity;
+
+  @OneToOne(() => ClassOption)
+  @JoinColumn({ name: 'classOptionId' })
+  classOption: ClassOption;
+}
+
+// --- Invoice Entity ---
+@Entity('invoices')
+export class Invoice {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  documentId: string;
+
+  @Column()
+  date: Date;
+
+  @Column()
+  paymentMethod: string;
+
+  @Column('decimal')
+  totalAmount: number;
+
+  @Column()
+  sessionId: number;
+
+  @Column({ default: false })
+  receiptDone: boolean;
+
+  @OneToOne(() => Session)
+  @JoinColumn({ name: 'sessionId' })
+  session: Session;
+
+  @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true })
+  items: InvoiceItem[];
+}
+
+// --- InvoiceItem Entity ---
+@Entity('invoice_items')
+export class InvoiceItem {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  invoiceId: number;
+
+  @Column()
+  description: string;
+
+  @Column('decimal')
+  amount: number;
+
+  @ManyToOne(() => Invoice, (invoice) => invoice.items)
+  @JoinColumn({ name: 'invoiceId' })
+  invoice: Invoice;
+}
+
+// --- Receipt Entity ---
+@Entity('receipts')
+export class Receipt {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  invoiceId: number;
+
+  @OneToOne(() => Invoice)
+  @JoinColumn({ name: 'invoiceId' })
+  invoice: Invoice;
+
+  @Column()
+  date: Date;
 }

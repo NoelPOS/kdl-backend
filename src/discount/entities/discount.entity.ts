@@ -9,5 +9,14 @@ export class DiscountEntity {
   title: string;
 
   @Column()
+  usage: string;
+
+  @Column()
   amount: number;
+
+  @Column()
+  effective_start_date: Date;
+
+  @Column({ nullable: true })
+  effective_end_date: Date;
 }

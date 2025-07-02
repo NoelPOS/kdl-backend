@@ -12,28 +12,63 @@ export class DiscountService {
     private readonly discountRepository: Repository<DiscountEntity>,
   ) {}
 
-  create(createDiscountDto: CreateDiscountDto): Promise<DiscountEntity> {
-    const discount = this.discountRepository.create(createDiscountDto);
-    return this.discountRepository.save(discount);
+  async create(createDiscountDto: CreateDiscountDto): Promise<DiscountEntity> {
+    const { title, usage, amount } = createDiscountDto;
+
+    const now = new Date();
+
+    // Find existing active discount with same title
+    const existing = await this.discountRepository.findOne({
+      where: {
+        title,
+        effective_end_date: null,
+      },
+    });
+
+    if (existing) {
+      existing.effective_end_date = new Date(now.getTime() - 1000); // expire 1 second before new one
+      await this.discountRepository.save(existing);
+    }
+
+    const newDiscount = this.discountRepository.create({
+      title,
+      usage,
+      amount,
+      effective_start_date: now,
+      effective_end_date: null,
+    });
+
+    return this.discountRepository.save(newDiscount);
   }
 
-  findAll(): Promise<DiscountEntity[]> {
-    return this.discountRepository.find();
+  async findAll(): Promise<DiscountEntity[]> {
+    return this.discountRepository
+      .createQueryBuilder('discount')
+      .where('discount.effective_end_date IS NULL')
+      .orderBy('discount.title', 'ASC')
+      .getMany();
   }
 
-  async findOne(id: number): Promise<DiscountEntity> {
-    const discount = await this.discountRepository.findOne({ where: { id } });
+  async findOne(name: string): Promise<DiscountEntity> {
+    const discount = await this.discountRepository.findOne({
+      where: { title: name },
+    });
     if (!discount) {
-      throw new NotFoundException(`Discount with ID ${id} not found.`);
+      throw new NotFoundException(`Discount with name ${name} not found.`);
     }
     return discount;
   }
 
-  async update(id: number, updateDiscountDto: UpdateDiscountDto): Promise<DiscountEntity> {
+  async update(
+    id: number,
+    updateDiscountDto: UpdateDiscountDto,
+  ): Promise<DiscountEntity> {
     await this.discountRepository.update(id, updateDiscountDto);
-    const updatedDiscount = await this.findOne(id);
+    const updatedDiscount = await this.discountRepository.findOne({
+      where: { id },
+    });
     if (!updatedDiscount) {
-        throw new NotFoundException(`Discount with ID ${id} not found.`);
+      throw new NotFoundException(`Discount with ID ${id} not found.`);
     }
     return updatedDiscount;
   }

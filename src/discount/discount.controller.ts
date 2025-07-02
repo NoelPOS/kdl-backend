@@ -35,6 +35,7 @@ export class DiscountController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   create(@Body() createDiscountDto: CreateDiscountDto) {
+    console.log('Creating discount:', createDiscountDto);
     return this.discountService.create(createDiscountDto);
   }
 
@@ -49,17 +50,17 @@ export class DiscountController {
     return this.discountService.findAll();
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a discount by ID' })
-  @ApiParam({ name: 'id', description: 'The ID of the discount' })
+  @Get('search/:name')
+  @ApiOperation({ summary: 'Get a discount by name' })
+  @ApiParam({ name: 'name', description: 'The name of the discount' })
   @ApiResponse({
     status: 200,
-    description: 'Returns the discount with the specified ID',
+    description: 'Returns the discount with the specified name',
     type: DiscountEntity,
   })
   @ApiResponse({ status: 404, description: 'Discount not found' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.discountService.findOne(id);
+  findOne(@Param('name') name: string) {
+    return this.discountService.findOne(name);
   }
 
   @Patch(':id')

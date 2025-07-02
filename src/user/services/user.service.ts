@@ -19,9 +19,9 @@ import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { TeacherEntity } from '../entities/teacher.entity';
 import { TeacherCourseEntity } from '../entities/teacher-course.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
-import { Session } from '../../session/entities/session.entity';
 import { ParentEntity } from '../entities/parent.entity';
 import { CreateParentDto } from '../dto/create-parent.dto';
+import { Session } from 'src/session/entities/session.entity';
 
 @Injectable()
 export class UserService {
@@ -92,12 +92,12 @@ export class UserService {
   }> {
     console.log('Fetching all users...');
     try {
-      const { page = 1, pageSize = 10 } = paginationDto;
-      const skip = (page - 1) * pageSize;
+      const { page = 1, limit = 10 } = paginationDto;
+      const skip = (page - 1) * limit;
 
       const [users, total] = await this.userRepository.findAndCount({
         skip,
-        take: pageSize,
+        take: limit,
         order: {
           createdAt: 'DESC',
         },
@@ -113,8 +113,8 @@ export class UserService {
         items,
         total,
         page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        pageSize: limit,
+        totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
       throw new BadRequestException('Failed to fetch users: ' + error.message);

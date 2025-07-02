@@ -1,33 +1,31 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateSessionDto {
   @ApiProperty()
   @IsNotEmpty()
-  @IsInt()
-  @Type(() => Number)
+  @IsNumber()
   studentId: number;
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsInt()
-  @Type(() => Number)
+  @IsNumber()
   courseId: number;
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsString()
-  mode: string;
+  @IsNumber()
+  classOptionId: number;
 
   @ApiProperty()
-  @IsInt()
-  @Type(() => Number)
-  classLimit: number;
-
-  @ApiProperty()
-  @IsInt()
-  @Type(() => Number)
+  @IsNumber()
   classCancel: number;
 
   @ApiProperty()

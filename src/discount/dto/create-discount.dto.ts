@@ -7,7 +7,15 @@ export class CreateDiscountDto {
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ example: 15.5, description: 'The discount amount' })
+  @ApiProperty({
+    example: 'admission',
+    description: 'Usage category like "admission" or "promotion"',
+  })
+  @IsString()
+  @IsNotEmpty()
+  usage: string;
+
+  @ApiProperty({ example: 2000, description: 'The discount amount' })
   @IsNumber()
   @IsNotEmpty()
   amount: number;

@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { StudentEntity } from '../../user/entities/student.entity';
 import { TeacherEntity } from '../../user/entities/teacher.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
-import { Session } from '../../session/entities/session.entity';
 import {
   Column,
   CreateDateColumn,
@@ -11,6 +10,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Session } from 'src/session/entities/session.entity';
 
 @Entity('schedules')
 export class Schedule {
