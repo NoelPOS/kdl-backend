@@ -18,6 +18,7 @@ import { ScheduleModule } from '../schedule/schedule.module';
 import { RoomModule } from '../room/room.module';
 import { DiscountModule } from '../discount/discount.module';
 import { SessionModule } from '../session/session.module';
+import { CoursePlusModule } from '../course-plus/course-plus.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { SessionModule } from '../session/session.module';
     RoomModule,
     DiscountModule,
     SessionModule,
+    CoursePlusModule,
   ],
   providers: [
     // Global Guards

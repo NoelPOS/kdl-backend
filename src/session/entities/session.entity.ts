@@ -10,7 +10,8 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { CourseEntity } from '../../course/entities/course.entity';
-import { StudentEntity } from 'src/user/entities/student.entity';
+import { StudentEntity } from '../../user/entities/student.entity';
+import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
 
 // --- ClassOption Entity ---
 @Entity('class_options')
@@ -106,15 +107,18 @@ export class Invoice {
   @Column('decimal')
   totalAmount: number;
 
-  @Column()
+  @Column({ nullable: true })
   sessionId: number;
+
+  @Column({ nullable: true })
+  coursePlusId: number;
 
   @Column({ default: false })
   receiptDone: boolean;
 
-  @OneToOne(() => Session)
-  @JoinColumn({ name: 'sessionId' })
-  session: Session;
+  @OneToOne(() => CoursePlus)
+  @JoinColumn({ name: 'coursePlusId' })
+  coursePlus: CoursePlus;
 
   @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true })
   items: InvoiceItem[];

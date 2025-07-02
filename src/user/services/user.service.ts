@@ -21,7 +21,7 @@ import { TeacherCourseEntity } from '../entities/teacher-course.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
 import { ParentEntity } from '../entities/parent.entity';
 import { CreateParentDto } from '../dto/create-parent.dto';
-import { Session } from 'src/session/entities/session.entity';
+import { Session } from '../../session/entities/session.entity';
 
 @Injectable()
 export class UserService {

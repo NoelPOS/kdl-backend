@@ -4,12 +4,11 @@ import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
 import { UserEntity } from './entities/user.entity';
 import { CommonModule } from '../common/common.module';
-import { ConfigService } from '@nestjs/config';
 import { StudentEntity } from './entities/student.entity';
 import { TeacherEntity } from './entities/teacher.entity';
 import { TeacherCourseEntity } from './entities/teacher-course.entity';
 import { ParentEntity } from './entities/parent.entity';
-import { Session } from 'src/session/entities/session.entity';
+import { Session } from '../session/entities/session.entity';
 
 @Module({
   imports: [

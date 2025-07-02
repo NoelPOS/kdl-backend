@@ -183,4 +183,24 @@ export class ScheduleController {
   checkScheduleConflicts(@Body() dto: CheckConflictBatchDto) {
     return this.scheduleService.checkConflicts(dto.schedules);
   }
+
+  @Post('preview')
+  @ApiOperation({
+    summary:
+      'Preview schedules and check for conflicts before final submission',
+  })
+  @ApiBody({ type: [CreateScheduleDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Preview of schedules and any conflicts',
+  })
+  async previewSchedules(@Body() schedules: CreateScheduleDto[]) {
+    // Check for conflicts using the existing service method
+    const conflicts = await this.scheduleService.checkConflicts(schedules);
+    // Return the preview (input) and conflicts
+    return {
+      preview: schedules,
+      conflicts,
+    };
+  }
 }

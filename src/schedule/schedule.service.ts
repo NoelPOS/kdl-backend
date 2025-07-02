@@ -433,38 +433,15 @@ export class ScheduleService {
   }
 
   async getSchedulesByStudentAndSession(sessionId: number, studentId: number) {
+    // for the relations select only student name, teacher name and course title
     return this.scheduleRepo
       .createQueryBuilder('schedule')
       .leftJoin('schedule.student', 'student')
       .leftJoin('schedule.teacher', 'teacher')
       .leftJoin('schedule.course', 'course')
-      .leftJoin('schedule.session', 'session')
-      .select([
-        'schedule.id',
-        'schedule.date',
-        'schedule.startTime',
-        'schedule.endTime',
-        'schedule.room',
-        'schedule.remark',
-        'schedule.attendance',
-        'schedule.feedback',
-        'schedule.verifyFb',
-        'schedule.classNumber',
-        'schedule.warning',
-        'student.id',
-        'student.name',
-        'student.nickname',
-        'student.profilePicture',
-        'teacher.id',
-        'teacher.name',
-        'course.id',
-        'course.title',
-        'session.mode',
-      ])
+      .addSelect(['student.name', 'teacher.name', 'course.title'])
       .where('schedule.sessionId = :sessionId', { sessionId })
       .andWhere('schedule.studentId = :studentId', { studentId })
-      .orderBy('schedule.date', 'ASC')
-      .addOrderBy('schedule.startTime', 'ASC')
       .getRawMany();
   }
 }

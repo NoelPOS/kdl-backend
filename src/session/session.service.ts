@@ -14,7 +14,7 @@ import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { InvoiceFilterDto } from './dto/invoice-filter.dto';
 import { ReceiptFilterDto } from './dto/receipt-filter.dto';
-import { Invoice } from 'src/session/entities/session.entity';
+import { Invoice } from '../session/entities/session.entity';
 import { DataSource } from 'typeorm';
 
 @Injectable()
