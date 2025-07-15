@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -42,6 +42,21 @@ export class SessionService {
   ) {}
 
   async create(dto: CreateSessionDto) {
+    // Check for existing session with same studentId, courseId, and classOptionId
+    console.log('Creating session with data:', dto);
+    const existing = await this.sessionRepository.findOne({
+      where: {
+        studentId: dto.studentId,
+        courseId: dto.courseId,
+        classOptionId: dto.classOptionId,
+        teacherId: dto.teacherId,
+      },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        'A session with the same student, course, and class option already exists.',
+      );
+    }
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
     session.invoiceDone = false;
@@ -119,22 +134,182 @@ export class SessionService {
     return result;
   }
 
-  async getPendingSessionsForInvoice() {
-    return await this.sessionRepository
+  async getPendingSessionsForInvoice(
+    date?: string,
+    status?: string,
+    course?: string,
+    teacher?: string,
+    student?: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    enrollments: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    console.log('Fetching pending sessions with filters:', {
+      date,
+      status,
+      course,
+      teacher,
+      student,
+      page,
+      limit,
+    });
+
+    // Validate pagination parameters
+    page = Math.max(1, page);
+    limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+
+    // First, get the session IDs that match our criteria for counting
+    let countQueryBuilder = this.sessionRepository
       .createQueryBuilder('session')
       .leftJoin('session.student', 'student')
       .leftJoin('session.course', 'course')
+      .leftJoin('session.teacher', 'teacher')
+      .leftJoin('session.classOption', 'classOption');
+
+    // Base filter - only pending invoices by default
+    if (!status || status === 'all') {
+      countQueryBuilder = countQueryBuilder.where(
+        'session.invoiceDone = :invoiceDone',
+        {
+          invoiceDone: false,
+        },
+      );
+    } else if (status === 'completed') {
+      countQueryBuilder = countQueryBuilder.where(
+        'session.invoiceDone = :invoiceDone',
+        {
+          invoiceDone: true,
+        },
+      );
+    }
+
+    // Add filtering conditions to count query
+    if (date) {
+      countQueryBuilder = countQueryBuilder.andWhere(
+        'DATE(session.createdAt) = :date',
+        {
+          date,
+        },
+      );
+    }
+
+    if (course) {
+      countQueryBuilder = countQueryBuilder.andWhere(
+        'course.title ILIKE :course',
+        {
+          course: `%${course}%`,
+        },
+      );
+    }
+
+    if (teacher) {
+      countQueryBuilder = countQueryBuilder.andWhere(
+        'teacher.name ILIKE :teacher',
+        {
+          teacher: `%${teacher}%`,
+        },
+      );
+    }
+
+    if (student) {
+      countQueryBuilder = countQueryBuilder.andWhere(
+        'student.name ILIKE :student',
+        {
+          student: `%${student}%`,
+        },
+      );
+    }
+
+    // Get total count for pagination
+    const totalCount = await countQueryBuilder.getCount();
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Now build the main query with pagination and sort by createdAt
+    let queryBuilder = this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoin('session.student', 'student')
+      .leftJoin('session.course', 'course')
+      .leftJoin('session.teacher', 'teacher')
       .leftJoin('session.classOption', 'classOption')
       .select([
-        'session.id',
-        'session.createdAt',
-        'student.id',
-        'student.name',
-        'course.title',
-        'classOption.tuitionFee',
-      ])
-      .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
-      .getRawMany();
+        'session.id as session_id',
+        'session.createdAt as session_createdAt',
+        'session.status as session_status',
+        'session.payment as session_payment',
+        'session.invoiceDone as session_invoiceDone',
+        'student.id as student_id',
+        'student.name as student_name',
+        'course.id as course_id',
+        'course.title as course_title',
+        'teacher.id as teacher_id',
+        'teacher.name as teacher_name',
+        'classOption.tuitionFee as classOption_tuitionFee',
+      ]);
+    // Apply the same filters to the main query
+    if (!status || status === 'pending') {
+      queryBuilder = queryBuilder.where('session.invoiceDone = :invoiceDone', {
+        invoiceDone: false,
+      });
+    } else if (status === 'completed') {
+      queryBuilder = queryBuilder.where('session.invoiceDone = :invoiceDone', {
+        invoiceDone: true,
+      });
+    }
+
+    if (date) {
+      queryBuilder = queryBuilder.andWhere('DATE(session.createdAt) = :date', {
+        date,
+      });
+    }
+
+    if (course) {
+      queryBuilder = queryBuilder.andWhere('course.title ILIKE :course', {
+        course: `%${course}%`,
+      });
+    }
+
+    if (teacher) {
+      queryBuilder = queryBuilder.andWhere('teacher.name ILIKE :teacher', {
+        teacher: `%${teacher}%`,
+      });
+    }
+
+    if (student) {
+      queryBuilder = queryBuilder.andWhere('student.name ILIKE :student', {
+        student: `%${student}%`,
+      });
+    }
+
+    // Add ordering and pagination
+    queryBuilder = queryBuilder
+      .orderBy('session.createdAt', 'DESC')
+      .offset((page - 1) * limit)
+      .limit(limit);
+
+    const enrollments = await queryBuilder.getRawMany();
+
+    console.log(
+      `Returning ${enrollments.length} enrollments out of ${totalCount} total`,
+    );
+
+    return {
+      enrollments,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
   }
 
   async getSpecificPendingSessionsForInvoice(sessionId: number) {
@@ -194,69 +369,80 @@ export class SessionService {
     });
   }
 
-  async listInvoices(filter: InvoiceFilterDto) {
-    console.log('filter', typeof filter.receiptDone);
-    const {
-      page = 1,
-      limit = 10,
-      from,
-      to,
-      sessionId,
-      studentId,
-      courseName,
-      documentId,
-      paymentMethod,
-      receiptDone,
-    } = filter;
-    const qb = this.invoiceRepo
+  async listInvoices(
+    page: number = 1,
+    limit: number = 10,
+    documentId?: string,
+    student?: string,
+    course?: string,
+    receiptDone?: string,
+  ): Promise<{
+    invoices: Invoice[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    const offset = (page - 1) * limit;
+
+    const queryBuilder = this.invoiceRepo
       .createQueryBuilder('invoice')
+      .leftJoinAndSelect('invoice.session', 'session')
+      .leftJoinAndSelect('session.student', 'student')
+      .leftJoinAndSelect('session.course', 'course')
+      .leftJoinAndSelect('session.teacher', 'teacher')
       .leftJoinAndSelect('invoice.items', 'items')
-      .leftJoin('invoice.session', 'session')
-      .leftJoin('session.student', 'student')
-      .leftJoin('session.course', 'course')
-      .orderBy('invoice.date', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .select([
-        'invoice.id',
-        'invoice.documentId',
-        'invoice.date',
-        'invoice.paymentMethod',
-        'invoice.totalAmount',
-        'invoice.sessionId',
-        'invoice.receiptDone',
-        'items',
-        'session.id',
-        'student.id',
-        'student.name',
-        'course.title',
-      ]);
-    if (from) qb.andWhere('invoice.date >= :from', { from });
-    if (to) qb.andWhere('invoice.date <= :to', { to });
-    if (sessionId) qb.andWhere('invoice.sessionId = :sessionId', { sessionId });
-    if (studentId) qb.andWhere('student.id = :studentId', { studentId });
-    if (courseName) qb.andWhere('course.title = :courseName', { courseName });
-    if (documentId)
-      qb.andWhere('invoice.documentId = :documentId', { documentId });
-    if (paymentMethod)
-      qb.andWhere('invoice.paymentMethod = :paymentMethod', { paymentMethod });
-    if (typeof receiptDone === 'string') {
-      if (receiptDone.toLowerCase() === 'true') {
-        qb.andWhere('invoice.receiptDone = :receiptDone', {
-          receiptDone: true,
-        });
-      } else if (receiptDone.toLowerCase() === 'false') {
-        qb.andWhere('invoice.receiptDone = :receiptDone', {
-          receiptDone: false,
-        });
-      }
-    } else if (typeof receiptDone === 'boolean') {
-      qb.andWhere('invoice.receiptDone = :receiptDone', { receiptDone });
+      .orderBy('invoice.date', 'DESC');
+
+    if (documentId) {
+      queryBuilder.andWhere('invoice.documentId ILIKE :documentId', {
+        documentId: `%${documentId}%`,
+      });
     }
 
-    const [invoices, total] = await qb.getManyAndCount();
+    if (student) {
+      queryBuilder.andWhere('student.name ILIKE :studentName', {
+        studentName: `%${student}%`,
+      });
+    }
 
-    return { invoices, total, page, limit };
+    if (course) {
+      queryBuilder.andWhere('course.title ILIKE :courseName', {
+        courseName: `%${course}%`,
+      });
+    }
+
+    if (receiptDone == 'completed') {
+      queryBuilder.andWhere('invoice.receiptDone = :receiptDone', {
+        receiptDone: true,
+      });
+    } else if (receiptDone == 'pending') {
+      queryBuilder.andWhere('invoice.receiptDone = :receiptDone', {
+        receiptDone: false,
+      });
+    }
+
+    // Get total count
+    const totalCount = await queryBuilder.getCount();
+
+    // Get paginated data
+    const invoices = await queryBuilder.offset(offset).limit(limit).getMany();
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      invoices,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
   }
 
   async listReceipts(filter: ReceiptFilterDto) {

@@ -30,4 +30,9 @@ export class CheckScheduleConflictDto {
   @IsOptional()
   @IsString()
   courseTitle?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  excludeId?: number;
 }

@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   NotFoundException,
   Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -19,6 +20,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { Session } from './entities/session.entity';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -27,6 +29,8 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { InvoiceFilterDto } from './dto/invoice-filter.dto';
 import { ReceiptFilterDto } from './dto/receipt-filter.dto';
 import { CreateClassOptionDto } from './dto/create-class-option.dto';
+import { PaginatedSessionResponseDto } from './dto/paginated-session-response.dto';
+import { PaginatedInvoiceResponseDto } from './dto/paginated-invoice-response.dto';
 
 @Controller('sessions')
 export class SessionController {
@@ -122,14 +126,69 @@ export class SessionController {
 
   @ApiTags('Invoices')
   @Get('pending-invoice')
-  @ApiOperation({ summary: 'Get sessions pending invoice' })
+  @ApiOperation({
+    summary: 'Get sessions pending invoice with filtering and pagination',
+  })
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    description: 'Filter by creation date (YYYY-MM-DD format)',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status (pending/completed)',
+  })
+  @ApiQuery({
+    name: 'course',
+    required: false,
+    description: 'Filter by course name',
+  })
+  @ApiQuery({
+    name: 'teacher',
+    required: false,
+    description: 'Filter by teacher name',
+  })
+  @ApiQuery({
+    name: 'student',
+    required: false,
+    description: 'Filter by student name',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 10)',
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of sessions pending invoice',
-    type: [Session],
+    description: 'List of sessions pending invoice with pagination',
+    type: PaginatedSessionResponseDto,
   })
-  getPendingSessionsForInvoice() {
-    return this.sessionService.getPendingSessionsForInvoice();
+  getPendingSessionsForInvoice(
+    @Query('date') date?: string,
+    @Query('status') status?: string,
+    @Query('course') course?: string,
+    @Query('teacher') teacher?: string,
+    @Query('student') student?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.sessionService.getPendingSessionsForInvoice(
+      date,
+      status,
+      course,
+      teacher,
+      student,
+      page,
+      limit,
+    );
   }
 
   @ApiTags('Invoices')
@@ -176,12 +235,33 @@ export class SessionController {
   @ApiTags('Invoices')
   @Get('invoices')
   @ApiOperation({ summary: 'List all invoices (paginated, filterable)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'documentId', required: false, type: String })
+  @ApiQuery({ name: 'student', required: false, type: String })
+  @ApiQuery({ name: 'course', required: false, type: String })
+  @ApiQuery({ name: 'receiptDone', required: false, type: Boolean })
   @ApiResponse({
     status: 200,
     description: 'Paginated, filterable list of invoices',
+    type: PaginatedInvoiceResponseDto,
   })
-  getInvoices(@Query() query: InvoiceFilterDto) {
-    return this.sessionService.listInvoices(query);
+  getInvoices(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('documentId') documentId?: string,
+    @Query('student') student?: string,
+    @Query('course') course?: string,
+    @Query('receiptDone') receiptDone?: string,
+  ) {
+    return this.sessionService.listInvoices(
+      page,
+      limit,
+      documentId,
+      student,
+      course,
+      receiptDone,
+    );
   }
 
   @ApiTags('Receipts')

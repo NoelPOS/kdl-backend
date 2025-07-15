@@ -28,8 +28,9 @@ export class CourseService {
   async search(name: string) {
     return this.courseRepository.find({
       where: {
-        title: ILike(`%${name}%`), // case-insensitive, partial match
+        title: ILike(`%${name}%`),
       },
+      select: ['id', 'title'],
     });
   }
 
@@ -47,14 +48,65 @@ export class CourseService {
     return course;
   }
 
-  async filter(ageRange: string, medium: string) {
+  async filter(
+    ageRange?: string,
+    medium?: string,
+    query?: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    courses: CourseEntity[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    // Validate pagination parameters
+    page = Math.max(1, page);
+    limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+
     const where: any = {};
-    if (ageRange !== 'all') {
+    if (ageRange && ageRange !== 'all') {
       where.ageRange = ageRange;
     }
-    if (medium !== 'all') {
+    if (medium && medium !== 'all') {
       where.medium = medium;
     }
-    return this.courseRepository.find({ where });
+    if (query && query.trim() !== '') {
+      where.title = ILike(`%${query}%`);
+    }
+
+    // Calculate pagination values
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const totalCount = await this.courseRepository.count({ where });
+
+    // Get paginated results
+    const courses = await this.courseRepository.find({
+      where,
+      skip,
+      take: limit,
+      order: { id: 'ASC' },
+    });
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    return {
+      courses,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNext,
+        hasPrev,
+      },
+    };
   }
 }

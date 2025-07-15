@@ -9,9 +9,27 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { Session } from '../../session/entities/session.entity';
 
+@Index('idx_schedules_room_date_time', ['room', 'date', 'startTime', 'endTime'])
+@Index('idx_schedules_teacher_date_time', [
+  'teacherId',
+  'date',
+  'startTime',
+  'endTime',
+])
+@Index('idx_schedules_student_date_time', [
+  'studentId',
+  'date',
+  'startTime',
+  'endTime',
+])
+@Index('idx_schedules_date', ['date'])
+@Index('idx_schedules_studentId', ['studentId'])
+@Index('idx_schedules_teacherId', ['teacherId'])
+@Index('idx_schedules_room', ['room'])
 @Entity('schedules')
 export class Schedule {
   @PrimaryGeneratedColumn()
@@ -34,19 +52,21 @@ export class Schedule {
   @ApiProperty({ description: 'Student id' })
   studentId: number;
 
-  @Column()
+  @Column(
+    { nullable: true, type: 'int' }, // Allow teacherId to be nullable
+  )
   @ApiProperty({ description: 'Teacher id' })
   teacherId: number;
 
-  @Column()
+  @Column({ type: 'date', nullable: true })
   @ApiProperty({ description: 'Date' })
   date: Date;
 
-  @Column()
+  @Column({ nullable: true })
   @ApiProperty({ description: 'Start time' })
   startTime: string;
 
-  @Column()
+  @Column({ nullable: true })
   @ApiProperty({ description: 'End time' })
   endTime: string;
 
@@ -91,7 +111,9 @@ export class Schedule {
   @JoinColumn({ name: 'studentId' })
   student: StudentEntity;
 
-  @ManyToOne(() => TeacherEntity)
+  @ManyToOne(() => TeacherEntity, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'teacherId' })
   teacher: TeacherEntity;
 

@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
   NotFoundException,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -36,6 +37,9 @@ import { TeacherEntity } from '../entities/teacher.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
 import { ParentEntity } from '../entities/parent.entity';
 import { CreateParentDto } from '../dto/create-parent.dto';
+import { PaginatedTeacherResponseDto } from '../dto/paginated-teacher-response.dto';
+import { PaginatedParentResponseDto } from '../dto/paginated-parent-response.dto';
+import { AssignChildrenToParentDto } from '../dto/assign-children-parent.dto';
 
 @Controller('users')
 export class UserController {
@@ -74,14 +78,68 @@ export class UserController {
 
   @ApiTags('Students')
   @Get('students')
-  @ApiOperation({ summary: 'Get all students' })
+  @ApiOperation({ summary: 'Get all students with pagination' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 10)',
+  })
+  @ApiQuery({
+    name: 'query',
+    required: false,
+    type: 'string',
+    description: 'Search query',
+  })
+  @ApiQuery({
+    name: 'active',
+    required: false,
+    type: 'string',
+    description: 'Filter by active status',
+  })
+  @ApiQuery({
+    name: 'course',
+    required: false,
+    type: 'string',
+    description: 'Filter by course',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Returns all students',
-    type: [StudentEntity],
+    description: 'Returns paginated students',
+    schema: {
+      type: 'object',
+      properties: {
+        students: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/StudentEntity' },
+        },
+        pagination: {
+          type: 'object',
+          properties: {
+            currentPage: { type: 'number' },
+            totalPages: { type: 'number' },
+            totalCount: { type: 'number' },
+            hasNext: { type: 'boolean' },
+            hasPrev: { type: 'boolean' },
+          },
+        },
+      },
+    },
   })
-  findAllStudents() {
-    return this.userService.findAllStudents();
+  findAllStudents(
+    @Query('query') query?: string,
+    @Query('active') active?: string,
+    @Query('course') course?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return this.userService.findAllStudents(query, active, course, page, limit);
   }
 
   @ApiTags('Students')
@@ -99,35 +157,6 @@ export class UserController {
   })
   findStudentsBySearch(@Query('name') query?: string) {
     return this.userService.searchStudents({ name: query });
-  }
-
-  @ApiTags('Students')
-  @Get('students/active')
-  @ApiOperation({
-    summary:
-      'Get all active students (students with at least one pending session)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns all active students',
-    type: [StudentEntity],
-  })
-  findActiveStudents() {
-    return this.userService.findActiveStudents();
-  }
-
-  @ApiTags('Students')
-  @Get('students/inactive')
-  @ApiOperation({
-    summary: 'Get all inactive students (students with no pending session)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns all inactive students',
-    type: [StudentEntity],
-  })
-  findInactiveStudents() {
-    return this.userService.findInactiveStudents();
   }
 
   @ApiTags('Students')
@@ -240,14 +269,50 @@ export class UserController {
 
   @ApiTags('Teachers')
   @Get('teachers')
-  @ApiOperation({ summary: 'Get all teachers' })
+  @ApiOperation({ summary: 'Get all teachers with pagination and filtering' })
+  @ApiQuery({
+    name: 'query',
+    required: false,
+    type: 'string',
+    description: 'Search query for teacher name',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: 'string',
+    description: 'Filter by status (active/inactive)',
+  })
+  @ApiQuery({
+    name: 'course',
+    required: false,
+    type: 'string',
+    description: 'Filter by course name',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 10)',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Returns all teachers',
-    type: [TeacherEntity],
+    description: 'Returns paginated teachers with filtering',
+    type: PaginatedTeacherResponseDto,
   })
-  findAllTeachers() {
-    return this.userService.findAllTeachers();
+  findAllTeachers(
+    @Query('query') query?: string,
+    @Query('status') status?: string,
+    @Query('course') course?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.userService.findAllTeachers(query, status, course, page, limit);
   }
 
   @ApiTags('Teachers')
@@ -268,7 +333,7 @@ export class UserController {
   }
 
   // =================================================================================================
-  // Parents
+  //
   // =================================================================================================
   @ApiTags('Parents')
   @Get('parents')
@@ -284,19 +349,55 @@ export class UserController {
 
   @ApiTags('Parents')
   @Get('parents/search')
-  @ApiOperation({ summary: 'Search parents by name' })
+  @ApiOperation({
+    summary: 'Search parents by name with pagination and child filtering',
+  })
   @ApiQuery({
     name: 'name',
-    required: true,
+    required: false,
     description: 'Search query for parent name',
+  })
+  @ApiQuery({
+    name: 'child',
+    required: false,
+    description: 'Filter by child name',
+  })
+  @ApiQuery({
+    name: 'address',
+    required: false,
+    description: 'Filter by parent address',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 10)',
   })
   @ApiResponse({
     status: 200,
-    description: 'Returns parents that match the search query',
-    type: [ParentEntity],
+    description: 'Returns parents that match the search query with pagination',
+    type: PaginatedParentResponseDto,
   })
-  searchParentsByName(@Query('name') name: string) {
-    return this.userService.searchParentsByName(name);
+  searchParentsByName(
+    @Query('name') name?: string,
+    @Query('child') child?: string,
+    @Query('address') address?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.userService.searchParentsByName(
+      name,
+      child,
+      address,
+      page,
+      limit,
+    );
   }
 
   @ApiTags('Parents')
@@ -312,6 +413,60 @@ export class UserController {
   createParent(@Body() createParentDto: CreateParentDto) {
     console.log(createParentDto);
     return this.userService.createParent(createParentDto);
+  }
+
+  @ApiTags('Parents')
+  @Post('parents/:parentId/children')
+  @ApiOperation({ summary: 'Assign children to a parent' })
+  @ApiParam({
+    name: 'parentId',
+    type: Number,
+    description: 'ID of the parent',
+  })
+  @ApiBody({ type: AssignChildrenToParentDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Children successfully assigned',
+  })
+  assignChildrenToParent(
+    @Param('parentId', ParseIntPipe) parentId: number,
+    @Body() dto: AssignChildrenToParentDto,
+  ) {
+    return this.userService.assignChildrenToParent(parentId, dto.studentIds);
+  }
+
+  @ApiTags('Parents')
+  @Get('parents/:parentId/children')
+  @ApiOperation({ summary: 'Get all children of a parent' })
+  @ApiParam({
+    name: 'parentId',
+    type: Number,
+    description: 'ID of the parent',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of children for the parent',
+    type: [StudentEntity],
+  })
+  getChildrenByParent(@Param('parentId', ParseIntPipe) parentId: number) {
+    return this.userService.getChildrenByParentId(parentId);
+  }
+
+  @ApiTags('Parents')
+  @Get('students/:studentId/parents')
+  @ApiOperation({ summary: 'Get all parents of a student' })
+  @ApiParam({
+    name: 'studentId',
+    type: Number,
+    description: 'ID of the student',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of parents for the student',
+    type: [ParentEntity],
+  })
+  getParentsByStudent(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.userService.getParentsByStudentId(studentId);
   }
 
   // =================================================================================================

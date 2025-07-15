@@ -86,7 +86,6 @@ async function bootstrap() {
       `API Documentation available at http://localhost:${port}/api/docs`,
     );
   }
-
   if (module.hot) {
     module.hot.accept();
     module.hot.dispose(() => app.close());

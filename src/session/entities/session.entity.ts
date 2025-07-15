@@ -12,6 +12,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { CourseEntity } from '../../course/entities/course.entity';
 import { StudentEntity } from '../../user/entities/student.entity';
 import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
+import { TeacherEntity } from '../../user/entities/teacher.entity';
 
 // --- ClassOption Entity ---
 @Entity('class_options')
@@ -68,6 +69,10 @@ export class Session {
   @ApiProperty({ description: 'Status' })
   status: string;
 
+  @Column({ nullable: true, type: 'int' })
+  @ApiProperty({ description: 'Teacher id' })
+  teacherId: number;
+
   @Column({ default: false })
   @ApiProperty({ description: 'Invoice done' })
   invoiceDone: boolean;
@@ -84,7 +89,13 @@ export class Session {
   @JoinColumn({ name: 'studentId' })
   student: StudentEntity;
 
-  @OneToOne(() => ClassOption)
+  @ManyToOne(() => TeacherEntity, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'teacherId' })
+  teacher: TeacherEntity;
+
+  @ManyToOne(() => ClassOption)
   @JoinColumn({ name: 'classOptionId' })
   classOption: ClassOption;
 }
@@ -119,6 +130,10 @@ export class Invoice {
   @OneToOne(() => CoursePlus)
   @JoinColumn({ name: 'coursePlusId' })
   coursePlus: CoursePlus;
+
+  @OneToOne(() => Session)
+  @JoinColumn({ name: 'sessionId' })
+  session: Session;
 
   @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true })
   items: InvoiceItem[];

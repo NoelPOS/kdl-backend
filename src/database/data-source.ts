@@ -34,15 +34,11 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
  */
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT) || 5432,
-  username: process.env.DB_USERNAME,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  entities: ['dist/**/*.entity.js'],
+  url: process.env.DATABASE_URL,
+  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   synchronize: false, // Should be false in production
   logging: process.env.NODE_ENV === 'development',
-  migrations: ['dist/database/migrations/*.js'],
+  migrations: [__dirname + '/migrations/*{.ts,.js}'],
 };
 
 // Data source instance for TypeORM CLI

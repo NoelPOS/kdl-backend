@@ -8,7 +8,9 @@ import { StudentEntity } from './entities/student.entity';
 import { TeacherEntity } from './entities/teacher.entity';
 import { TeacherCourseEntity } from './entities/teacher-course.entity';
 import { ParentEntity } from './entities/parent.entity';
+import { ParentStudentEntity } from './entities/parent-student.entity';
 import { Session } from '../session/entities/session.entity';
+import { CourseEntity } from '../course/entities/course.entity';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { Session } from '../session/entities/session.entity';
       TeacherCourseEntity,
       Session,
       ParentEntity,
+      ParentStudentEntity,
+      CourseEntity,
     ]),
     CommonModule,
   ],

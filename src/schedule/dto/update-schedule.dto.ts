@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsInt } from 'class-validator';
 
 export class UpdateScheduleDto {
   @ApiProperty({ required: false })
@@ -21,4 +21,54 @@ export class UpdateScheduleDto {
   @IsOptional()
   @IsBoolean()
   verifyFb?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  date?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  startTime?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  endTime?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  room?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  teacherId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  teacherName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  studentName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  nickname?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  courseName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  warning?: string;
 }

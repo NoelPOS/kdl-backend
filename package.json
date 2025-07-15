@@ -19,7 +19,8 @@
     "typeorm": "npm run build && npx typeorm -d dist/database/data-source.js",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
-    "migration:revert": "npm run typeorm -- migration:revert"
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "seed": "npm run build && node -r tsconfig-paths/register dist/database/seeders/run-seeder.js"
   },
   "dependencies": {
     "@nestjs/cli": "^10.4.9",
@@ -45,10 +46,11 @@
     "resend": "^4.5.1",
     "rxjs": "^7.8.1",
     "speakeasy": "^2.0.0",
-    "typeorm": "^0.3.20",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

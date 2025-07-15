@@ -4,6 +4,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -23,6 +24,11 @@ export class CreateSessionDto {
   @IsNotEmpty()
   @IsNumber()
   classOptionId: number;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsNumber()
+  teacherId: number;
 
   @ApiProperty()
   @IsNumber()

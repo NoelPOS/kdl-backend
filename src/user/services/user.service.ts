@@ -21,6 +21,7 @@ import { TeacherCourseEntity } from '../entities/teacher-course.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
 import { ParentEntity } from '../entities/parent.entity';
 import { CreateParentDto } from '../dto/create-parent.dto';
+import { ParentStudentEntity } from '../entities/parent-student.entity';
 import { Session } from '../../session/entities/session.entity';
 
 @Injectable()
@@ -45,6 +46,12 @@ export class UserService {
 
     @InjectRepository(ParentEntity)
     private parentRepository: Repository<ParentEntity>,
+
+    @InjectRepository(ParentStudentEntity)
+    private parentStudentRepo: Repository<ParentStudentEntity>,
+
+    @InjectRepository(CourseEntity)
+    private courseRepository: Repository<CourseEntity>,
 
     private configService: ConfigService,
   ) {
@@ -269,23 +276,156 @@ export class UserService {
     }
   }
 
-  async findAllStudents(): Promise<{
+  async findAllStudents(
+    query?: string,
+    active?: string,
+    course?: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
     students: StudentEntity[];
-    total?: number;
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
   }> {
-    console.log('Fetching all students...');
-    try {
-      const page = 1; // Default to page 1
-      const pageSize = 10; // Default page size
-      const skip = (page - 1) * pageSize;
+    console.log('Fetching students with filters:', {
+      query,
+      active,
+      course,
+      page,
+      limit,
+    });
 
-      const [students, total] = await this.studentRepository.findAndCount({
-        skip,
-        take: pageSize,
+    try {
+      let filteredStudentIds: number[] | null = null;
+
+      // Step 1: Handle active/inactive filtering
+      if (active === 'active' || active === 'inactive') {
+        const pendingSessions = await this.sessionRepo.find({
+          where: { status: 'Pending' },
+        });
+        const activeStudentIds = [
+          ...new Set(pendingSessions.map((session) => session.studentId)),
+        ];
+
+        if (active === 'active') {
+          filteredStudentIds = activeStudentIds;
+          if (activeStudentIds.length === 0) {
+            return {
+              students: [],
+              pagination: {
+                currentPage: page,
+                totalPages: 0,
+                totalCount: 0,
+                hasNext: false,
+                hasPrev: false,
+              },
+            };
+          }
+        } else if (active === 'inactive') {
+          filteredStudentIds = activeStudentIds;
+        }
+      }
+
+      // Step 2: Handle course filtering by course name
+      if (course) {
+        const courseEntity = await this.courseRepository.findOne({
+          where: { title: ILike(`%${course}%`) },
+          select: ['id'],
+        });
+
+        if (courseEntity) {
+          const courseSessions = await this.sessionRepo.find({
+            where: { courseId: courseEntity.id },
+          });
+          const courseStudentIds = [
+            ...new Set(courseSessions.map((session) => session.studentId)),
+          ];
+
+          if (filteredStudentIds !== null) {
+            if (active === 'active') {
+              filteredStudentIds = filteredStudentIds.filter((id) =>
+                courseStudentIds.includes(id),
+              );
+            } else if (active === 'inactive') {
+              filteredStudentIds = courseStudentIds.filter(
+                (id) => !filteredStudentIds.includes(id),
+              );
+            }
+          } else {
+            filteredStudentIds = courseStudentIds;
+          }
+        } else {
+          return {
+            students: [],
+            pagination: {
+              currentPage: page,
+              totalPages: 0,
+              totalCount: 0,
+              hasNext: false,
+              hasPrev: false,
+            },
+          };
+        }
+      }
+
+      // Step 3: Build where clause for final query
+      const where: any = {};
+
+      if (query) {
+        where.name = ILike(`%${query}%`);
+      }
+
+      if (filteredStudentIds !== null) {
+        if (active === 'inactive' && !course) {
+          if (filteredStudentIds.length === 0) {
+            return {
+              students: [],
+              pagination: {
+                currentPage: page,
+                totalPages: 0,
+                totalCount: 0,
+                hasNext: false,
+                hasPrev: false,
+              },
+            };
+          } else {
+            where.id = Not(In(filteredStudentIds));
+          }
+        } else {
+          if (filteredStudentIds.length === 0) {
+            return {
+              students: [],
+              pagination: {
+                currentPage: page,
+                totalPages: 0,
+                totalCount: 0,
+                hasNext: false,
+                hasPrev: false,
+              },
+            };
+          }
+          where.id = In(filteredStudentIds);
+        }
+      }
+
+      // Calculate pagination
+      const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await this.studentRepository.count({ where });
+      const totalPages = Math.ceil(totalCount / limit);
+
+      // Fetch paginated students
+      const students = await this.studentRepository.find({
+        where,
         order: {
           createdAt: 'DESC',
         },
-        // Select only necessary fields
         select: [
           'id',
           'name',
@@ -297,10 +437,19 @@ export class UserService {
           'adConcent',
           'profilePicture',
         ],
+        skip: offset,
+        take: limit,
       });
 
       return {
         students,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
       };
     } catch (error) {
       throw new BadRequestException(
@@ -310,7 +459,6 @@ export class UserService {
   }
 
   // search students function with typeorm ILike
-
   async searchStudents(
     query: Partial<StudentEntity>,
   ): Promise<StudentEntity[]> {
@@ -417,52 +565,178 @@ export class UserService {
     });
   }
 
-  async findActiveStudents(): Promise<StudentEntity[]> {
+  async findAllTeachers(
+    query?: string,
+    status?: string,
+    course?: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    teachers: TeacherEntity[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
     try {
-      const pendingSessions = await this.sessionRepo.find({
-        where: { status: 'Pending' },
-      });
-      const studentIds = [
-        ...new Set(pendingSessions.map((session) => session.studentId)),
-      ];
-      if (studentIds.length === 0) return [];
-      const activeStudents = await this.studentRepository.findBy({
-        id: In(studentIds),
-      });
-      return activeStudents;
-    } catch (error) {
-      throw new BadRequestException(
-        'Failed to fetch active students: ' + error.message,
-      );
-    }
-  }
+      // Validate pagination parameters
+      page = Math.max(1, page);
+      limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
 
-  async findInactiveStudents(): Promise<StudentEntity[]> {
-    try {
-      const pendingSessions = await this.sessionRepo.find({
-        where: { status: 'Pending' },
-      });
-      const activeStudentIds = [
-        ...new Set(pendingSessions.map((session) => session.studentId)),
-      ];
-      if (activeStudentIds.length === 0) {
-        return await this.studentRepository.find();
+      let filteredTeacherIds: number[] | null = null;
+
+      // Handle status filtering (active/inactive)
+      if (status === 'active' || status === 'inactive') {
+        // Get teachers who have pending sessions (active)
+        const pendingSessions = await this.sessionRepo.find({
+          where: { status: 'Pending' },
+        });
+
+        // Get unique teacher IDs from teacher-course assignments for sessions
+        const sessionCourseIds = [
+          ...new Set(pendingSessions.map((session) => session.courseId)),
+        ];
+
+        if (sessionCourseIds.length > 0) {
+          const teacherCourses = await this.teacherCourseRepo.find({
+            where: { courseId: In(sessionCourseIds) },
+          });
+          const activeTeacherIds = [
+            ...new Set(teacherCourses.map((tc) => tc.teacherId)),
+          ];
+
+          if (status === 'active') {
+            filteredTeacherIds = activeTeacherIds;
+            if (activeTeacherIds.length === 0) {
+              return {
+                teachers: [],
+                pagination: {
+                  currentPage: page,
+                  totalPages: 0,
+                  totalCount: 0,
+                  hasNext: false,
+                  hasPrev: false,
+                },
+              };
+            }
+          } else if (status === 'inactive') {
+            filteredTeacherIds = activeTeacherIds;
+          }
+        } else if (status === 'active') {
+          // No pending sessions, so no active teachers
+          return {
+            teachers: [],
+            pagination: {
+              currentPage: page,
+              totalPages: 0,
+              totalCount: 0,
+              hasNext: false,
+              hasPrev: false,
+            },
+          };
+        }
       }
-      const inactiveStudents = await this.studentRepository.findBy({
-        id: Not(In(activeStudentIds)),
-      });
-      return inactiveStudents;
-    } catch (error) {
-      throw new BadRequestException(
-        'Failed to fetch inactive students: ' + error.message,
-      );
-    }
-  }
 
-  async findAllTeachers(): Promise<TeacherEntity[]> {
-    try {
-      const teachers = this.teacherRepository.find();
-      return teachers;
+      // Handle course filtering
+      if (course) {
+        const courseEntity = await this.courseRepository.findOne({
+          where: { title: ILike(`%${course}%`) },
+          select: ['id'],
+        });
+
+        if (courseEntity) {
+          const teacherCourses = await this.teacherCourseRepo.find({
+            where: { courseId: courseEntity.id },
+          });
+          const courseTeacherIds = teacherCourses.map((tc) => tc.teacherId);
+
+          if (filteredTeacherIds !== null) {
+            if (status === 'active') {
+              filteredTeacherIds = filteredTeacherIds.filter((id) =>
+                courseTeacherIds.includes(id),
+              );
+            } else if (status === 'inactive') {
+              filteredTeacherIds = courseTeacherIds.filter(
+                (id) => !filteredTeacherIds.includes(id),
+              );
+            }
+          } else {
+            filteredTeacherIds = courseTeacherIds;
+          }
+        } else {
+          return {
+            teachers: [],
+            pagination: {
+              currentPage: page,
+              totalPages: 0,
+              totalCount: 0,
+              hasNext: false,
+              hasPrev: false,
+            },
+          };
+        }
+      }
+
+      // Build where clause
+      const where: any = {};
+
+      if (query) {
+        where.name = ILike(`%${query}%`);
+      }
+
+      if (filteredTeacherIds !== null) {
+        if (status === 'inactive' && !course) {
+          if (filteredTeacherIds.length === 0) {
+            // All teachers are inactive
+            // No additional filter needed
+          } else {
+            where.id = Not(In(filteredTeacherIds));
+          }
+        } else {
+          if (filteredTeacherIds.length === 0) {
+            return {
+              teachers: [],
+              pagination: {
+                currentPage: page,
+                totalPages: 0,
+                totalCount: 0,
+                hasNext: false,
+                hasPrev: false,
+              },
+            };
+          }
+          where.id = In(filteredTeacherIds);
+        }
+      }
+
+      // Calculate pagination
+      const skip = (page - 1) * limit;
+
+      // Get total count
+      const totalCount = await this.teacherRepository.count({ where });
+      const totalPages = Math.ceil(totalCount / limit);
+
+      // Fetch paginated teachers
+      const teachers = await this.teacherRepository.find({
+        where,
+        order: { createdAt: 'DESC' },
+        skip,
+        take: limit,
+      });
+
+      return {
+        teachers,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
     } catch (error) {
       throw new BadRequestException(
         'Failed to fetch teachers: ' + error.message,
@@ -494,13 +768,107 @@ export class UserService {
     }
   }
 
-  // Search parents by name using ILike
-  async searchParentsByName(name: string): Promise<ParentEntity[]> {
+  async searchParentsByName(
+    query?: string,
+    child?: string,
+    address?: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    parents: ParentEntity[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
     try {
-      return await this.parentRepository.find({
-        where: { name: ILike(`%${name}%`) },
+      // Validate pagination parameters
+      page = Math.max(1, page);
+      limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+
+      let filteredParentIds: number[] | null = null;
+
+      // Handle child filtering
+      if (child && child.trim() !== 'all') {
+        const studentEntity = await this.studentRepository.findOne({
+          where: { name: ILike(`%${child}%`) },
+          select: ['id'],
+        });
+
+        if (studentEntity) {
+          const parentChildren = await this.parentStudentRepo.find({
+            where: { studentId: studentEntity.id },
+          });
+          filteredParentIds = parentChildren.map((pc) => pc.parentId);
+        } else {
+          return {
+            parents: [],
+            pagination: {
+              currentPage: page,
+              totalPages: 0,
+              totalCount: 0,
+              hasNext: false,
+              hasPrev: false,
+            },
+          };
+        }
+      }
+
+      // Build where clause
+      const where: any = {};
+
+      if (query) {
+        where.name = ILike(`%${query}%`);
+      }
+
+      if (address && address.trim() !== 'all') {
+        where.address = ILike(`%${address}%`);
+      }
+
+      if (filteredParentIds !== null) {
+        if (filteredParentIds.length === 0) {
+          return {
+            parents: [],
+            pagination: {
+              currentPage: page,
+              totalPages: 0,
+              totalCount: 0,
+              hasNext: false,
+              hasPrev: false,
+            },
+          };
+        }
+        where.id = In(filteredParentIds);
+      }
+
+      // Calculate pagination
+      const skip = (page - 1) * limit;
+
+      // Get total count
+      const totalCount = await this.parentRepository.count({ where });
+      const totalPages = Math.ceil(totalCount / limit);
+
+      // Fetch paginated parents
+      const parents = await this.parentRepository.find({
+        where,
         order: { createdAt: 'DESC' },
+        skip,
+        take: limit,
       });
+
+      return {
+        parents,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
     } catch (error) {
       throw new BadRequestException(
         'Failed to search parents: ' + error.message,
@@ -523,5 +891,49 @@ export class UserService {
         'Failed to create parent: ' + error.message,
       );
     }
+  }
+
+  async assignChildrenToParent(
+    parentId: number,
+    studentIds: number[],
+  ): Promise<ParentStudentEntity[]> {
+    const assignments = studentIds.map((studentId) => {
+      const entry = new ParentStudentEntity();
+      entry.parentId = parentId;
+      entry.studentId = studentId;
+      return entry;
+    });
+
+    return this.parentStudentRepo.save(assignments);
+  }
+
+  async getChildrenByParentId(parentId: number): Promise<StudentEntity[]> {
+    const parentStudents = await this.parentStudentRepo.find({
+      where: { parentId },
+    });
+
+    if (parentStudents.length === 0) {
+      return [];
+    }
+
+    const studentIds = parentStudents.map((ps) => ps.studentId);
+    return this.studentRepository.find({
+      where: { id: In(studentIds) },
+    });
+  }
+
+  async getParentsByStudentId(studentId: number): Promise<ParentEntity[]> {
+    const parentStudents = await this.parentStudentRepo.find({
+      where: { studentId },
+    });
+
+    if (parentStudents.length === 0) {
+      return [];
+    }
+
+    const parentIds = parentStudents.map((ps) => ps.parentId);
+    return this.parentRepository.find({
+      where: { id: In(parentIds) },
+    });
   }
 }

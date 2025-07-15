@@ -65,21 +65,50 @@ export class ScheduleController {
 
   @Get('filter')
   @ApiOperation({ summary: 'Get schedules within a date range' })
-  @ApiQuery({ name: 'startDate', required: true, type: String })
-  @ApiQuery({ name: 'endDate', required: true, type: String })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
   @ApiQuery({ name: 'studentName', required: false, type: String })
+  @ApiQuery({ name: 'teacherName', required: false, type: String })
+  @ApiQuery({ name: 'courseName', required: false, type: String })
+  @ApiQuery({ name: 'attendanceStatus', required: false, type: String })
+  @ApiQuery({ name: 'classStatus', required: false, type: String })
+  @ApiQuery({ name: 'room', required: false, type: String })
+  @ApiQuery({ name: 'sort', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiResponse({
     status: 200,
-    description: 'Schedules within the specified date range',
-    type: [Schedule],
+    description: 'Paginated schedules with metadata',
+    schema: {
+      type: 'object',
+      properties: {
+        schedules: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/Schedule' },
+        },
+        pagination: {
+          type: 'object',
+          properties: {
+            currentPage: { type: 'number' },
+            totalPages: { type: 'number' },
+            totalCount: { type: 'number' },
+            hasNext: { type: 'boolean' },
+            hasPrev: { type: 'boolean' },
+          },
+        },
+      },
+    },
   })
   getSchedulesByDateRange(@Query() query: FilterScheduleDto) {
-    const { startDate, endDate, studentName } = query;
-    return this.scheduleService.getSchedulesByRangeAndStudentName(
-      startDate,
-      endDate,
-      studentName,
-    );
+    // Map 'limit' to 'pageSize' for backend compatibility
+    if (query.page === undefined) query.page = 1;
+    if (query.pageSize === undefined && (query as any).limit) {
+      query.pageSize = (query as any).limit;
+    } else if (query.pageSize === undefined) {
+      query.pageSize = 10;
+    }
+
+    return this.scheduleService.getSchedulesByRangeAndFilters(query);
   }
 
   @Get('today')
@@ -153,7 +182,7 @@ export class ScheduleController {
   @ApiResponse({ status: 404, description: 'Schedule not found' })
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateScheduleDto: Partial<CreateScheduleDto>,
+    @Body() updateScheduleDto: UpdateScheduleDto,
   ) {
     return this.scheduleService.updateSchedule(id, updateScheduleDto);
   }

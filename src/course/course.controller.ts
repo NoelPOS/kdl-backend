@@ -9,10 +9,12 @@ import {
   ParseIntPipe,
   NotFoundException,
   Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { PaginatedCourseResponseDto } from './dto/paginated-course-response.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -22,6 +24,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { CourseEntity } from './entities/course.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('Courses')
 @Controller('courses')
@@ -68,24 +71,51 @@ export class CourseController {
   }
 
   @Get('filter')
-  @ApiOperation({ summary: 'Filter courses by age range and medium' })
+  @ApiOperation({
+    summary:
+      'Filter courses by age range, medium, and course name with pagination',
+  })
   @ApiQuery({
     name: 'ageRange',
-    required: true,
+    required: false,
     description: 'Age range to filter by, or "all" for any',
   })
   @ApiQuery({
     name: 'medium',
-    required: true,
+    required: false,
     description: 'Medium to filter by, or "all" for any',
+  })
+  @ApiQuery({
+    name: 'query',
+    required: false,
+    description: 'Course name to search for (partial match)',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number for pagination',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of items per page',
+    type: Number,
   })
   @ApiResponse({
     status: 200,
-    description: 'Returns courses matching the filter',
-    type: [CourseEntity],
+    description: 'Returns courses matching the filter with pagination',
+    type: PaginatedCourseResponseDto,
   })
-  filter(@Query('ageRange') ageRange: string, @Query('medium') medium: string) {
-    return this.courseService.filter(ageRange, medium);
+  filter(
+    @Query('ageRange') ageRange?: string,
+    @Query('medium') medium?: string,
+    @Query('query') query?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    console.log(query, ageRange, medium, page, limit);
+    return this.courseService.filter(ageRange, medium, query, page, limit);
   }
 
   @Get(':id')

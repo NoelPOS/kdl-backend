@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Schedule } from './entities/schedule.entity';
 import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
+import { FilterScheduleDto } from './dto/filter-schedule.dto';
 
 @Injectable()
 export class ScheduleService {
@@ -26,8 +27,24 @@ export class ScheduleService {
     return this.scheduleRepo.findOne({ where: { id } });
   }
 
-  async updateSchedule(id: number, dto: Partial<CreateScheduleDto>) {
-    const result = await this.scheduleRepo.update(id, dto);
+  async updateSchedule(
+    id: number,
+    dto: Partial<CreateScheduleDto & { warning?: string }>,
+  ) {
+    // Only pick fields that exist in the Schedule entity
+    const updateFields: any = {};
+    if (dto.date !== undefined) updateFields.date = dto.date;
+    if (dto.startTime !== undefined) updateFields.startTime = dto.startTime;
+    if (dto.endTime !== undefined) updateFields.endTime = dto.endTime;
+    if (dto.room !== undefined) updateFields.room = dto.room;
+    if (dto.remark !== undefined) updateFields.remark = dto.remark;
+    if (dto.attendance !== undefined) updateFields.attendance = dto.attendance;
+    if (dto.teacherId !== undefined) updateFields.teacherId = dto.teacherId;
+    if (dto.warning !== undefined) updateFields.warning = dto.warning;
+    // The following fields are not in the entity: teacherName, studentName, nickname, courseName
+    // If you want to update related entities, you need to handle that separately
+
+    const result = await this.scheduleRepo.update(id, updateFields);
     if (result.affected === 0) {
       return null; // Schedule not found
     }
@@ -50,10 +67,12 @@ export class ScheduleService {
   async getSchedulesForTeacher(teacherId: number) {
     return this.scheduleRepo.find({ where: { teacherId } });
   }
-  async checkConflict(dto: CheckScheduleConflictDto) {
-    const { date, startTime, endTime, room, teacherId, studentId } = dto;
 
-    const existing = await this.scheduleRepo
+  async checkConflict(dto: CheckScheduleConflictDto) {
+    const { date, startTime, endTime, room, teacherId, studentId, excludeId } =
+      dto;
+
+    const queryBuilder = this.scheduleRepo
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.course', 'course')
       .leftJoinAndSelect('s.teacher', 'teacher')
@@ -70,8 +89,13 @@ export class ScheduleService {
       .andWhere('s.startTime < :endTime AND s.endTime > :startTime', {
         startTime,
         endTime,
-      })
-      .getOne();
+      });
+
+    if (excludeId !== undefined && excludeId !== null) {
+      queryBuilder.andWhere('s.id != :excludeId', { excludeId });
+    }
+
+    const existing = await queryBuilder.getOne();
 
     if (existing) {
       const isRoomConflict = existing.room === room;
@@ -390,46 +414,187 @@ export class ScheduleService {
       .getRawMany();
   }
 
-  async getSchedulesByRangeAndStudentName(
-    startDate: string,
-    endDate: string,
-    studentName: string,
-  ) {
-    const query = this.scheduleRepo
-      .createQueryBuilder('schedule')
-      .leftJoin('schedule.student', 'student')
-      .leftJoin('schedule.teacher', 'teacher')
-      .leftJoin('schedule.course', 'course')
-      .where('schedule.date >= :startDate', { startDate })
-      .andWhere('schedule.date <= :endDate', { endDate });
+  async getSchedulesByRangeAndFilters(filterDto: FilterScheduleDto) {
+    console.log('Filter Schedule DTO:', filterDto);
 
-    if (studentName !== 'all') {
-      query.andWhere('student.name = :studentName', { studentName });
+    const {
+      startDate,
+      endDate,
+      studentName,
+      teacherName,
+      courseName,
+      attendanceStatus,
+      classStatus,
+      room,
+      sort,
+      page = 1,
+      pageSize, // Remove default value here since it's already set in controller
+    } = filterDto;
+
+    // Use 10 as fallback if pageSize is still undefined
+    const actualPageSize = pageSize || 10;
+
+    // console.log('Actual pagination values:', {
+    //   page,
+    //   pageSize,
+    //   actualPageSize,
+    // });
+
+    // console.log('Filter values:', {
+    //   startDate,
+    //   endDate,
+    //   studentName,
+    //   teacherName,
+    //   courseName,
+    //   attendanceStatus,
+    //   classStatus,
+    //   room,
+    // });
+
+    const qb = this.scheduleRepo
+      .createQueryBuilder('schedule')
+      .leftJoinAndSelect('schedule.student', 'student')
+      .leftJoinAndSelect('schedule.teacher', 'teacher')
+      .leftJoinAndSelect('schedule.course', 'course');
+
+    // Track if any filters are applied
+    let filtersApplied = 0;
+
+    if (startDate) {
+      console.log('Applying startDate filter:', startDate);
+      qb.andWhere('schedule.date >= :startDate', { startDate });
+      filtersApplied++;
+    }
+    if (endDate) {
+      console.log('Applying endDate filter:', endDate);
+      qb.andWhere('schedule.date <= :endDate', { endDate });
+      filtersApplied++;
+    }
+    if (studentName) {
+      console.log('Applying studentName filter:', studentName);
+      qb.andWhere('student.name ILIKE :studentName', {
+        studentName: `%${studentName}%`,
+      });
+      filtersApplied++;
+    }
+    if (teacherName) {
+      console.log('Applying teacherName filter:', teacherName);
+      qb.andWhere('teacher.name ILIKE :teacherName', {
+        teacherName: `%${teacherName}%`,
+      });
+      filtersApplied++;
+    }
+    if (courseName) {
+      console.log('Applying courseName filter:', courseName);
+      qb.andWhere('course.title ILIKE :courseName', {
+        courseName: `%${courseName}%`,
+      });
+      filtersApplied++;
+    }
+    if (attendanceStatus && attendanceStatus !== 'all') {
+      console.log('Applying attendanceStatus filter:', attendanceStatus);
+      qb.andWhere('schedule.attendance = :attendanceStatus', {
+        attendanceStatus,
+      });
+      filtersApplied++;
+    }
+    if (classStatus && classStatus !== 'all') {
+      console.log('Applying classStatus filter:', classStatus);
+      qb.andWhere('schedule.status = :classStatus', { classStatus });
+      filtersApplied++;
+    }
+    if (room) {
+      console.log('Applying room filter:', room);
+      qb.andWhere('schedule.room ILIKE :room', { room: `%${room}%` });
+      filtersApplied++;
     }
 
-    return query
-      .select([
-        'schedule.id',
-        'schedule.date',
-        'schedule.startTime',
-        'schedule.endTime',
-        'schedule.room',
-        'schedule.remark',
-        'schedule.attendance',
-        'schedule.feedback',
-        'schedule.verifyFb',
-        'schedule.warning',
-        'schedule.classNumber',
-        'student.name',
-        'teacher.name',
-        'course.title',
-      ])
-      .addSelect('student.id')
-      .addSelect('teacher.id')
-      .addSelect('course.id')
-      .orderBy('schedule.date', 'ASC')
-      .addOrderBy('schedule.startTime', 'ASC')
-      .getRawMany();
+    console.log('Total filters applied:', filtersApplied);
+
+    // Get total count before applying pagination
+    const totalCount = await qb.getCount();
+    console.log('Total count after filters:', totalCount);
+
+    // Sorting
+    switch (sort) {
+      case 'date_asc':
+        qb.orderBy('schedule.date', 'ASC');
+        break;
+      case 'date_desc':
+        qb.orderBy('schedule.date', 'DESC');
+        break;
+      case 'student_asc':
+        qb.orderBy('student.name', 'ASC');
+        break;
+      case 'student_desc':
+        qb.orderBy('student.name', 'DESC');
+        break;
+      case 'teacher_asc':
+        qb.orderBy('teacher.name', 'ASC');
+        break;
+      case 'teacher_desc':
+        qb.orderBy('teacher.name', 'DESC');
+        break;
+      case 'room_asc':
+        qb.orderBy('schedule.room', 'ASC');
+        break;
+      case 'room_desc':
+        qb.orderBy('schedule.room', 'DESC');
+        break;
+      default:
+        qb.orderBy('schedule.date', 'ASC');
+    }
+
+    // Apply pagination
+    const offset = (page - 1) * actualPageSize;
+    qb.skip(offset).take(actualPageSize);
+
+    // console.log(`Applying pagination: OFFSET ${offset}, LIMIT ${actualPageSize}`);
+    // console.log('Final SQL with pagination:', qb.getQuery());
+    // console.log('Final query parameters:', qb.getParameters());
+
+    // Try using getMany() instead of getRawMany() to see if pagination works
+    const schedulesEntities = await qb.getMany();
+    console.log(
+      'Number of schedule entities returned:',
+      schedulesEntities.length,
+    );
+
+    // Transform entities to the expected format
+    const schedules = schedulesEntities.map((schedule) => ({
+      schedule_id: schedule.id,
+      schedule_date: schedule.date,
+      schedule_startTime: schedule.startTime,
+      schedule_endTime: schedule.endTime,
+      schedule_room: schedule.room,
+      schedule_attendance: schedule.attendance,
+      schedule_remark: schedule.remark,
+      schedule_classNumber: schedule.classNumber,
+      schedule_warning: schedule.warning,
+      schedule_courseId: schedule.courseId,
+      course_title: schedule.course?.title || null,
+      teacher_name: schedule.teacher?.name || null,
+      student_id: schedule.student?.id || null,
+      student_name: schedule.student?.name || null,
+      student_nickname: schedule.student?.nickname || null,
+      student_profilePicture: schedule.student?.profilePicture || null,
+    }));
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / actualPageSize);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    return {
+      schedules,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNext,
+        hasPrev,
+      },
+    };
   }
 
   async getSchedulesByStudentAndSession(sessionId: number, studentId: number) {
