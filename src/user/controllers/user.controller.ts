@@ -30,6 +30,7 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateStudentDto } from '../dto/create-student.dto';
+import { UpdateStudentDto } from '../dto/update-student.dto';
 import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { AssignCoursesToTeacherDto } from '../dto/assign-course-teacher.dto';
 import { StudentEntity } from '../entities/student.entity';
@@ -175,6 +176,25 @@ export class UserController {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
     return student;
+  }
+
+  @ApiTags('Students')
+  @Put('students/:id')
+  @ApiOperation({ summary: 'Update a student by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Student ID' })
+  @ApiBody({ type: UpdateStudentDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Student has been successfully updated',
+    type: StudentEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  async updateStudentById(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ) {
+    return this.userService.updateStudent(id, updateStudentDto);
   }
 
   // =================================================================================================
@@ -385,7 +405,7 @@ export class UserController {
     type: PaginatedParentResponseDto,
   })
   searchParentsByName(
-    @Query('name') name?: string,
+    @Query('query') name?: string,
     @Query('child') child?: string,
     @Query('address') address?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,

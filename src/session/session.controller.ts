@@ -31,6 +31,8 @@ import { ReceiptFilterDto } from './dto/receipt-filter.dto';
 import { CreateClassOptionDto } from './dto/create-class-option.dto';
 import { PaginatedSessionResponseDto } from './dto/paginated-session-response.dto';
 import { PaginatedInvoiceResponseDto } from './dto/paginated-invoice-response.dto';
+import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
+import { PaginatedSessionOverviewResponseDto } from './dto/paginated-session-overview-response.dto';
 
 @Controller('sessions')
 export class SessionController {
@@ -84,6 +86,49 @@ export class SessionController {
   })
   getStudentSessions(@Param('studentId', ParseIntPipe) studentId: number) {
     return this.sessionService.getStudentSessions(studentId);
+  }
+
+  @ApiTags('Sessions')
+  @Get('student/:studentId/filtered')
+  @ApiOperation({ summary: 'Get filtered student sessions with pagination' })
+  @ApiParam({ name: 'studentId', type: 'number' })
+  @ApiQuery({
+    name: 'courseName',
+    required: false,
+    description: 'Filter by course name',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status (completed/wip)',
+  })
+  @ApiQuery({
+    name: 'payment',
+    required: false,
+    description: 'Filter by payment status (paid/unpaid)',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 12)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Filtered student sessions with pagination',
+    type: PaginatedSessionOverviewResponseDto,
+  })
+  getStudentSessionsFiltered(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Query() filterDto: StudentSessionFilterDto,
+  ) {
+    return this.sessionService.getStudentSessionsFiltered(studentId, filterDto);
   }
 
   @ApiTags('Sessions')

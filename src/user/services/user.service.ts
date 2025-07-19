@@ -14,6 +14,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ConfigService } from '@nestjs/config';
 import { CreateStudentDto } from '../dto/create-student.dto';
+import { UpdateStudentDto } from '../dto/update-student.dto';
 import { StudentEntity } from '../entities/student.entity';
 import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { TeacherEntity } from '../entities/teacher.entity';
@@ -306,7 +307,7 @@ export class UserService {
       // Step 1: Handle active/inactive filtering
       if (active === 'active' || active === 'inactive') {
         const pendingSessions = await this.sessionRepo.find({
-          where: { status: 'Pending' },
+          where: { status: 'WP' },
         });
         const activeStudentIds = [
           ...new Set(pendingSessions.map((session) => session.studentId)),
@@ -507,6 +508,31 @@ export class UserService {
     }
   }
 
+  async updateStudent(
+    id: number,
+    updateStudentDto: UpdateStudentDto,
+  ): Promise<StudentEntity> {
+    try {
+      const student = await this.studentRepository.findOneBy({ id });
+      if (!student) {
+        throw new NotFoundException(`Student with ID ${id} not found`);
+      }
+
+      // Update only the fields that are provided
+      Object.assign(student, updateStudentDto);
+
+      const updatedStudent = await this.studentRepository.save(student);
+      return updatedStudent;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to update student with ID ${id}: ${error.message}`,
+      );
+    }
+  }
+
   async createTeacher(
     createTeacherDto: CreateTeacherDto,
   ): Promise<TeacherEntity> {
@@ -592,7 +618,7 @@ export class UserService {
       if (status === 'active' || status === 'inactive') {
         // Get teachers who have pending sessions (active)
         const pendingSessions = await this.sessionRepo.find({
-          where: { status: 'Pending' },
+          where: { status: 'WP' },
         });
 
         // Get unique teacher IDs from teacher-course assignments for sessions

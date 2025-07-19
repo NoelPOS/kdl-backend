@@ -8,7 +8,7 @@ import {
   Receipt,
   Session,
 } from './entities/session.entity';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Schedule } from '../schedule/entities/schedule.entity';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
@@ -16,6 +16,7 @@ import { InvoiceFilterDto } from './dto/invoice-filter.dto';
 import { ReceiptFilterDto } from './dto/receipt-filter.dto';
 import { Invoice } from '../session/entities/session.entity';
 import { DataSource } from 'typeorm';
+import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
 
 @Injectable()
 export class SessionService {
@@ -116,7 +117,7 @@ export class SessionService {
       const completedCount = await this.scheduleRepo.count({
         where: {
           sessionId: s.id,
-          attendance: 'Completed',
+          attendance: 'present',
         },
       });
 
@@ -128,10 +129,123 @@ export class SessionService {
         payment: s.payment,
         completedCount,
         classCancel: s.classCancel,
+        medium: s.course.medium,
       });
     }
 
     return result;
+  }
+
+  async getStudentSessionsFiltered(
+    studentId: number,
+    filterDto: StudentSessionFilterDto,
+  ) {
+    const { courseName, status, payment, page = 1, limit = 12 } = filterDto;
+
+    // Validate pagination parameters
+    const validatedPage = Math.max(1, page);
+    const validatedLimit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+
+    // Build the query
+    const queryBuilder = this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.course', 'course')
+      .leftJoinAndSelect('session.classOption', 'classOption')
+      .where('session.studentId = :studentId', { studentId });
+
+    // Apply filters
+    if (courseName) {
+      queryBuilder.andWhere('course.title ILIKE :courseName', {
+        courseName: `%${courseName}%`,
+      });
+    }
+
+    if (status) {
+      if (status === 'completed') {
+        queryBuilder.andWhere('session.status = :status', {
+          status: 'Completed',
+        });
+      } else if (status === 'wip') {
+        queryBuilder.andWhere('session.status = :status', { status: 'WP' });
+      }
+    }
+
+    if (payment) {
+      if (payment === 'paid') {
+        queryBuilder.andWhere('session.payment = :payment', {
+          payment: 'Paid',
+        });
+      } else if (payment === 'unpaid') {
+        queryBuilder.andWhere('session.payment = :payment', {
+          payment: 'Unpaid',
+        });
+      }
+    }
+
+    // Get total count for pagination
+    const totalCount = await queryBuilder.getCount();
+
+    // Apply pagination
+    const offset = (validatedPage - 1) * validatedLimit;
+    queryBuilder.skip(offset).take(validatedLimit);
+
+    // Order by creation date (newest first)
+    queryBuilder.orderBy('session.createdAt', 'DESC');
+
+    // Get the sessions
+    const sessions = await queryBuilder.getMany();
+
+    // Build the result with progress calculation
+    const result = [];
+    for (const session of sessions) {
+      const completedCount = await this.scheduleRepo.count({
+        where: {
+          sessionId: session.id,
+          attendance: 'present',
+        },
+      });
+
+      // Calculate total scheduled classes for this session
+      const totalScheduledCount = await this.scheduleRepo.count({
+        where: {
+          sessionId: session.id,
+        },
+      });
+
+      // Calculate progress percentage
+      const progressPercentage =
+        totalScheduledCount > 0
+          ? Math.round((completedCount / totalScheduledCount) * 100)
+          : 0;
+
+      result.push({
+        sessionId: session.id,
+        courseTitle: session.course?.title,
+        courseDescription: session.course?.description,
+        mode: session.classOption.classMode,
+        payment: session.payment,
+        completedCount,
+        classCancel: session.classCancel,
+        progress: `${progressPercentage}%`,
+        medium: session.course.medium,
+      });
+    }
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / validatedLimit);
+    const hasNext = validatedPage < totalPages;
+    const hasPrev = validatedPage > 1;
+
+    return {
+      sessions: result,
+      pagination: {
+        currentPage: validatedPage,
+        totalPages,
+        totalCount,
+        hasNext,
+        hasPrev,
+      },
+    };
   }
 
   async getPendingSessionsForInvoice(
