@@ -427,7 +427,11 @@ export class SessionService {
   }
 
   async getSpecificPendingSessionsForInvoice(sessionId: number) {
-    return await this.sessionRepository
+    console.log(
+      'Fetching specific pending session for invoice with ID:',
+      sessionId,
+    );
+    const session = await this.sessionRepository
       .createQueryBuilder('session')
       .leftJoin('session.student', 'student')
       .leftJoin('session.course', 'course')
@@ -438,11 +442,13 @@ export class SessionService {
         'student.id',
         'student.name',
         'course.title',
-        'classOption.tuitionFee',
+        'classOption.tuitionFee as classoption_tuitionfee',
       ])
-      .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
       .andWhere('session.id = :sessionId', { sessionId })
       .getRawOne();
+
+    console.log('Fetched specific pending session for invoice:', session);
+    return session;
   }
 
   async getInvoice(id: number) {
