@@ -18,6 +18,10 @@
       "destination": "/dist/main.js"
     },
     {
+      "source": "/swagger-ui.*",
+      "destination": "/dist/main.js"
+    },
+    {
       "source": "/",
       "destination": "/index.html"
     }
