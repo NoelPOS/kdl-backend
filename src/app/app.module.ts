@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
+import { AppController } from './app.controller';
 
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import configuration from '../config/configuration';
@@ -92,6 +93,7 @@ import { join } from 'path/win32';
     SessionModule,
     CoursePlusModule,
   ],
+  controllers: [AppController],
   providers: [
     // Global Guards
     {

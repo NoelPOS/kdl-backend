@@ -22,7 +22,7 @@ async function bootstrap() {
   const environment = configService.get<string>('NODE_ENV', 'development');
   const swaggerEnabled = configService.get<boolean>(
     'SWAGGER_ENABLED',
-    environment === 'development',
+    true, // Default to true
   );
 
   // Global Exception Filter for handling HTTP exceptions
