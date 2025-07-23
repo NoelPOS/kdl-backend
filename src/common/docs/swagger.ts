@@ -11,7 +11,6 @@ export const setupSwagger = (app: INestApplication): void => {
   const nodeEnv = configService.get('NODE_ENV');
   const swaggerEnabledRaw = configService.get('SWAGGER_ENABLED', 'true');
 
-  // Handle both boolean and string values from environment variables
   const swaggerEnabled =
     swaggerEnabledRaw === true || swaggerEnabledRaw === 'true';
 
@@ -19,10 +18,9 @@ export const setupSwagger = (app: INestApplication): void => {
     nodeEnv,
     swaggerEnabledRaw,
     swaggerEnabled,
-    type: typeof swaggerEnabledRaw,
+    baseUrl: configService.get('BASE_URL') || 'http://localhost:3000',
   });
 
-  // Always enable Swagger unless explicitly disabled
   if (!swaggerEnabled) {
     console.log('Swagger is disabled');
     return;
@@ -59,7 +57,7 @@ export const setupSwagger = (app: INestApplication): void => {
     operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
   });
 
-  // Add custom Swagger configuration
+  // Setup Swagger with absolute URLs for production
   SwaggerModule.setup('docs', app, document, {
     jsonDocumentUrl: '/swagger-json',
     swaggerOptions: {
@@ -72,9 +70,12 @@ export const setupSwagger = (app: INestApplication): void => {
       defaultModelExpandDepth: 3,
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
+      // Add this for production
+      url: '/swagger-json',
     },
     customSiteTitle: 'KDL API Docs',
+    customCss: '.swagger-ui .topbar { display: none }', // Optional: hide topbar
   });
 
-  console.log('Swagger setup completed successfully at /api/docs');
+  console.log('Swagger setup completed successfully at /docs');
 };

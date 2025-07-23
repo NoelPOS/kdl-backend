@@ -21,7 +21,7 @@ import { DiscountModule } from '../discount/discount.module';
 import { SessionModule } from '../session/session.module';
 import { CoursePlusModule } from '../course-plus/course-plus.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path/win32';
+import { join } from 'path';
 
 @Module({
   imports: [
