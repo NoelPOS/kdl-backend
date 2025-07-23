@@ -80,12 +80,6 @@ export const setupSwagger = (app: INestApplication): void => {
     },
     customSiteTitle: 'KDL API Docs',
     customfavIcon: 'https://nestjs.com/img/favicon.png',
-    customJs: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.8/swagger-ui-bundle.min.js',
-    ],
-    customCssUrl: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.8/swagger-ui.min.css',
-    ],
   });
 
   console.log('Swagger setup completed successfully at /api/docs');
