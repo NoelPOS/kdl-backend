@@ -61,17 +61,11 @@ export const setupSwagger = (app: INestApplication): void => {
 
   // Add custom Swagger configuration
   SwaggerModule.setup('docs', app, document, {
-    explorer: true,
-    jsonDocumentUrl: '/api/swagger-json',
     swaggerOptions: {
       persistAuthorization: true,
       displayRequestDuration: true,
       docExpansion: 'list',
       filter: true,
-      showCommonExtensions: true,
-      syntaxHighlight: {
-        theme: 'monokai',
-      },
       tryItOutEnabled: true,
       defaultModelsExpandDepth: 3,
       defaultModelExpandDepth: 3,
@@ -79,7 +73,6 @@ export const setupSwagger = (app: INestApplication): void => {
       operationsSorter: 'alpha',
     },
     customSiteTitle: 'KDL API Docs',
-    customfavIcon: 'https://nestjs.com/img/favicon.png',
   });
 
   console.log('Swagger setup completed successfully at /api/docs');
