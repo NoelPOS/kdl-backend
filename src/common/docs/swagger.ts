@@ -9,12 +9,26 @@ import { ConfigService } from '@nestjs/config';
 export const setupSwagger = (app: INestApplication): void => {
   const configService = app.get(ConfigService);
   const nodeEnv = configService.get('NODE_ENV');
-  const swaggerEnabled = configService.get<boolean>('SWAGGER_ENABLED', true); // Default to true
+  const swaggerEnabledRaw = configService.get('SWAGGER_ENABLED', 'true');
+
+  // Handle both boolean and string values from environment variables
+  const swaggerEnabled =
+    swaggerEnabledRaw === true || swaggerEnabledRaw === 'true';
+
+  console.log('Swagger Setup Debug:', {
+    nodeEnv,
+    swaggerEnabledRaw,
+    swaggerEnabled,
+    type: typeof swaggerEnabledRaw,
+  });
 
   // Always enable Swagger unless explicitly disabled
-  if (swaggerEnabled === false) {
+  if (!swaggerEnabled) {
+    console.log('Swagger is disabled');
     return;
   }
+
+  console.log('Setting up Swagger...');
 
   const options = new DocumentBuilder()
     .setTitle('KDL API Documentation')
@@ -73,4 +87,6 @@ export const setupSwagger = (app: INestApplication): void => {
       'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.8/swagger-ui.min.css',
     ],
   });
+
+  console.log('Swagger setup completed successfully at /api/docs');
 };

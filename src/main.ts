@@ -20,10 +20,11 @@ async function bootstrap() {
   // Get configuration values with defaults
   const port = configService.get<number>('PORT', 3001);
   const environment = configService.get<string>('NODE_ENV', 'development');
-  const swaggerEnabled = configService.get<boolean>(
-    'SWAGGER_ENABLED',
-    true, // Default to true
-  );
+  const swaggerEnabledRaw = configService.get('SWAGGER_ENABLED', 'true');
+
+  // Handle both boolean and string values from environment variables
+  const swaggerEnabled =
+    swaggerEnabledRaw === true || swaggerEnabledRaw === 'true';
 
   // Global Exception Filter for handling HTTP exceptions
   app.useGlobalFilters(new HttpExceptionFilter());
