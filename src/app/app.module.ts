@@ -55,7 +55,7 @@ import { join } from 'path';
 
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
-      exclude: ['/api*'],
+      exclude: ['/api*', '/docs*', '/swagger-json'], // Exclude Swagger routes
     }),
 
     ResendModule.forRootAsync({

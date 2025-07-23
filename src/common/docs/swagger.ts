@@ -59,6 +59,7 @@ export const setupSwagger = (app: INestApplication): void => {
 
   // Setup Swagger with absolute URLs for production
   SwaggerModule.setup('docs', app, document, {
+    explorer: true,
     jsonDocumentUrl: '/swagger-json',
     swaggerOptions: {
       persistAuthorization: true,
@@ -70,7 +71,6 @@ export const setupSwagger = (app: INestApplication): void => {
       defaultModelExpandDepth: 3,
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
-      // Add this for production
       url: '/swagger-json',
     },
     customSiteTitle: 'KDL API Docs',

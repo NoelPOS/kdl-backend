@@ -18,7 +18,7 @@
       "destination": "/dist/main.js"
     },
     {
-      "source": "/docs/(.*)",
+      "source": "/swagger-json",
       "destination": "/dist/main.js"
     },
     {
