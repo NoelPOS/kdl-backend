@@ -10,12 +10,12 @@
   ],
   "rewrites": [
     {
-      "source": "/api",
-      "destination": "/index.html"
+      "source": "/api/(.*)",
+      "destination": "/dist/main.js"
     },
     {
-      "source": "/(.*)",
-      "destination": "/dist/main.js"
+      "source": "/",
+      "destination": "/index.html"
     }
   ]
 }
