@@ -19,6 +19,8 @@ import { RoomModule } from '../room/room.module';
 import { DiscountModule } from '../discount/discount.module';
 import { SessionModule } from '../session/session.module';
 import { CoursePlusModule } from '../course-plus/course-plus.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path/win32';
 
 @Module({
   imports: [
@@ -48,6 +50,11 @@ import { CoursePlusModule } from '../course-plus/course-plus.module';
         THROTTLE_TTL: Joi.number().default(60),
         THROTTLE_LIMIT: Joi.number().default(10),
       }),
+    }),
+
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      exclude: ['/api*'],
     }),
 
     ResendModule.forRootAsync({
