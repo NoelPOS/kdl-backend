@@ -8,22 +8,10 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/dist/main.js"
-    },
-    {
-      "source": "/docs",
-      "destination": "/dist/main.js"
-    },
-    {
-      "source": "/swagger-json",
-      "destination": "/dist/main.js"
-    },
-    {
-      "source": "/",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "dist/main.js"
     }
   ]
 }
