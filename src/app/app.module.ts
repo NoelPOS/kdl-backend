@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
-import { AppController } from './app.controller';
 
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import configuration from '../config/configuration';
@@ -55,6 +54,7 @@ import { join } from 'path';
 
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/public',
       exclude: ['/api*', '/docs*', '/swagger-json'], // Exclude Swagger routes
     }),
 
@@ -93,7 +93,6 @@ import { join } from 'path';
     SessionModule,
     CoursePlusModule,
   ],
-  controllers: [AppController],
   providers: [
     // Global Guards
     {
