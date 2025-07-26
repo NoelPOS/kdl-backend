@@ -107,36 +107,34 @@ export class SessionService {
   }
 
   async getSessionOverviewByStudentId(studentId: number) {
-    const sessions = await this.sessionRepository
+    // Optimized query: Join with schedules and use subquery to avoid N+1
+    const result = await this.sessionRepository
       .createQueryBuilder('session')
       .leftJoinAndSelect('session.course', 'course')
       .leftJoinAndSelect('session.classOption', 'classOption')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id')
+          .andWhere('schedule.attendance = :attendance', {
+            attendance: 'present',
+          });
+      }, 'completedCount')
       .where('session.studentId = :studentId', { studentId })
-      .getMany();
+      .getRawAndEntities();
 
-    const result = [];
-
-    for (const s of sessions) {
-      const completedCount = await this.scheduleRepo.count({
-        where: {
-          sessionId: s.id,
-          attendance: 'present',
-        },
-      });
-
-      result.push({
-        sessionId: s.id,
-        courseTitle: s.course?.title,
-        courseDescription: s.course?.description,
-        mode: s.classOption.classMode,
-        payment: s.payment,
-        completedCount,
-        classCancel: s.classCancel,
-        medium: s.course.medium,
-      });
-    }
-
-    return result;
+    // Transform the result to match the expected format
+    return result.entities.map((session, index) => ({
+      sessionId: session.id,
+      courseTitle: session.course?.title,
+      courseDescription: session.course?.description,
+      mode: session.classOption.classMode,
+      payment: session.payment,
+      completedCount: parseInt(result.raw[index].completedCount || '0'),
+      classCancel: session.classCancel,
+      medium: session.course.medium,
+    }));
   }
 
   async getStudentSessionsFiltered(
@@ -195,25 +193,33 @@ export class SessionService {
     // Order by creation date (newest first)
     queryBuilder.orderBy('session.createdAt', 'DESC');
 
-    // Get the sessions
-    const sessions = await queryBuilder.getMany();
+    // Optimize: Add subqueries to get progress data in one query instead of N+1
+    queryBuilder
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id')
+          .andWhere('schedule.attendance = :attendance', {
+            attendance: 'present',
+          });
+      }, 'completedCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id');
+      }, 'totalScheduledCount');
 
-    // Build the result with progress calculation
-    const result = [];
-    for (const session of sessions) {
-      const completedCount = await this.scheduleRepo.count({
-        where: {
-          sessionId: session.id,
-          attendance: 'present',
-        },
-      });
+    // Get the sessions with progress data in one query
+    const result = await queryBuilder.getRawAndEntities();
 
-      // Calculate total scheduled classes for this session
-      const totalScheduledCount = await this.scheduleRepo.count({
-        where: {
-          sessionId: session.id,
-        },
-      });
+    // Transform the result to match the expected format
+    const transformedResult = result.entities.map((session, index) => {
+      const completedCount = parseInt(result.raw[index].completedCount || '0');
+      const totalScheduledCount = parseInt(
+        result.raw[index].totalScheduledCount || '0',
+      );
 
       // Calculate progress percentage
       const progressPercentage =
@@ -221,7 +227,7 @@ export class SessionService {
           ? Math.round((completedCount / totalScheduledCount) * 100)
           : 0;
 
-      result.push({
+      return {
         sessionId: session.id,
         courseTitle: session.course?.title,
         courseDescription: session.course?.description,
@@ -232,8 +238,8 @@ export class SessionService {
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
         status: session.status,
-      });
-    }
+      };
+    });
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / validatedLimit);
@@ -241,7 +247,7 @@ export class SessionService {
     const hasPrev = validatedPage > 1;
 
     return {
-      sessions: result,
+      sessions: transformedResult,
       pagination: {
         currentPage: validatedPage,
         totalPages,

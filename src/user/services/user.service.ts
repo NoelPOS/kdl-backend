@@ -296,7 +296,7 @@ export class UserService {
       hasPrev: boolean;
     };
   }> {
-    console.log('Fetching students with filters:', {
+    console.log('Fetching students with filters (OPTIMIZED FIXED):', {
       query,
       active,
       course,
@@ -305,145 +305,119 @@ export class UserService {
     });
 
     try {
-      let filteredStudentIds: number[] | null = null;
+      // Validate pagination parameters
+      page = Math.max(1, page);
+      limit = Math.min(Math.max(1, limit), 100);
 
-      // Step 1: Handle active/inactive filtering
-      if (active === 'active' || active === 'inactive') {
-        const pendingSessions = await this.sessionRepo.find({
-          where: { status: 'WP' },
-        });
-        const activeStudentIds = [
-          ...new Set(pendingSessions.map((session) => session.studentId)),
-        ];
+      // Build the main query with joins to eliminate N+1 queries
+      let queryBuilder = this.studentRepository
+        .createQueryBuilder('student')
+        .select([
+          'student.id',
+          'student.name',
+          'student.nickname',
+          'student.dob',
+          'student.phone',
+          'student.allergic',
+          'student.doNotEat',
+          'student.adConcent',
+          'student.profilePicture',
+          'student.createdAt',
+        ]);
 
-        if (active === 'active') {
-          filteredStudentIds = activeStudentIds;
-          if (activeStudentIds.length === 0) {
-            return {
-              students: [],
-              pagination: {
-                currentPage: page,
-                totalPages: 0,
-                totalCount: 0,
-                hasNext: false,
-                hasPrev: false,
-              },
-            };
-          }
-        } else if (active === 'inactive') {
-          filteredStudentIds = activeStudentIds;
-        }
-      }
-
-      // Step 2: Handle course filtering by course name
-      if (course) {
-        const courseEntity = await this.courseRepository.findOne({
-          where: { title: ILike(`%${course}%`) },
-          select: ['id'],
-        });
-
-        if (courseEntity) {
-          const courseSessions = await this.sessionRepo.find({
-            where: { courseId: courseEntity.id },
-          });
-          const courseStudentIds = [
-            ...new Set(courseSessions.map((session) => session.studentId)),
-          ];
-
-          if (filteredStudentIds !== null) {
-            if (active === 'active') {
-              filteredStudentIds = filteredStudentIds.filter((id) =>
-                courseStudentIds.includes(id),
-              );
-            } else if (active === 'inactive') {
-              filteredStudentIds = courseStudentIds.filter(
-                (id) => !filteredStudentIds.includes(id),
-              );
-            }
-          } else {
-            filteredStudentIds = courseStudentIds;
-          }
-        } else {
-          return {
-            students: [],
-            pagination: {
-              currentPage: page,
-              totalPages: 0,
-              totalCount: 0,
-              hasNext: false,
-              hasPrev: false,
-            },
-          };
-        }
-      }
-
-      // Step 3: Build where clause for final query
-      const where: any = {};
-
+      // Apply name search filter
       if (query) {
-        where.name = ILike(`%${query}%`);
+        queryBuilder.andWhere('student.name ILIKE :query', {
+          query: `%${query}%`,
+        });
       }
 
-      if (filteredStudentIds !== null) {
-        if (active === 'inactive' && !course) {
-          if (filteredStudentIds.length === 0) {
-            return {
-              students: [],
-              pagination: {
-                currentPage: page,
-                totalPages: 0,
-                totalCount: 0,
-                hasNext: false,
-                hasPrev: false,
-              },
-            };
-          } else {
-            where.id = Not(In(filteredStudentIds));
-          }
-        } else {
-          if (filteredStudentIds.length === 0) {
-            return {
-              students: [],
-              pagination: {
-                currentPage: page,
-                totalPages: 0,
-                totalCount: 0,
-                hasNext: false,
-                hasPrev: false,
-              },
-            };
-          }
-          where.id = In(filteredStudentIds);
+      // Apply active/inactive filtering with proper joins
+      if (active === 'active') {
+        queryBuilder
+          .innerJoin('sessions', 'session', 'session.studentId = student.id')
+          .andWhere('session.status = :status', { status: 'WP' });
+      } else if (active === 'inactive') {
+        // Use NOT EXISTS subquery for inactive students
+        queryBuilder.andWhere(
+          'NOT EXISTS (SELECT 1 FROM sessions s WHERE s."studentId" = student.id AND s.status = :status)',
+          { status: 'WP' },
+        );
+      }
+
+      // Apply course filtering
+      if (course) {
+        if (active !== 'active') {
+          // Add join only if not already joined for active filter
+          queryBuilder.leftJoin(
+            'sessions',
+            'session',
+            'session.studentId = student.id',
+          );
         }
+        queryBuilder
+          .leftJoin('courses', 'course', 'course.id = session.courseId')
+          .andWhere('course.title ILIKE :course', {
+            course: `%${course}%`,
+          });
       }
 
-      // Calculate pagination
-      const offset = (page - 1) * limit;
+      // For counting, we need a separate simpler query without DISTINCT
+      const countQueryBuilder =
+        this.studentRepository.createQueryBuilder('student');
 
-      // Get total count for pagination
-      const totalCount = await this.studentRepository.count({ where });
+      // Apply the same filters for counting
+      if (query) {
+        countQueryBuilder.andWhere('student.name ILIKE :query', {
+          query: `%${query}%`,
+        });
+      }
+
+      if (active === 'active') {
+        countQueryBuilder
+          .innerJoin('sessions', 'session', 'session.studentId = student.id')
+          .andWhere('session.status = :status', { status: 'WP' });
+      } else if (active === 'inactive') {
+        countQueryBuilder.andWhere(
+          'NOT EXISTS (SELECT 1 FROM sessions s WHERE s."studentId" = student.id AND s.status = :status)',
+          { status: 'WP' },
+        );
+      }
+
+      if (course) {
+        if (active !== 'active') {
+          countQueryBuilder.leftJoin(
+            'sessions',
+            'session',
+            'session.studentId = student.id',
+          );
+        }
+        countQueryBuilder
+          .leftJoin('courses', 'course', 'course.id = session.courseId')
+          .andWhere('course.title ILIKE :course', {
+            course: `%${course}%`,
+          });
+      }
+
+      // Get total count with DISTINCT to handle duplicates from joins
+      const totalCount = await countQueryBuilder
+        .select('COUNT(DISTINCT student.id)', 'count')
+        .getRawOne()
+        .then((result) => parseInt(result.count));
+
       const totalPages = Math.ceil(totalCount / limit);
 
-      // Fetch paginated students
-      const students = await this.studentRepository.find({
-        where,
-        order: {
-          createdAt: 'DESC',
-        },
-        select: [
-          'id',
-          'name',
-          'nickname',
-          'dob',
-          'phone',
-          'allergic',
-          'doNotEat',
-          'adConcent',
-          'profilePicture',
-        ],
-        skip: offset,
-        take: limit,
-      });
+      // Apply DISTINCT and pagination to main query
+      queryBuilder.distinctOn(['student.id']);
+      queryBuilder.orderBy('student.id', 'DESC');
+      queryBuilder.addOrderBy('student.createdAt', 'DESC');
+
+      // Apply pagination
+      const offset = (page - 1) * limit;
+      queryBuilder.skip(offset).take(limit);
+
+      // Execute the main query
+      const students = await queryBuilder.getMany();
 
       return {
         students,
@@ -456,6 +430,7 @@ export class UserService {
         },
       };
     } catch (error) {
+      console.error('Error in optimized findAllStudents:', error);
       throw new BadRequestException(
         'Failed to fetch students: ' + error.message,
       );

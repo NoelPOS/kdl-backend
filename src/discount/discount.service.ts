@@ -17,13 +17,12 @@ export class DiscountService {
 
     const now = new Date();
 
-    // Find existing active discount with same title
-    const existing = await this.discountRepository.findOne({
-      where: {
-        title,
-        effective_end_date: null,
-      },
-    });
+    // Optimized query using query builder with composite index
+    const existing = await this.discountRepository
+      .createQueryBuilder('discount')
+      .where('discount.title = :title', { title })
+      .andWhere('discount.effective_end_date IS NULL')
+      .getOne();
 
     if (existing) {
       existing.effective_end_date = new Date(now.getTime() - 1000); // expire 1 second before new one
@@ -51,10 +50,14 @@ export class DiscountService {
 
   async findOne(name: string): Promise<DiscountEntity[]> {
     console.log('Finding discount with name: ', name);
-    const discount = await this.discountRepository.findOne({
-      where: { title: ILike(`%${name}%`) },
-    });
-    // console.log(discount);
+
+    // Optimized query using query builder for better performance with ILIKE
+    const discount = await this.discountRepository
+      .createQueryBuilder('discount')
+      .where('discount.title ILIKE :name', { name: `%${name}%` })
+      .andWhere('discount.effective_end_date IS NULL') // Only search active discounts
+      .getOne();
+
     if (!discount) {
       throw new NotFoundException(`Discount with name ${name} not found.`);
     }
