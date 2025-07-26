@@ -39,4 +39,10 @@ export class TeacherEntity {
   @Column()
   @ApiProperty({ description: 'Teacher profile picture' })
   profilePicture: string;
+
+  @Column({
+    nullable: true,
+  })
+  @ApiProperty({ description: 'Teacher profile key' })
+  profileKey: string;
 }

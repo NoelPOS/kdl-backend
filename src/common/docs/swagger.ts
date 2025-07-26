@@ -52,29 +52,15 @@ export const setupSwagger = (app: INestApplication): void => {
     )
     .build();
 
-  const document = SwaggerModule.createDocument(app, options, {
-    deepScanRoutes: true,
-    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
-  });
+  const document = SwaggerModule.createDocument(app, options);
 
-  // Setup Swagger with absolute URLs for production
+  // Setup Swagger UI
   SwaggerModule.setup('docs', app, document, {
     explorer: true,
-    jsonDocumentUrl: '/swagger-json',
     swaggerOptions: {
       persistAuthorization: true,
       displayRequestDuration: true,
-      docExpansion: 'list',
-      filter: true,
-      tryItOutEnabled: true,
-      defaultModelsExpandDepth: 3,
-      defaultModelExpandDepth: 3,
-      tagsSorter: 'alpha',
-      operationsSorter: 'alpha',
-      url: '/swagger-json',
     },
-    customSiteTitle: 'KDL API Docs',
-    customCss: '.swagger-ui .topbar { display: none }', // Optional: hide topbar
   });
 
   console.log('Swagger setup completed successfully at /docs');

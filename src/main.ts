@@ -9,13 +9,17 @@ import {
 import { setupSwagger } from './common/docs/swagger';
 import { HttpExceptionFilter } from './common/exception/http-exception.filter';
 import { ConfigService } from '@nestjs/config';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 declare const module: any;
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+
+  // Express v5 compatibility - support complex query strings
+  app.set('query parser', 'extended');
 
   // Get configuration values with defaults
   const port = configService.get<number>('PORT', 3001);

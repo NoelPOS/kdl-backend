@@ -96,5 +96,10 @@ export class CreateStudentDto {
   @IsOptional()
   profilePicture?: string;
 
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  profileKey?: string;
+
   // parent
 }

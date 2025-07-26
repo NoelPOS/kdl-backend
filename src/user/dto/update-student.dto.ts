@@ -106,4 +106,9 @@ export class UpdateStudentDto {
   @IsString()
   @IsOptional()
   profilePicture?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  profileKey?: string;
 }

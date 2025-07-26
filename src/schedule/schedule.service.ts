@@ -425,6 +425,7 @@ export class ScheduleService {
       courseName,
       attendanceStatus,
       classStatus,
+      classOption,
       room,
       sort,
       page = 1,
@@ -455,7 +456,9 @@ export class ScheduleService {
       .createQueryBuilder('schedule')
       .leftJoinAndSelect('schedule.student', 'student')
       .leftJoinAndSelect('schedule.teacher', 'teacher')
-      .leftJoinAndSelect('schedule.course', 'course');
+      .leftJoinAndSelect('schedule.course', 'course')
+      .leftJoinAndSelect('schedule.session', 'session')
+      .leftJoinAndSelect('session.classOption', 'classOption');
 
     // Track if any filters are applied
     let filtersApplied = 0;
@@ -508,6 +511,13 @@ export class ScheduleService {
       qb.andWhere('schedule.room ILIKE :room', { room: `%${room}%` });
       filtersApplied++;
     }
+    if (classOption && classOption !== 'all') {
+      console.log('Applying classOption filter:', classOption);
+      qb.andWhere('classOption.classMode = :classOption', {
+        classOption,
+      });
+      filtersApplied++;
+    }
 
     console.log('Total filters applied:', filtersApplied);
 
@@ -541,6 +551,12 @@ export class ScheduleService {
       case 'room_desc':
         qb.orderBy('schedule.room', 'DESC');
         break;
+      case 'class_option_asc':
+        qb.orderBy('classOption.classMode', 'ASC');
+        break;
+      case 'class_option_desc':
+        qb.orderBy('classOption.classMode', 'DESC');
+        break;
       default:
         qb.orderBy('schedule.date', 'ASC');
     }
@@ -573,11 +589,12 @@ export class ScheduleService {
       schedule_warning: schedule.warning,
       schedule_courseId: schedule.courseId,
       course_title: schedule.course?.title || null,
-      teacher_name: schedule.teacher?.name || null,
+      teacher_name: schedule.teacher?.name || 'TBD',
       student_id: schedule.student?.id || null,
       student_name: schedule.student?.name || null,
       student_nickname: schedule.student?.nickname || null,
       student_profilePicture: schedule.student?.profilePicture || null,
+      class_option: schedule.session?.classOption?.classMode || null,
     }));
 
     // Calculate pagination metadata

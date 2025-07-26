@@ -24,6 +24,8 @@ import { ParentEntity } from '../entities/parent.entity';
 import { CreateParentDto } from '../dto/create-parent.dto';
 import { ParentStudentEntity } from '../entities/parent-student.entity';
 import { Session } from '../../session/entities/session.entity';
+import { UpdateTeacherDto } from '../dto/update-teacher.dto';
+import { UpdateParentDto } from '../dto/update-parent.dto';
 
 @Injectable()
 export class UserService {
@@ -267,6 +269,7 @@ export class UserService {
       student.adConcent = createStudentDto.adConcent;
       student.phone = createStudentDto.phone;
       student.profilePicture = createStudentDto.profilePicture || '';
+      student.profileKey = createStudentDto.profileKey || '';
 
       const savedStudent = await this.studentRepository.save(student);
       return savedStudent;
@@ -544,6 +547,7 @@ export class UserService {
       teacher.lineId = createTeacherDto.lineId || '';
       teacher.address = createTeacherDto.address;
       teacher.profilePicture = createTeacherDto.profilePicture || '';
+      teacher.profileKey = createTeacherDto.profileKey || '';
 
       const savedTeacher = await this.teacherRepository.save(teacher);
       return savedTeacher;
@@ -910,6 +914,8 @@ export class UserService {
       parent.contactNo = createParentDto.contactNo;
       parent.lineId = createParentDto.lineId;
       parent.address = createParentDto.address;
+      parent.profilePicture = createParentDto.profilePicture || '';
+      parent.profileKey = createParentDto.profileKey || '';
       const savedParent = await this.parentRepository.save(parent);
       return savedParent;
     } catch (error) {
@@ -961,5 +967,84 @@ export class UserService {
     return this.parentRepository.find({
       where: { id: In(parentIds) },
     });
+  }
+
+  async updateTeacher(
+    id: number,
+    updateTeacherDto: UpdateTeacherDto,
+  ): Promise<TeacherEntity> {
+    try {
+      const teacher = await this.teacherRepository.findOneBy({ id });
+      if (!teacher) {
+        throw new NotFoundException(`Teacher with ID ${id} not found`);
+      }
+      Object.assign(teacher, updateTeacherDto);
+      const updatedTeacher = await this.teacherRepository.save(teacher);
+      return updatedTeacher;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to update teacher with ID ${id}: ${error.message}`,
+      );
+    }
+  }
+
+  async findTeacherById(id: number): Promise<TeacherEntity> {
+    try {
+      const teacher = await this.teacherRepository.findOneBy({ id });
+      if (!teacher) {
+        throw new NotFoundException(`Teacher with ID ${id} not found`);
+      }
+      return teacher;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to find teacher with ID ${id}: ${error.message}`,
+      );
+    }
+  }
+
+  async findParentById(id: number): Promise<ParentEntity> {
+    try {
+      const parent = await this.parentRepository.findOneBy({ id });
+      if (!parent) {
+        throw new NotFoundException(`Parent with ID ${id} not found`);
+      }
+      console.log('Found parent:', parent);
+      return parent;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to find parent with ID ${id}: ${error.message}`,
+      );
+    }
+  }
+
+  async updateParent(
+    id: number,
+    updateParentDto: UpdateParentDto,
+  ): Promise<ParentEntity> {
+    try {
+      const parent = await this.parentRepository.findOneBy({ id });
+      if (!parent) {
+        throw new NotFoundException(`Parent with ID ${id} not found`);
+      }
+      Object.assign(parent, updateParentDto);
+      const updatedParent = await this.parentRepository.save(parent);
+      return updatedParent;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to update parent with ID ${id}: ${error.message}`,
+      );
+    }
   }
 }

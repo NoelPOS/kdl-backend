@@ -41,6 +41,7 @@ import { CreateParentDto } from '../dto/create-parent.dto';
 import { PaginatedTeacherResponseDto } from '../dto/paginated-teacher-response.dto';
 import { PaginatedParentResponseDto } from '../dto/paginated-parent-response.dto';
 import { AssignChildrenToParentDto } from '../dto/assign-children-parent.dto';
+import { UpdateTeacherDto } from '../dto/update-teacher.dto';
 
 @Controller('users')
 export class UserController {
@@ -352,6 +353,47 @@ export class UserController {
     return this.userService.searchTeachersByName(name);
   }
 
+  @ApiTags('Teachers')
+  @Get('teachers/:id')
+  @ApiOperation({ summary: 'Get a teacher by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the teacher object',
+    type: TeacherEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Teacher not found' })
+  async findTeacherById(@Param('id', ParseIntPipe) id: number) {
+    const teacher = await this.userService.findTeacherById(id);
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
+    }
+    return teacher;
+  }
+
+  @ApiTags('Teachers')
+  @Put('teachers/:id')
+  @ApiOperation({ summary: 'Update a teacher by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiBody({ type: UpdateTeacherDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher has been successfully updated',
+    type: TeacherEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Teacher not found' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  async updateTeacherById(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateTeacherDto: UpdateTeacherDto,
+  ) {
+    const teacher = await this.userService.updateTeacher(id, updateTeacherDto);
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
+    }
+    return teacher;
+  }
+
   // =================================================================================================
   //
   // =================================================================================================
@@ -487,6 +529,47 @@ export class UserController {
   })
   getParentsByStudent(@Param('studentId', ParseIntPipe) studentId: number) {
     return this.userService.getParentsByStudentId(studentId);
+  }
+
+  @ApiTags('Parents')
+  @Put('parents/:id')
+  @ApiOperation({ summary: 'Update a parent by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Parent ID' })
+  @ApiBody({ type: CreateParentDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Parent has been successfully updated',
+    type: ParentEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Parent not found' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  async updateParentById(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateParentDto: Partial<CreateParentDto> = {},
+  ) {
+    const parent = await this.userService.updateParent(id, updateParentDto);
+    if (!parent) {
+      throw new NotFoundException(`Parent with ID ${id} not found`);
+    }
+    return parent;
+  }
+
+  @ApiTags('Parents')
+  @Get('parents/:id')
+  @ApiOperation({ summary: 'Get a parent by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Parent ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the parent object',
+    type: ParentEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Parent not found' })
+  async findParentById(@Param('id', ParseIntPipe) id: number) {
+    const parent = await this.userService.findParentById(id);
+    if (!parent) {
+      throw new NotFoundException(`Parent with ID ${id} not found`);
+    }
+    return parent;
   }
 
   // =================================================================================================

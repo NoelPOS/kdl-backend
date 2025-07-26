@@ -1,30 +1,35 @@
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsOptional, IsString } from 'class-validator';
 
-export class CreateParentDto {
+export class UpdateParentDto {
   @ApiProperty({
     example: 'Parent1',
     description: 'Parent name',
+    required: false,
   })
   @IsString()
-  @IsNotEmpty({ message: 'Name is required' })
-  name: string;
+  @IsOptional()
+  @Transform(({ value }) => value?.trim())
+  name?: string;
 
   @ApiProperty({
     example: 'Parent@gmail.com',
     description: 'Parent email',
+    required: false,
   })
-  // @IsEmail({}, { message: 'Invalid email format' })
-  @IsNotEmpty({ message: 'Email is required' })
-  email: string;
+  @IsString()
+  @IsOptional()
+  email?: string;
 
   @ApiProperty({
     example: '+1234567890',
     description: 'Parent contact number',
+    required: false,
   })
-  // @IsPhoneNumber(null, { message: 'Invalid contact number format' })
-  @IsNotEmpty({ message: 'Contact number is required' })
-  contactNo: string;
+  @IsString()
+  @IsOptional()
+  contactNo?: string;
 
   @ApiProperty({
     example: 'Parent_line_id',
@@ -38,14 +43,16 @@ export class CreateParentDto {
   @ApiProperty({
     example: '123 Main St, City, Country',
     description: 'Parent address',
+    required: false,
   })
   @IsString()
-  @IsNotEmpty({ message: 'Address is required' })
-  address: string;
+  @IsOptional()
+  address?: string;
 
   @ApiProperty({
     example: 'https://example.com',
     description: 'Parent profile picture',
+    required: false,
   })
   @IsString()
   @IsOptional()

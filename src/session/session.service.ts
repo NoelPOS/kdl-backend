@@ -76,7 +76,10 @@ export class SessionService {
   }
 
   async update(id: number, dto: UpdateSessionDto) {
-    await this.sessionRepository.update(id, dto);
+    const result = await this.sessionRepository.update(id, dto);
+    if (result.affected === 0) {
+      throw new BadRequestException(`Session with ID ${id} not found`);
+    }
     return this.findOne(id);
   }
 
@@ -228,6 +231,7 @@ export class SessionService {
         classCancel: session.classCancel,
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
+        status: session.status,
       });
     }
 
@@ -466,6 +470,7 @@ export class SessionService {
         'invoice.paymentMethod',
         'invoice.totalAmount',
         'invoice.sessionId',
+        'invoice.receiptDone',
         'items',
         'session.id',
         'student.name',

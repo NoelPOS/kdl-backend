@@ -372,12 +372,18 @@ export class SessionController {
     type: Session,
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateSessionDto: UpdateSessionDto,
   ) {
-    this.sessionService.update(id, updateSessionDto);
-    return true;
+    const updatedSession = await this.sessionService.update(
+      id,
+      updateSessionDto,
+    );
+    if (!updatedSession) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+    return updatedSession;
   }
 
   @ApiTags('Sessions')

@@ -61,4 +61,8 @@ export class StudentEntity {
   @Column()
   @ApiProperty({ description: 'Profile picture URL' })
   profilePicture: string;
+
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'Profile picture key' })
+  profileKey: string;
 }

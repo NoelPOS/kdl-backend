@@ -35,4 +35,16 @@ export class ParentEntity {
   @Column()
   @ApiProperty({ description: 'Parent address' })
   address: string;
+
+  @Column({
+    nullable: true,
+  })
+  @ApiProperty({ description: 'Teacher profile picture' })
+  profilePicture: string;
+
+  @Column({
+    nullable: true,
+  })
+  @ApiProperty({ description: 'Parent profile key' })
+  profileKey: string;
 }

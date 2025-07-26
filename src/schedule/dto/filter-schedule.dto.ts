@@ -41,6 +41,11 @@ export class FilterScheduleDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  classOption?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
   room?: string;
 
   @ApiProperty({

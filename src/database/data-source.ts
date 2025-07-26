@@ -21,9 +21,22 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       url: configService.get<string>('DATABASE_URL'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       synchronize: configService.get<string>('NODE_ENV') === 'development',
-      logging: configService.get<string>('NODE_ENV') === 'development',
+      // Enhanced logging for performance monitoring
+      logging:
+        configService.get<string>('NODE_ENV') === 'development'
+          ? ['query', 'error', 'warn', 'info']
+          : ['error', 'warn'],
+      // Log slow queries (>500ms) - great for performance monitoring
+      maxQueryExecutionTime: 500,
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
       migrationsRun: false,
+      // Connection pool optimization
+      extra: {
+        max: 20, // Maximum pool size
+        min: 5, // Minimum pool size
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+      },
     };
   },
 };
