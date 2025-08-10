@@ -621,7 +621,12 @@ export class ScheduleService {
       .leftJoin('schedule.student', 'student')
       .leftJoin('schedule.teacher', 'teacher')
       .leftJoin('schedule.course', 'course')
-      .addSelect(['student.name', 'teacher.name', 'course.title'])
+      .addSelect([
+        'student.name',
+        'student.profilePicture',
+        'teacher.name',
+        'course.title',
+      ])
       .where('schedule.sessionId = :sessionId', { sessionId })
       .andWhere('schedule.studentId = :studentId', { studentId })
       .getRawMany();

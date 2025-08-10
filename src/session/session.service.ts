@@ -429,202 +429,233 @@ export class SessionService {
     page = Math.max(1, page);
     limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
 
-    // First, get the session IDs that match our criteria for counting - ONLY pending invoices
-    let countQueryBuilder = this.sessionRepository
-      .createQueryBuilder('session')
-      .leftJoin('session.student', 'student')
-      .leftJoin('session.course', 'course')
-      .leftJoin('session.teacher', 'teacher')
-      .leftJoin('session.classOption', 'classOption')
-      .where('session.invoiceDone = :invoiceDone', { invoiceDone: false }); // Always only pending
+    // Helper function to apply filters
+    const applySessionFilters = (qb: any, useSessionAlias = true) => {
+      const sessionAlias = useSessionAlias ? 'session' : 'session';
 
-    // Add filtering conditions to count query
-    if (date) {
-      countQueryBuilder = countQueryBuilder.andWhere(
-        'DATE(session.createdAt) = :date',
-        {
-          date,
-        },
-      );
-    }
+      if (date) {
+        qb.andWhere(`DATE(${sessionAlias}.createdAt) = :sessionDate`, {
+          sessionDate: date,
+        });
+      }
+      if (course) {
+        qb.andWhere('course.title ILIKE :sessionCourse', {
+          sessionCourse: `%${course}%`,
+        });
+      }
+      if (teacher) {
+        qb.andWhere('teacher.name ILIKE :sessionTeacher', {
+          sessionTeacher: `%${teacher}%`,
+        });
+      }
+      if (student) {
+        qb.andWhere('student.name ILIKE :sessionStudent', {
+          sessionStudent: `%${student}%`,
+        });
+      }
+      return qb;
+    };
 
-    if (course) {
-      countQueryBuilder = countQueryBuilder.andWhere(
-        'course.title ILIKE :course',
-        {
-          course: `%${course}%`,
-        },
-      );
-    }
+    const applyPackageFilters = (qb: any) => {
+      if (date) {
+        qb.andWhere('DATE(package.createdAt) = :packageDate', {
+          packageDate: date,
+        });
+      }
+      if (course) {
+        qb.andWhere('package.classOptionTitle ILIKE :packageCourse', {
+          packageCourse: `%${course}%`,
+        });
+      }
+      if (student && student.trim() !== '') {
+        qb.andWhere('package.studentName ILIKE :packageStudent', {
+          packageStudent: `%${student}%`,
+        });
+      }
+      return qb;
+    };
 
-    if (teacher) {
-      countQueryBuilder = countQueryBuilder.andWhere(
-        'teacher.name ILIKE :teacher',
-        {
-          teacher: `%${teacher}%`,
-        },
-      );
-    }
+    // Get all data in parallel to reduce database round trips
+    const promises = [];
 
-    if (student) {
-      countQueryBuilder = countQueryBuilder.andWhere(
-        'student.name ILIKE :student',
-        {
-          student: `%${student}%`,
-        },
-      );
-    }
-
-    // Get total count for pagination
-    const totalCount = await countQueryBuilder.getCount();
-    const totalPages = Math.ceil(totalCount / limit);
-
-    // Now build the main query with pagination and sort by createdAt - ONLY pending invoices
-    let queryBuilder = this.sessionRepository
-      .createQueryBuilder('session')
-      .leftJoin('session.student', 'student')
-      .leftJoin('session.course', 'course')
-      .leftJoin('session.teacher', 'teacher')
-      .leftJoin('session.classOption', 'classOption')
-      .select([
-        'session.id as session_id',
-        'session.createdAt as session_createdAt',
-        'session.status as session_status',
-        'session.payment as session_payment',
-        'session.invoiceDone as session_invoiceDone',
-        'student.id as student_id',
-        'student.name as student_name',
-        'course.id as course_id',
-        'course.title as course_title',
-        'teacher.id as teacher_id',
-        'teacher.name as teacher_name',
-        'classOption.tuitionFee as classOption_tuitionFee',
-      ])
-      .where('session.invoiceDone = :invoiceDone', { invoiceDone: false }); // Always only pending
-
-    if (date) {
-      queryBuilder = queryBuilder.andWhere('DATE(session.createdAt) = :date', {
-        date,
-      });
-    }
-
-    if (course) {
-      queryBuilder = queryBuilder.andWhere('course.title ILIKE :course', {
-        course: `%${course}%`,
-      });
-    }
-
-    if (teacher) {
-      queryBuilder = queryBuilder.andWhere('teacher.name ILIKE :teacher', {
-        teacher: `%${teacher}%`,
-      });
-    }
-
-    if (student) {
-      queryBuilder = queryBuilder.andWhere('student.name ILIKE :student', {
-        student: `%${student}%`,
-      });
-    }
-
-    // Add ordering and pagination
-    queryBuilder = queryBuilder
-      .orderBy('session.createdAt', 'DESC')
-      .offset((page - 1) * limit)
-      .limit(limit);
-
-    const enrollments = await queryBuilder.getRawMany();
-
-    let allEnrollments = [];
-    let totalExtraCount = 0;
-
-    // Add regular session enrollments if requested
+    // Sessions
     if (
       !transactionType ||
       transactionType === 'all' ||
       transactionType === 'course'
     ) {
-      allEnrollments.push(...enrollments);
+      const sessionCountQuery = this.sessionRepository
+        .createQueryBuilder('session')
+        .leftJoin('session.student', 'student')
+        .leftJoin('session.course', 'course')
+        .leftJoin('session.teacher', 'teacher')
+        .where('session.invoiceDone = :invoiceDone', { invoiceDone: false });
+
+      applySessionFilters(sessionCountQuery);
+
+      const sessionDataQuery = this.sessionRepository
+        .createQueryBuilder('session')
+        .leftJoin('session.student', 'student')
+        .leftJoin('session.course', 'course')
+        .leftJoin('session.teacher', 'teacher')
+        .leftJoin('session.classOption', 'classOption')
+        .select([
+          'session.id as session_id',
+          'session.createdAt as session_createdAt',
+          'session.status as session_status',
+          'session.payment as session_payment',
+          'session.invoiceDone as session_invoiceDone',
+          'student.id as student_id',
+          'student.name as student_name',
+          'course.id as course_id',
+          'course.title as course_title',
+          'teacher.id as teacher_id',
+          'teacher.name as teacher_name',
+          'classOption.tuitionFee as classOption_tuitionFee',
+        ])
+        .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
+        .orderBy('session.createdAt', 'DESC');
+
+      applySessionFilters(sessionDataQuery);
+
+      promises.push(sessionCountQuery.getCount());
+      promises.push(sessionDataQuery.getRawMany());
+    } else {
+      promises.push(Promise.resolve(0));
+      promises.push(Promise.resolve([]));
     }
 
-    // Get Course Plus records that need invoices if requested - ONLY invoiceGenerated: false
+    // Course Plus
     if (
       !transactionType ||
       transactionType === 'all' ||
       transactionType === 'courseplus'
     ) {
-      const coursePlusRecords = await this.coursePlusRepo.find({
-        where: { invoiceGenerated: false }, // Always only pending
-        relations: [
-          'session',
-          'session.student',
-          'session.course',
-          'session.classOption',
-          'session.teacher',
-        ],
-      });
+      const coursePlusCountQuery = this.coursePlusRepo
+        .createQueryBuilder('coursePlus')
+        .leftJoin('coursePlus.session', 'session')
+        .leftJoin('session.student', 'student')
+        .leftJoin('session.course', 'course')
+        .leftJoin('session.teacher', 'teacher')
+        .where('coursePlus.invoiceGenerated = :cpInvoiceGenerated', {
+          cpInvoiceGenerated: false,
+        });
 
-      console.log('Fetched Course Plus records:', coursePlusRecords);
+      applySessionFilters(coursePlusCountQuery);
 
-      // Transform Course Plus to match session enrollment format
-      const coursePlusAsEnrollments = coursePlusRecords.map((coursePlus) => ({
-        session_id: `cp-${coursePlus.id}`, // Prefix to distinguish
-        session_createdat: coursePlus.session.createdAt,
+      const coursePlusDataQuery = this.coursePlusRepo
+        .createQueryBuilder('coursePlus')
+        .leftJoinAndSelect('coursePlus.session', 'session')
+        .leftJoinAndSelect('session.student', 'student')
+        .leftJoinAndSelect('session.course', 'course')
+        .leftJoinAndSelect('session.classOption', 'classOption')
+        .leftJoinAndSelect('session.teacher', 'teacher')
+        .where('coursePlus.invoiceGenerated = :cpInvoiceGenerated2', {
+          cpInvoiceGenerated2: false,
+        })
+        .orderBy('session.createdAt', 'DESC');
+
+      applySessionFilters(coursePlusDataQuery);
+
+      promises.push(coursePlusCountQuery.getCount());
+      promises.push(coursePlusDataQuery.getMany());
+    } else {
+      promises.push(Promise.resolve(0));
+      promises.push(Promise.resolve([]));
+    }
+
+    // Packages
+    if (
+      !transactionType ||
+      transactionType === 'all' ||
+      transactionType === 'package'
+    ) {
+      const packageCountQuery = this.packageRepo
+        .createQueryBuilder('package')
+        .where('package.invoiceGenerated = :pkgInvoiceGenerated', {
+          pkgInvoiceGenerated: false,
+        });
+
+      applyPackageFilters(packageCountQuery);
+
+      const packageDataQuery = this.packageRepo
+        .createQueryBuilder('package')
+        .where('package.invoiceGenerated = :pkgInvoiceGenerated2', {
+          pkgInvoiceGenerated2: false,
+        })
+        .orderBy('package.createdAt', 'DESC');
+
+      applyPackageFilters(packageDataQuery);
+
+      promises.push(packageCountQuery.getCount());
+      promises.push(packageDataQuery.getMany());
+    } else {
+      promises.push(Promise.resolve(0));
+      promises.push(Promise.resolve([]));
+    }
+
+    // Execute all queries in parallel
+    const [
+      sessionCount,
+      sessionData,
+      coursePlusCount,
+      coursePlusData,
+      packageCount,
+      packageData,
+    ] = await Promise.all(promises);
+
+    // Calculate total count and pagination
+    const totalCountWithExtras = sessionCount + coursePlusCount + packageCount;
+    const totalPages = Math.ceil(totalCountWithExtras / limit);
+
+    // Combine all data and sort by creation date
+    let allEnrollments = [];
+
+    // Add session enrollments
+    if (sessionData.length > 0) {
+      allEnrollments.push(...sessionData);
+    }
+
+    // Transform and add course plus enrollments
+    if (coursePlusData.length > 0) {
+      const coursePlusAsEnrollments = coursePlusData.map((coursePlus) => ({
+        session_id: `cp-${coursePlus.id}`,
+        session_createdAt: coursePlus.session.createdAt,
         session_status: coursePlus.session.status,
         session_payment: coursePlus.session.payment,
-        session_invoiceDone: false, // Always false for pending invoices
+        session_invoiceDone: false,
         student_id: coursePlus.session.student.id,
         student_name: coursePlus.session.student.name,
         course_id: coursePlus.session.course.id,
         course_title: `${coursePlus.session.course.title} (Course Plus)`,
         teacher_id: coursePlus.session.teacher?.id,
         teacher_name: coursePlus.session.teacher?.name,
-        classoption_tuitionfee: coursePlus.amount, // Use course plus amount
-        // Additional fields for identification
+        classOption_tuitionFee: coursePlus.amount,
+        // Additional fields
         coursePlusId: coursePlus.id,
         type: 'course_plus',
         additionalClasses: coursePlus.classNo,
         description: coursePlus.description,
       }));
-
       allEnrollments.push(...coursePlusAsEnrollments);
-      totalExtraCount += coursePlusRecords.length;
     }
 
-    // Get Package records that need invoices if requested - ONLY invoiceGenerated: false
-    if (
-      !transactionType ||
-      transactionType === 'all' ||
-      transactionType === 'package'
-    ) {
-      const packageWhere: any = { invoiceGenerated: false }; // Always only pending
-
-      // Apply student filter if provided
-      if (student && student.trim() !== '') {
-        packageWhere.studentName = ILike(`%${student}%`);
-      }
-
-      const packageRecords = await this.packageRepo.find({
-        where: packageWhere,
-        order: { createdAt: 'DESC' },
-      });
-
-      console.log('Fetched Package records:', packageRecords);
-
-      // Transform Packages to match session enrollment format
-      const packagesAsEnrollments = packageRecords.map((pkg) => ({
-        session_id: `pkg-${pkg.id}`, // Prefix to distinguish
-        session_createdat: pkg.createdAt,
+    // Transform and add package enrollments
+    if (packageData.length > 0) {
+      const packagesAsEnrollments = packageData.map((pkg) => ({
+        session_id: `pkg-${pkg.id}`,
+        session_createdAt: pkg.createdAt,
         session_status: pkg.status,
-        session_payment: 'pending', // Default for packages
-        session_invoiceDone: false, // Always false for pending invoices
+        session_payment: 'pending',
+        session_invoiceDone: false,
         student_id: pkg.studentId,
         student_name: pkg.studentName,
         course_id: pkg.classOptionId,
         course_title: `${pkg.classOptionTitle} (Package)`,
-        teacher_id: null, // Packages don't have teachers
+        teacher_id: null,
         teacher_name: null,
-        classoption_tuitionfee: pkg.tuitionFee,
-        // Additional fields for identification
+        classOption_tuitionFee: pkg.tuitionFee,
+        // Additional fields
         packageId: pkg.id,
         type: 'package',
         classMode: pkg.classMode,
@@ -632,32 +663,41 @@ export class SessionService {
         purchaseDate: pkg.purchaseDate,
         isRedeemed: pkg.isRedeemed,
       }));
-
       allEnrollments.push(...packagesAsEnrollments);
-      totalExtraCount += packageRecords.length;
     }
 
-    // Update total count to include extra records (course plus + packages)
-    const sessionCount =
-      !transactionType ||
-      transactionType === 'all' ||
-      transactionType === 'course'
-        ? totalCount
-        : 0;
-    const totalCountWithExtras = sessionCount + totalExtraCount;
-    const totalPagesWithExtras = Math.ceil(totalCountWithExtras / limit);
+    // Sort all enrollments by creation date (newest first)
+    allEnrollments.sort((a, b) => {
+      const dateA = new Date(a.session_createdAt || a.session_createdat);
+      const dateB = new Date(b.session_createdAt || b.session_createdat);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    // Apply pagination to the combined results
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedEnrollments = allEnrollments.slice(startIndex, endIndex);
+
+    // Normalize field names to match expected format
+    const normalizedEnrollments = paginatedEnrollments.map((enrollment) => ({
+      ...enrollment,
+      session_createdat:
+        enrollment.session_createdAt || enrollment.session_createdat,
+      classoption_tuitionfee:
+        enrollment.classOption_tuitionFee || enrollment.classoption_tuitionfee,
+    }));
 
     console.log(
-      `Returning ${allEnrollments.length} enrollments out of ${totalCountWithExtras} total`,
+      `Returning ${normalizedEnrollments.length} enrollments out of ${totalCountWithExtras} total`,
     );
 
     return {
-      enrollments: allEnrollments,
+      enrollments: normalizedEnrollments,
       pagination: {
         currentPage: page,
-        totalPages: totalPagesWithExtras,
+        totalPages,
         totalCount: totalCountWithExtras,
-        hasNext: page < totalPagesWithExtras,
+        hasNext: page < totalPages,
         hasPrev: page > 1,
       },
     };

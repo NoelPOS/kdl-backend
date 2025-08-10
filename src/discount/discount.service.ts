@@ -59,7 +59,7 @@ export class DiscountService {
       .getOne();
 
     if (!discount) {
-      throw new NotFoundException(`Discount with name ${name} not found.`);
+      return [];
     }
     return [discount];
   }
