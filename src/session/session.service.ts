@@ -327,7 +327,7 @@ export class SessionService {
           .from('schedules', 'schedule')
           .where('schedule.sessionId = session.id')
           .andWhere('schedule.attendance = :attendance', {
-            attendance: 'present',
+            attendance: 'completed',
           });
       }, 'completedCount')
       .addSelect((subQuery) => {
@@ -335,7 +335,16 @@ export class SessionService {
           .select('COUNT(*)')
           .from('schedules', 'schedule')
           .where('schedule.sessionId = session.id');
-      }, 'totalScheduledCount');
+      }, 'totalScheduledCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id')
+          .andWhere('schedule.attendance = :canceledAttendance', {
+            canceledAttendance: 'cancelled',
+          });
+      }, 'canceledCount');
 
     // Get the sessions with progress data in one query
     const result = await queryBuilder.getRawAndEntities();
@@ -346,6 +355,7 @@ export class SessionService {
       const totalScheduledCount = parseInt(
         result.raw[index].totalScheduledCount || '0',
       );
+      const canceledCount = parseInt(result.raw[index].canceledCount || '0');
 
       // Calculate progress percentage
       const progressPercentage =
@@ -360,7 +370,7 @@ export class SessionService {
         mode: session.classOption.classMode,
         payment: session.payment,
         completedCount,
-        classCancel: session.classCancel,
+        classCancel: canceledCount,
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
         status: session.status,
