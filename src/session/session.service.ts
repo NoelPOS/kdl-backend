@@ -13,10 +13,16 @@ import { Schedule } from '../schedule/entities/schedule.entity';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { InvoiceFilterDto } from './dto/invoice-filter.dto';
+import { PackageEntity } from '../package/entities/package.entity';
 import { ReceiptFilterDto } from './dto/receipt-filter.dto';
 import { Invoice } from '../session/entities/session.entity';
 import { DataSource } from 'typeorm';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
+import { CoursePlus } from '../course-plus/entities/course-plus.entity';
+import { AddCoursePlusDto } from './dto/add-course-plus.dto';
+import { CourseEntity } from '../course/entities/course.entity';
+import { console } from 'inspector';
+import { parse } from 'path';
 
 @Injectable()
 export class SessionService {
@@ -39,39 +45,83 @@ export class SessionService {
     @InjectRepository(Receipt)
     private readonly receiptRepo: Repository<Receipt>,
 
+    @InjectRepository(CoursePlus)
+    private readonly coursePlusRepo: Repository<CoursePlus>,
+
+    @InjectRepository(PackageEntity)
+    private readonly packageRepo: Repository<PackageEntity>,
+
     private readonly dataSource: DataSource,
   ) {}
 
   async create(dto: CreateSessionDto) {
     // Check for existing session with same studentId, courseId, and classOptionId
     console.log('Creating session with data:', dto);
-    const existing = await this.sessionRepository.findOne({
-      where: {
-        studentId: dto.studentId,
-        courseId: dto.courseId,
-        classOptionId: dto.classOptionId,
-        teacherId: dto.teacherId,
-      },
-    });
-    if (existing) {
-      throw new BadRequestException(
-        'A session with the same student, course, and class option already exists.',
-      );
+
+    // For package-based sessions, we might allow multiple sessions from the same package
+    // So we need to modify the duplicate check logic
+    if (!dto.isFromPackage) {
+      const existing = await this.sessionRepository.findOne({
+        where: {
+          studentId: dto.studentId,
+          courseId: dto.courseId,
+          classOptionId: dto.classOptionId,
+          teacherId: dto.teacherId,
+          isFromPackage: false, // Only check for non-package sessions
+        },
+      });
+      if (existing) {
+        throw new BadRequestException(
+          'A session with the same student, course, and class option already exists.',
+        );
+      }
     }
+
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
-    session.invoiceDone = false;
+    session.invoiceDone = dto.isFromPackage ? true : false; // If from package, invoice is already handled
+    session.isFromPackage = dto.isFromPackage || false;
+    session.packageId = dto.packageId || null;
+
+    // If this is from a package, we might want to update the package status
+    if (dto.isFromPackage && dto.packageId) {
+      try {
+        // First get the course details to update package redemption info
+        const course = await this.dataSource
+          .getRepository(CourseEntity)
+          .findOne({
+            where: { id: dto.courseId },
+          });
+
+        // Update the package to mark it as used/redeemed
+        await this.packageRepo.update(dto.packageId, {
+          isRedeemed: true,
+          status: 'used',
+          redeemedAt: new Date().toISOString(),
+          redeemedCourseId: dto.courseId,
+          redeemedCourseName: course?.title || 'Unknown Course',
+        });
+      } catch (error) {
+        console.error('Error updating package status:', error);
+        // You might want to throw an error here or handle it differently
+        throw new BadRequestException('Failed to update package status');
+      }
+    }
+
     return await this.sessionRepository.save(session);
   }
 
   async findAll() {
-    return this.sessionRepository.find({ relations: ['course'] });
+    return this.sessionRepository.find({
+      relations: ['course'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOne(id: number) {
     return this.sessionRepository.findOne({
       where: { id },
-      relations: ['course'],
+      relations: ['course', 'classOption'],
     });
   }
 
@@ -92,17 +142,91 @@ export class SessionService {
     return session;
   }
 
+  async addCoursePlus(addCoursePlusDto: AddCoursePlusDto) {
+    const { sessionId, additionalClasses } = addCoursePlusDto;
+
+    // Verify session exists and get related data
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      relations: ['course', 'classOption', 'student', 'teacher'],
+    });
+
+    if (!session) {
+      throw new BadRequestException(`Session with ID ${sessionId} not found`);
+    }
+
+    // Calculate amount based on class option
+    const pricePerClass =
+      session.classOption.tuitionFee / session.classOption.classLimit;
+    const totalAmount = pricePerClass * additionalClasses;
+
+    // Create course plus record
+    const coursePlus = this.coursePlusRepo.create({
+      sessionId: sessionId,
+      classNo: additionalClasses,
+      amount: totalAmount,
+      payment: false,
+      description: `Additional ${additionalClasses} classes for ${session.course.title}`,
+      invoiceGenerated: false,
+      receiptGenerated: false,
+    });
+
+    const savedCoursePlus = await this.coursePlusRepo.save(coursePlus);
+
+    // Create additional schedules based on additionalClasses count
+    const createdSchedules = [];
+    for (let i = 0; i < additionalClasses; i++) {
+      const schedule = this.scheduleRepo.create({
+        sessionId: sessionId,
+        courseId: session.courseId,
+        studentId: session.studentId,
+        teacherId: session.teacherId,
+        coursePlusId: savedCoursePlus.id,
+        // Default values - can be updated later by admin
+        date: new Date(), // Placeholder date
+        startTime: '09:00', // Placeholder time
+        endTime: '10:00', // Placeholder time
+        room: 'TBD', // To be determined
+        attendance: '',
+        remark: '',
+        warning: '',
+        feedback: '',
+        verifyFb: false,
+        classNumber: null,
+      });
+
+      const savedSchedule = await this.scheduleRepo.save(schedule);
+      createdSchedules.push(savedSchedule);
+    }
+
+    return {
+      success: true,
+      coursePlus: savedCoursePlus,
+      schedules: createdSchedules,
+      message: `Successfully added ${additionalClasses} additional classes with schedules`,
+    };
+  }
+
   async getStudentSessions(studentId: number) {
     return this.sessionRepository.find({
       where: { studentId },
-      relations: ['course', 'teacher'],
+      relations: ['course', 'teacher', 'classOption'],
+      order: { createdAt: 'DESC' },
     });
   }
 
   async getStudentSessionByCourse(studentId: number, courseId: number) {
     return this.sessionRepository.findOne({
       where: { studentId, courseId },
-      relations: ['course', 'teacher'],
+      relations: ['course', 'teacher', 'classOption'],
+    });
+  }
+
+  async getSessionsByPackage(packageId: number) {
+    return this.sessionRepository.find({
+      where: { packageId, isFromPackage: true },
+      relations: ['course', 'teacher', 'classOption'],
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -134,6 +258,8 @@ export class SessionService {
       completedCount: parseInt(result.raw[index].completedCount || '0'),
       classCancel: session.classCancel,
       medium: session.course.medium,
+      isFromPackage: session.isFromPackage,
+      packageId: session.packageId,
     }));
   }
 
@@ -238,6 +364,8 @@ export class SessionService {
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
         status: session.status,
+        isFromPackage: session.isFromPackage,
+        packageId: session.packageId,
       };
     });
 
@@ -264,6 +392,7 @@ export class SessionService {
     course?: string,
     teacher?: string,
     student?: string,
+    transactionType?: string,
     page: number = 1,
     limit: number = 10,
   ): Promise<{
@@ -290,30 +419,14 @@ export class SessionService {
     page = Math.max(1, page);
     limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
 
-    // First, get the session IDs that match our criteria for counting
+    // First, get the session IDs that match our criteria for counting - ONLY pending invoices
     let countQueryBuilder = this.sessionRepository
       .createQueryBuilder('session')
       .leftJoin('session.student', 'student')
       .leftJoin('session.course', 'course')
       .leftJoin('session.teacher', 'teacher')
-      .leftJoin('session.classOption', 'classOption');
-
-    // Base filter - only pending invoices by default
-    if (!status || status === 'all') {
-      countQueryBuilder = countQueryBuilder.where(
-        'session.invoiceDone = :invoiceDone',
-        {
-          invoiceDone: false,
-        },
-      );
-    } else if (status === 'completed') {
-      countQueryBuilder = countQueryBuilder.where(
-        'session.invoiceDone = :invoiceDone',
-        {
-          invoiceDone: true,
-        },
-      );
-    }
+      .leftJoin('session.classOption', 'classOption')
+      .where('session.invoiceDone = :invoiceDone', { invoiceDone: false }); // Always only pending
 
     // Add filtering conditions to count query
     if (date) {
@@ -356,7 +469,7 @@ export class SessionService {
     const totalCount = await countQueryBuilder.getCount();
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Now build the main query with pagination and sort by createdAt
+    // Now build the main query with pagination and sort by createdAt - ONLY pending invoices
     let queryBuilder = this.sessionRepository
       .createQueryBuilder('session')
       .leftJoin('session.student', 'student')
@@ -376,17 +489,8 @@ export class SessionService {
         'teacher.id as teacher_id',
         'teacher.name as teacher_name',
         'classOption.tuitionFee as classOption_tuitionFee',
-      ]);
-    // Apply the same filters to the main query
-    if (!status || status === 'pending') {
-      queryBuilder = queryBuilder.where('session.invoiceDone = :invoiceDone', {
-        invoiceDone: false,
-      });
-    } else if (status === 'completed') {
-      queryBuilder = queryBuilder.where('session.invoiceDone = :invoiceDone', {
-        invoiceDone: true,
-      });
-    }
+      ])
+      .where('session.invoiceDone = :invoiceDone', { invoiceDone: false }); // Always only pending
 
     if (date) {
       queryBuilder = queryBuilder.andWhere('DATE(session.createdAt) = :date', {
@@ -420,27 +524,220 @@ export class SessionService {
 
     const enrollments = await queryBuilder.getRawMany();
 
+    let allEnrollments = [];
+    let totalExtraCount = 0;
+
+    // Add regular session enrollments if requested
+    if (
+      !transactionType ||
+      transactionType === 'all' ||
+      transactionType === 'course'
+    ) {
+      allEnrollments.push(...enrollments);
+    }
+
+    // Get Course Plus records that need invoices if requested - ONLY invoiceGenerated: false
+    if (
+      !transactionType ||
+      transactionType === 'all' ||
+      transactionType === 'courseplus'
+    ) {
+      const coursePlusRecords = await this.coursePlusRepo.find({
+        where: { invoiceGenerated: false }, // Always only pending
+        relations: [
+          'session',
+          'session.student',
+          'session.course',
+          'session.classOption',
+          'session.teacher',
+        ],
+      });
+
+      console.log('Fetched Course Plus records:', coursePlusRecords);
+
+      // Transform Course Plus to match session enrollment format
+      const coursePlusAsEnrollments = coursePlusRecords.map((coursePlus) => ({
+        session_id: `cp-${coursePlus.id}`, // Prefix to distinguish
+        session_createdat: coursePlus.session.createdAt,
+        session_status: coursePlus.session.status,
+        session_payment: coursePlus.session.payment,
+        session_invoiceDone: false, // Always false for pending invoices
+        student_id: coursePlus.session.student.id,
+        student_name: coursePlus.session.student.name,
+        course_id: coursePlus.session.course.id,
+        course_title: `${coursePlus.session.course.title} (Course Plus)`,
+        teacher_id: coursePlus.session.teacher?.id,
+        teacher_name: coursePlus.session.teacher?.name,
+        classoption_tuitionfee: coursePlus.amount, // Use course plus amount
+        // Additional fields for identification
+        coursePlusId: coursePlus.id,
+        type: 'course_plus',
+        additionalClasses: coursePlus.classNo,
+        description: coursePlus.description,
+      }));
+
+      allEnrollments.push(...coursePlusAsEnrollments);
+      totalExtraCount += coursePlusRecords.length;
+    }
+
+    // Get Package records that need invoices if requested - ONLY invoiceGenerated: false
+    if (
+      !transactionType ||
+      transactionType === 'all' ||
+      transactionType === 'package'
+    ) {
+      const packageWhere: any = { invoiceGenerated: false }; // Always only pending
+
+      // Apply student filter if provided
+      if (student && student.trim() !== '') {
+        packageWhere.studentName = ILike(`%${student}%`);
+      }
+
+      const packageRecords = await this.packageRepo.find({
+        where: packageWhere,
+        order: { createdAt: 'DESC' },
+      });
+
+      console.log('Fetched Package records:', packageRecords);
+
+      // Transform Packages to match session enrollment format
+      const packagesAsEnrollments = packageRecords.map((pkg) => ({
+        session_id: `pkg-${pkg.id}`, // Prefix to distinguish
+        session_createdat: pkg.createdAt,
+        session_status: pkg.status,
+        session_payment: 'pending', // Default for packages
+        session_invoiceDone: false, // Always false for pending invoices
+        student_id: pkg.studentId,
+        student_name: pkg.studentName,
+        course_id: pkg.classOptionId,
+        course_title: `${pkg.classOptionTitle} (Package)`,
+        teacher_id: null, // Packages don't have teachers
+        teacher_name: null,
+        classoption_tuitionfee: pkg.tuitionFee,
+        // Additional fields for identification
+        packageId: pkg.id,
+        type: 'package',
+        classMode: pkg.classMode,
+        classLimit: pkg.classLimit,
+        purchaseDate: pkg.purchaseDate,
+        isRedeemed: pkg.isRedeemed,
+      }));
+
+      allEnrollments.push(...packagesAsEnrollments);
+      totalExtraCount += packageRecords.length;
+    }
+
+    // Update total count to include extra records (course plus + packages)
+    const sessionCount =
+      !transactionType ||
+      transactionType === 'all' ||
+      transactionType === 'course'
+        ? totalCount
+        : 0;
+    const totalCountWithExtras = sessionCount + totalExtraCount;
+    const totalPagesWithExtras = Math.ceil(totalCountWithExtras / limit);
+
     console.log(
-      `Returning ${enrollments.length} enrollments out of ${totalCount} total`,
+      `Returning ${allEnrollments.length} enrollments out of ${totalCountWithExtras} total`,
     );
 
     return {
-      enrollments,
+      enrollments: allEnrollments,
       pagination: {
         currentPage: page,
-        totalPages,
-        totalCount,
-        hasNext: page < totalPages,
+        totalPages: totalPagesWithExtras,
+        totalCount: totalCountWithExtras,
+        hasNext: page < totalPagesWithExtras,
         hasPrev: page > 1,
       },
     };
   }
 
-  async getSpecificPendingSessionsForInvoice(sessionId: number) {
+  async getSpecificPendingSessionsForInvoice(sessionId: number | string) {
     console.log(
       'Fetching specific pending session for invoice with ID:',
       sessionId,
     );
+
+    // Check if this is a Course Plus ID (prefixed with 'cp-')
+    if (typeof sessionId === 'string' && sessionId.startsWith('cp-')) {
+      const coursePlusId = parseInt(sessionId.replace('cp-', ''));
+      console.log('Fetching Course Plus record with ID:', coursePlusId);
+
+      const coursePlus = await this.coursePlusRepo.findOne({
+        where: { id: coursePlusId },
+        relations: [
+          'session',
+          'session.student',
+          'session.course',
+          'session.classOption',
+        ],
+      });
+
+      if (!coursePlus) {
+        console.log('Course Plus record not found with ID:', coursePlusId);
+        return null;
+      }
+
+      // Transform Course Plus to match the expected session format
+      const transformedCoursePlus = {
+        session_id: coursePlusId,
+        session_createdat: coursePlus.session.createdAt,
+        student_id: coursePlus.session.student.id,
+        student_name: coursePlus.session.student.name,
+        course_title: `${coursePlus.session.course.title} (Course Plus)`,
+        classoption_tuitionfee: coursePlus.amount, // Use Course Plus amount instead of class option fee
+        // Additional Course Plus specific fields
+        type: 'course_plus',
+        coursePlusId: coursePlus.id,
+        additionalClasses: coursePlus.classNo,
+        description: coursePlus.description,
+        originalSessionId: coursePlus.sessionId,
+      };
+
+      console.log(
+        'Fetched specific Course Plus for invoice:',
+        transformedCoursePlus,
+      );
+      return transformedCoursePlus;
+    }
+
+    // Check if this is a Package ID (prefixed with 'pkg-')
+    if (typeof sessionId === 'string' && sessionId.startsWith('pkg-')) {
+      const packageId = parseInt(sessionId.replace('pkg-', ''));
+      console.log('Fetching Package record with ID:', packageId);
+
+      const packageRecord = await this.packageRepo.findOne({
+        where: { id: packageId },
+      });
+
+      if (!packageRecord) {
+        console.log('Package record not found with ID:', packageId);
+        return null;
+      }
+
+      // Transform Package to match the expected session format
+      const transformedPackage = {
+        session_id: packageId,
+        session_createdat: packageRecord.createdAt,
+        student_id: packageRecord.studentId,
+        student_name: packageRecord.studentName,
+        course_title: `${packageRecord.classOptionTitle} (Package)`,
+        classoption_tuitionfee: packageRecord.tuitionFee,
+        // Additional Package specific fields
+        type: 'package',
+        packageId: packageRecord.id,
+        classMode: packageRecord.classMode,
+        classLimit: packageRecord.classLimit,
+        purchaseDate: packageRecord.purchaseDate,
+        isRedeemed: packageRecord.isRedeemed,
+      };
+
+      console.log('Fetched specific Package for invoice:', transformedPackage);
+      return transformedPackage;
+    }
+
+    // Handle regular session (original logic)
     const session = await this.sessionRepository
       .createQueryBuilder('session')
       .leftJoin('session.student', 'student')
@@ -457,36 +754,21 @@ export class SessionService {
       .andWhere('session.id = :sessionId', { sessionId })
       .getRawOne();
 
+    if (session) {
+      session.type = 'session'; // Add type for consistency
+    }
+
     console.log('Fetched specific pending session for invoice:', session);
     return session;
   }
 
   async getInvoice(id: number) {
-    const qb = this.invoiceRepo
-      .createQueryBuilder('invoice')
-      .leftJoin('invoice.session', 'session')
-      .leftJoin('session.student', 'student')
-      .leftJoin('session.course', 'course')
-      .leftJoinAndSelect('invoice.items', 'items')
-      .where('invoice.id = :id', { id })
-      .select([
-        'invoice.id',
-        'invoice.documentId',
-        'invoice.date',
-        'invoice.paymentMethod',
-        'invoice.totalAmount',
-        'invoice.sessionId',
-        'invoice.receiptDone',
-        'items',
-        'session.id',
-        'student.name',
-        'course.title',
-      ]);
-    const invoice = await qb.getOne();
-    if (!invoice) return null;
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id },
+      relations: ['items'],
+    });
     return invoice;
   }
-
   async getReceipt(id: number) {
     return this.receiptRepo.findOne({
       where: { id },
@@ -521,10 +803,6 @@ export class SessionService {
 
     const queryBuilder = this.invoiceRepo
       .createQueryBuilder('invoice')
-      .leftJoinAndSelect('invoice.session', 'session')
-      .leftJoinAndSelect('session.student', 'student')
-      .leftJoinAndSelect('session.course', 'course')
-      .leftJoinAndSelect('session.teacher', 'teacher')
       .leftJoinAndSelect('invoice.items', 'items')
       .orderBy('invoice.date', 'DESC');
 
@@ -535,13 +813,13 @@ export class SessionService {
     }
 
     if (student) {
-      queryBuilder.andWhere('student.name ILIKE :studentName', {
+      queryBuilder.andWhere('invoice.studentName ILIKE :studentName', {
         studentName: `%${student}%`,
       });
     }
 
     if (course) {
-      queryBuilder.andWhere('course.title ILIKE :courseName', {
+      queryBuilder.andWhere('invoice.courseName ILIKE :courseName', {
         courseName: `%${course}%`,
       });
     }
@@ -563,7 +841,7 @@ export class SessionService {
     const invoices = await queryBuilder.offset(offset).limit(limit).getMany();
 
     const totalPages = Math.ceil(totalCount / limit);
-
+    console.log('Invoices fetched:', invoices);
     return {
       invoices,
       pagination: {
@@ -637,9 +915,28 @@ export class SessionService {
 
   async createInvoiceAndMarkSession(dto: CreateInvoiceDto) {
     return this.dataSource.transaction(async (manager) => {
+      // Validate that the correct ID is provided based on type
+      if (dto.transactionType === 'course' && !dto.sessionId) {
+        throw new BadRequestException('sessionId is required for course type');
+      }
+      if (dto.transactionType === 'courseplus' && !dto.coursePlusId) {
+        throw new BadRequestException(
+          'coursePlusId is required for courseplus type',
+        );
+      }
+      if (dto.transactionType === 'package' && !dto.packageId) {
+        throw new BadRequestException('packageId is required for package type');
+      }
+
       const invoiceRepo = manager.getRepository(Invoice);
       const invoice = invoiceRepo.create({
-        sessionId: dto.sessionId,
+        studentId: dto.studentId,
+        studentName: dto.studentName,
+        courseName: dto.courseName,
+        sessionId: dto.sessionId || null,
+        coursePlusId: dto.coursePlusId || null,
+        packageId: dto.packageId || null,
+        type: dto.transactionType,
         documentId: dto.documentId,
         date: new Date(dto.date),
         paymentMethod: dto.paymentMethod,
@@ -650,8 +947,25 @@ export class SessionService {
       });
       const savedInvoice = await invoiceRepo.save(invoice);
 
-      const sessionRepo = manager.getRepository(Session);
-      await sessionRepo.update(dto.sessionId, { invoiceDone: true });
+      // Update the respective entity based on type
+      if (dto.transactionType === 'course' && dto.sessionId) {
+        const sessionRepo = manager.getRepository(Session);
+        await sessionRepo.update(dto.sessionId, { invoiceDone: true });
+      } else if (dto.transactionType === 'courseplus' && dto.coursePlusId) {
+        const coursePlusRepo = manager.getRepository(CoursePlus);
+        const coursePlusId = parseInt(
+          (dto.coursePlusId as string).replace('cp-', ''),
+        );
+        await coursePlusRepo.update(coursePlusId, {
+          invoiceGenerated: true,
+        });
+      } else if (dto.transactionType === 'package' && dto.packageId) {
+        const packageId = parseInt(
+          (dto.packageId as string).replace('pkg-', ''),
+        );
+        const packageRepo = manager.getRepository(PackageEntity);
+        await packageRepo.update(packageId, { invoiceGenerated: true });
+      }
 
       return savedInvoice;
     });

@@ -33,6 +33,7 @@ import { PaginatedSessionResponseDto } from './dto/paginated-session-response.dt
 import { PaginatedInvoiceResponseDto } from './dto/paginated-invoice-response.dto';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
 import { PaginatedSessionOverviewResponseDto } from './dto/paginated-session-overview-response.dto';
+import { AddCoursePlusDto } from './dto/add-course-plus.dto';
 
 @Controller('sessions')
 export class SessionController {
@@ -50,6 +51,20 @@ export class SessionController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   create(@Body() createSessionDto: CreateSessionDto) {
     return this.sessionService.create(createSessionDto);
+  }
+
+  @ApiTags('Sessions')
+  @Post('course-plus')
+  @ApiOperation({ summary: 'Add course plus to an existing session' })
+  @ApiBody({ type: AddCoursePlusDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Course plus has been successfully added.',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @ApiResponse({ status: 404, description: 'Session not found.' })
+  addCoursePlus(@Body() addCoursePlusDto: AddCoursePlusDto) {
+    return this.sessionService.addCoursePlus(addCoursePlusDto);
   }
 
   @ApiTags('Sessions')
@@ -148,6 +163,19 @@ export class SessionController {
     return this.sessionService.getStudentSessionByCourse(studentId, courseId);
   }
 
+  @ApiTags('Sessions')
+  @Get('package/:packageId')
+  @ApiOperation({ summary: 'Get sessions created from a specific package' })
+  @ApiParam({ name: 'packageId', type: 'number' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions created from the specified package',
+    type: [Session],
+  })
+  getSessionsByPackage(@Param('packageId', ParseIntPipe) packageId: number) {
+    return this.sessionService.getSessionsByPackage(packageId);
+  }
+
   @ApiTags('Class Options')
   @Post('class-options')
   @ApiOperation({ summary: 'Create a new class option' })
@@ -211,6 +239,13 @@ export class SessionController {
     type: 'number',
     description: 'Items per page (default: 10)',
   })
+  @ApiQuery({
+    name: 'transactionType',
+    required: false,
+    description:
+      'Filter by transaction type: course, courseplus, package, or all',
+    enum: ['course', 'courseplus', 'package', 'all'],
+  })
   @ApiResponse({
     status: 200,
     description: 'List of sessions pending invoice with pagination',
@@ -222,6 +257,7 @@ export class SessionController {
     @Query('course') course?: string,
     @Query('teacher') teacher?: string,
     @Query('student') student?: string,
+    @Query('transactionType') transactionType?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ) {
@@ -231,6 +267,7 @@ export class SessionController {
       course,
       teacher,
       student,
+      transactionType,
       page,
       limit,
     );
@@ -239,14 +276,14 @@ export class SessionController {
   @ApiTags('Invoices')
   @Get('pending-invoice/:sessionId')
   @ApiOperation({ summary: 'Get a specific session pending invoice' })
-  @ApiParam({ name: 'sessionId', type: 'number' })
+  @ApiParam({ name: 'sessionId' })
   @ApiResponse({
     status: 200,
     description: 'The session pending invoice',
     type: Session,
   })
   getSpecificPendingSessionsForInvoice(
-    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('sessionId') sessionId: number | string,
   ) {
     return this.sessionService.getSpecificPendingSessionsForInvoice(sessionId);
   }
@@ -264,6 +301,7 @@ export class SessionController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   createInvoice(@Body() createInvoiceDto: CreateInvoiceDto) {
+    console.log(createInvoiceDto);
     return this.sessionService.createInvoiceAndMarkSession(createInvoiceDto);
   }
 

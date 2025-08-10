@@ -7,6 +7,8 @@ import {
   IsArray,
   ValidateNested,
   ArrayMinSize,
+  IsOptional,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -21,9 +23,36 @@ class InvoiceItemDto {
 }
 
 export class CreateInvoiceDto {
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
+  sessionId?: number | string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  coursePlusId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  packageId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  courseName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsInt()
-  sessionId: number;
+  studentId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  studentName?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsIn(['course', 'courseplus', 'package'])
+  transactionType: 'course' | 'courseplus' | 'package';
 
   @ApiProperty()
   @IsString()

@@ -30,12 +30,39 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       maxQueryExecutionTime: 500,
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
       migrationsRun: false,
-      // Connection pool optimization
+      // Enhanced connection pool optimization for production reliability
       extra: {
         max: 20, // Maximum pool size
-        min: 5, // Minimum pool size
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
+        min: 5, // Minimum pool size - keep minimum connections alive
+        idleTimeoutMillis: 300000, // 5 minutes - keep connections alive longer
+        connectionTimeoutMillis: 10000, // 10 seconds - longer timeout for connection acquisition
+        acquireTimeoutMillis: 30000, // 30 seconds - time to wait for available connection
+        // PostgreSQL specific settings
+        keepAlive: true, // Enable TCP keep-alive
+        keepAliveInitialDelayMillis: 10000, // 10 seconds
+        // Optimized reconnection settings (less frequent checks for efficiency)
+        reapIntervalMillis: 10000, // Check for idle connections every 10 seconds (not 1s)
+        createTimeoutMillis: 30000, // 30 seconds to create new connection
+        destroyTimeoutMillis: 5000, // 5 seconds to destroy connection
+        createRetryIntervalMillis: 1000, // 1 second between retry attempts (not 200ms)
+
+        // CRITICAL: Connection validation to prevent "Connection terminated" errors
+        testOnBorrow: true, // Test connection before giving to client (prevents stale connections)
+        testOnReturn: false, // Don't test on return (efficiency)
+        testOnCreate: true, // Test new connections
+        testWhileIdle: true, // Test idle connections
+        validationQuery: 'SELECT 1', // Simple health check query
+        validationTimeout: 3000, // 3 seconds to validate connection
+
+        // PostgreSQL-specific connection validation
+        statement_timeout: 60000, // 60 seconds for query timeout
+        query_timeout: 60000, // 60 seconds for query timeout
+        idle_in_transaction_session_timeout: 300000, // 5 minutes for idle transactions
+
+        // Network-level keep-alive for long-term connections
+        keepAliveInitialDelay: 10000, // 10 seconds initial delay
+        keepAliveProbes: 3, // Number of keep-alive probes before giving up
+        keepAliveInterval: 10000, // 10 seconds between keep-alive probes
       },
     };
   },

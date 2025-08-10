@@ -77,6 +77,16 @@ export class Session {
   @ApiProperty({ description: 'Invoice done' })
   invoiceDone: boolean;
 
+  @Column({ default: false })
+  @ApiProperty({
+    description: 'Whether this session is created from a package',
+  })
+  isFromPackage: boolean;
+
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'Package ID if session is from a package' })
+  packageId: number;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Session creation date' })
   createdAt: Date;
@@ -118,21 +128,36 @@ export class Invoice {
   @Column('decimal')
   totalAmount: number;
 
-  @Column({ nullable: true })
-  sessionId: number;
+  @Column({ nullable: true, type: 'varchar' })
+  sessionId: number | string;
 
-  @Column({ nullable: true })
-  coursePlusId: number;
+  @Column({ nullable: true, type: 'varchar' })
+  coursePlusId: number | string;
+
+  @Column({ nullable: true, type: 'varchar' })
+  packageId: number | string;
 
   @Column({ default: false })
   receiptDone: boolean;
+
+  @Column({ default: 'course' })
+  type: string; // 'session', 'course_plus', 'package'
+
+  @Column({ nullable: true })
+  studentId: number;
+
+  @Column({ nullable: true })
+  studentName: string;
+
+  @Column({ nullable: true })
+  courseName: string;
 
   @OneToOne(() => CoursePlus)
   @JoinColumn({ name: 'coursePlusId' })
   coursePlus: CoursePlus;
 
-  @OneToOne(() => Session)
-  @JoinColumn({ name: 'sessionId' })
+  @OneToOne(() => Session, { nullable: true })
+  @JoinColumn({ name: 'sessionId', foreignKeyConstraintName: null }) // Disable FK constraint
   session: Session;
 
   @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true })

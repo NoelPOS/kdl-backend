@@ -19,8 +19,10 @@ import { RoomModule } from '../room/room.module';
 import { DiscountModule } from '../discount/discount.module';
 import { SessionModule } from '../session/session.module';
 import { CoursePlusModule } from '../course-plus/course-plus.module';
+import { PackageModule } from '../package/package.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
   imports: [
@@ -79,6 +81,10 @@ import { join } from 'path';
     }),
 
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+
+    // Database error handling and connection management
+    DatabaseModule,
+
     // Common modules
     CommonModule,
 
@@ -92,6 +98,7 @@ import { join } from 'path';
     DiscountModule,
     SessionModule,
     CoursePlusModule,
+    PackageModule,
   ],
   providers: [
     // Global Guards

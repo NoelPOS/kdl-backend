@@ -10,6 +10,8 @@ import {
   Invoice,
 } from './entities/session.entity';
 import { Schedule } from '../schedule/entities/schedule.entity';
+import { CoursePlus } from '../course-plus/entities/course-plus.entity';
+import { PackageEntity } from '../package/entities/package.entity';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { Schedule } from '../schedule/entities/schedule.entity';
       InvoiceItem,
       Receipt,
       Invoice,
+      CoursePlus,
+      PackageEntity,
     ]),
   ],
   controllers: [SessionController],
