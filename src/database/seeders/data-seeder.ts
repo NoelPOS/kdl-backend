@@ -471,7 +471,6 @@ export class DataSeeder {
         'Credit Card',
       ]);
       invoice.totalAmount = classOption.tuitionFee;
-      invoice.sessionId = session.id;
       invoice.receiptDone = faker.datatype.boolean();
       invoices.push(invoice);
     }

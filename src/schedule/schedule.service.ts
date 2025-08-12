@@ -19,6 +19,7 @@ export class ScheduleService {
   }
 
   async createBulkSchedules(dtos: CreateScheduleDto[]) {
+    console.log('Creating bulk schedules:', dtos);
     const schedules = dtos.map((dto) => this.scheduleRepo.create(dto));
     return await this.scheduleRepo.save(schedules);
   }
