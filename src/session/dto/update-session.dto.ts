@@ -16,4 +16,9 @@ export class UpdateSessionDto extends PartialType(CreateSessionDto) {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiProperty({ required: false, description: 'Session payment status' })
+  @IsOptional()
+  @IsString()
+  payment?: string;
 }

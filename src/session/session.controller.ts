@@ -289,15 +289,38 @@ export class SessionController {
   }
 
   @ApiTags('Invoices')
+  @Get('invoices/next-document-id')
+  @ApiOperation({ summary: 'Get the next available document ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the next document ID that would be generated',
+    schema: {
+      type: 'object',
+      properties: {
+        documentId: {
+          type: 'string',
+          example: '202508120001',
+        },
+      },
+    },
+  })
+  getNextDocumentId() {
+    return this.sessionService
+      .getNextDocumentId()
+      .then((documentId) => ({ documentId }));
+  }
+
+  @ApiTags('Invoices')
   @Post('invoices')
   @ApiOperation({
-    summary: 'Create a new invoice and mark session as invoiced (atomic)',
+    summary:
+      'Create a new invoice with session groups and mark sessions as invoiced (atomic)',
   })
   @ApiBody({ type: CreateInvoiceDto })
   @ApiResponse({
     status: 201,
     description:
-      'The invoice has been successfully created and the session marked as invoiced.',
+      'The invoice has been successfully created and the sessions marked as invoiced.',
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   createInvoice(@Body() createInvoiceDto: CreateInvoiceDto) {
@@ -400,24 +423,70 @@ export class SessionController {
   }
 
   @ApiTags('Sessions')
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update a session' })
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update session status' })
   @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ type: UpdateSessionDto })
+  @ApiBody({
+    description: 'Status update payload',
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          description: 'New status for the session',
+          example: 'Completed',
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 200,
-    description: 'The session has been successfully updated.',
+    description: 'The session status has been successfully updated.',
     type: Session,
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async update(
+  async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateSessionDto: UpdateSessionDto,
+    @Body('status') status: string,
   ) {
-    const updatedSession = await this.sessionService.update(
-      id,
-      updateSessionDto,
-    );
+    const updatedSession = await this.sessionService.update(id, { status });
+    if (!updatedSession) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+    return updatedSession;
+  }
+
+  @ApiTags('Sessions')
+  @Patch(':id/payment')
+  @ApiOperation({ summary: 'Update session payment status' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({
+    description: 'Payment status update payload',
+    schema: {
+      type: 'object',
+      properties: {
+        payment: {
+          type: 'string',
+          description: 'New payment status for the session',
+          example: 'paid',
+          enum: ['paid', 'unpaid'],
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The session payment status has been successfully updated.',
+    type: Session,
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async updatePayment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('status') status: string,
+  ) {
+    const updatedSession = await this.sessionService.update(id, {
+      payment: status,
+    });
     if (!updatedSession) {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
