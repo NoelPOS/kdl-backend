@@ -42,6 +42,12 @@ import { PaginatedTeacherResponseDto } from '../dto/paginated-teacher-response.d
 import { PaginatedParentResponseDto } from '../dto/paginated-parent-response.dto';
 import { AssignChildrenToParentDto } from '../dto/assign-children-parent.dto';
 import { UpdateTeacherDto } from '../dto/update-teacher.dto';
+import { ConnectParentStudentDto } from '../dto/connect-parent-student.dto';
+import { ParentChildrenFilterDto } from '../dto/parent-children-filter.dto';
+import { PaginatedParentChildrenResponseDto } from '../dto/paginated-parent-children-response.dto';
+import { ParentStudentEntity } from '../entities/parent-student.entity';
+import { TeacherCoursesFilterDto } from '../dto/teacher-courses-filter.dto';
+import { PaginatedTeacherCoursesResponseDto } from '../dto/paginated-teacher-courses-response.dto';
 
 @Controller('users')
 export class UserController {
@@ -233,21 +239,47 @@ export class UserController {
     return teacher;
   }
 
-  @ApiTags('Teachers')
+  @ApiTags('Teacher-Course Relationships')
   @Get('teachers/:teacherId/courses')
-  @ApiOperation({ summary: 'Get all courses assigned to a teacher' })
+  @ApiOperation({
+    summary: 'Get teacher courses with filtering and pagination',
+  })
   @ApiParam({
     name: 'teacherId',
     type: Number,
     description: 'ID of the teacher',
   })
+  @ApiQuery({
+    name: 'query',
+    required: false,
+    type: 'string',
+    description: 'Search query for filtering courses by name',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 12)',
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of courses assigned to the teacher',
-    type: [CourseEntity],
+    description: 'Paginated list of teacher courses with filtering',
+    type: PaginatedTeacherCoursesResponseDto,
   })
-  getCoursesByTeacher(@Param('teacherId', ParseIntPipe) teacherId: number) {
-    return this.userService.getCoursesByTeacherId(teacherId);
+  @ApiResponse({ status: 404, description: 'Teacher not found' })
+  getTeacherCourses(
+    @Param('teacherId', ParseIntPipe) teacherId: number,
+    @Query('query') query?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(12), ParseIntPipe) limit: number = 12,
+  ) {
+    return this.userService.getTeacherCourses(teacherId, query, page, limit);
   }
 
   @ApiTags('Teachers')
@@ -497,21 +529,69 @@ export class UserController {
     return this.userService.assignChildrenToParent(parentId, dto.studentIds);
   }
 
-  @ApiTags('Parents')
+  @ApiTags('Parent-Child Relationships')
   @Get('parents/:parentId/children')
-  @ApiOperation({ summary: 'Get all children of a parent' })
+  @ApiOperation({
+    summary: 'Get parent children with filtering and pagination',
+  })
   @ApiParam({
     name: 'parentId',
     type: Number,
     description: 'ID of the parent',
   })
+  @ApiQuery({
+    name: 'query',
+    required: false,
+    type: 'string',
+    description: 'Search query for filtering children by name',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 12)',
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of children for the parent',
-    type: [StudentEntity],
+    description: 'Paginated list of parent children with filtering',
+    type: PaginatedParentChildrenResponseDto,
   })
-  getChildrenByParent(@Param('parentId', ParseIntPipe) parentId: number) {
-    return this.userService.getChildrenByParentId(parentId);
+  @ApiResponse({ status: 404, description: 'Parent not found' })
+  getParentChildren(
+    @Param('parentId', ParseIntPipe) parentId: number,
+    @Query('query') query?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(12), ParseIntPipe) limit: number = 12,
+  ) {
+    return this.userService.getParentChildren(parentId, query, page, limit);
+  }
+
+  @ApiTags('Parent-Child Relationships')
+  @Post('parent-children')
+  @ApiOperation({ summary: 'Connect a parent to a student' })
+  @ApiBody({ type: ConnectParentStudentDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Parent and student successfully connected',
+    type: ParentStudentEntity,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Connection already exists or invalid data',
+  })
+  @ApiResponse({ status: 404, description: 'Parent or student not found' })
+  connectParentToStudent(@Body() connectDto: ConnectParentStudentDto) {
+    return this.userService.connectParentToStudent(
+      connectDto.parentId,
+      connectDto.studentId,
+      connectDto.isPrimary,
+    );
   }
 
   @ApiTags('Parents')

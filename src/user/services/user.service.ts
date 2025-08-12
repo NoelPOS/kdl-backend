@@ -556,6 +556,96 @@ export class UserService {
     return teacherCourses.map((tc) => tc.course);
   }
 
+  async getTeacherCourses(
+    teacherId: number,
+    query?: string,
+    page: number = 1,
+    limit: number = 12,
+  ): Promise<{
+    courses: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    // Verify teacher exists
+    const teacher = await this.teacherRepository.findOne({
+      where: { id: teacherId },
+    });
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
+    }
+
+    // Build the where conditions
+    let whereConditions: any = { teacherId };
+
+    // If we have a search query, we need to use a query builder
+    if (query && query.trim()) {
+      const queryBuilder = this.teacherCourseRepo
+        .createQueryBuilder('tc')
+        .leftJoinAndSelect('tc.course', 'course')
+        .where('tc.teacherId = :teacherId', { teacherId })
+        .andWhere('LOWER(course.name) LIKE LOWER(:query)', {
+          query: `%${query}%`,
+        });
+
+      // Get total count for pagination
+      const totalCount = await queryBuilder.getCount();
+      const totalPages = Math.ceil(totalCount / limit);
+
+      // Get the results with pagination
+      const courses = await queryBuilder
+        .skip((page - 1) * limit)
+        .take(limit)
+        .addOrderBy('course.name', 'ASC')
+        .getMany();
+
+      // Transform the result - return only courses
+      const transformedCourses = courses.map((tc) => tc.course);
+
+      return {
+        courses: transformedCourses,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
+    } else {
+      // For simple queries without search, use find with relations
+      const [courses, totalCount] = await this.teacherCourseRepo.findAndCount({
+        where: { teacherId },
+        relations: ['course'],
+        skip: (page - 1) * limit,
+        take: limit,
+        order: {
+          id: 'ASC', // Order by the teacher_course id for consistency
+        },
+      });
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      // Transform the result - return only courses
+      const transformedCourses = courses.map((tc) => tc.course);
+
+      return {
+        courses: transformedCourses,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
+    }
+  }
+
   async getTeachersByCourseId(courseId: number): Promise<TeacherEntity[]> {
     const teacherCourses = await this.teacherCourseRepo.find({
       where: { courseId },
@@ -912,6 +1002,111 @@ export class UserService {
     });
 
     return this.parentStudentRepo.save(assignments);
+  }
+
+  async connectParentToStudent(
+    parentId: number,
+    studentId: number,
+    isPrimary: boolean = false,
+  ): Promise<ParentStudentEntity> {
+    // Check if connection already exists
+    const existingConnection = await this.parentStudentRepo.findOne({
+      where: { parentId, studentId },
+    });
+
+    if (existingConnection) {
+      throw new BadRequestException('Parent and student are already connected');
+    }
+
+    // Verify parent and student exist
+    const parent = await this.parentRepository.findOne({
+      where: { id: parentId },
+    });
+    if (!parent) {
+      throw new NotFoundException(`Parent with ID ${parentId} not found`);
+    }
+
+    const student = await this.studentRepository.findOne({
+      where: { id: studentId },
+    });
+    if (!student) {
+      throw new NotFoundException(`Student with ID ${studentId} not found`);
+    }
+
+    const connection = new ParentStudentEntity();
+    connection.parentId = parentId;
+    connection.studentId = studentId;
+    connection.isPrimary = isPrimary;
+
+    return this.parentStudentRepo.save(connection);
+  }
+
+  async getParentChildren(
+    parentId: number,
+    query?: string,
+    page: number = 1,
+    limit: number = 12,
+  ): Promise<{
+    children: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    // Verify parent exists
+    const parent = await this.parentRepository.findOne({
+      where: { id: parentId },
+    });
+    if (!parent) {
+      throw new NotFoundException(`Parent with ID ${parentId} not found`);
+    }
+
+    const queryBuilder = this.parentStudentRepo
+      .createQueryBuilder('ps')
+      .leftJoinAndSelect('ps.student', 'student')
+      .where('ps.parentId = :parentId', { parentId });
+
+    // Add search filtering if query is provided
+    if (query && query.trim()) {
+      queryBuilder.andWhere('student.name ILIKE :query', {
+        query: `%${query}%`,
+      });
+    }
+
+    // Get total count for pagination
+    const totalCount = await queryBuilder.getCount();
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Apply pagination
+    const children = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('ps.isPrimary', 'DESC') // Primary connections first
+      .addOrderBy('student.name', 'ASC')
+      .getMany();
+
+    // Transform the result to match the frontend interface
+    const transformedChildren = children.map((ps) => ({
+      id: ps.id,
+      parentId: ps.parentId,
+      studentId: ps.studentId,
+      isPrimary: ps.isPrimary,
+      student: ps.student,
+    }));
+
+    return {
+      children: transformedChildren,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
   }
 
   async getChildrenByParentId(parentId: number): Promise<StudentEntity[]> {
