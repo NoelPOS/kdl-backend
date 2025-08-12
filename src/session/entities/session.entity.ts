@@ -128,37 +128,24 @@ export class Invoice {
   @Column('decimal')
   totalAmount: number;
 
-  @Column({ nullable: true, type: 'varchar' })
-  sessionId: number | string;
-
-  @Column({ nullable: true, type: 'varchar' })
-  coursePlusId: number | string;
-
-  @Column({ nullable: true, type: 'varchar' })
-  packageId: number | string;
-
   @Column({ default: false })
   receiptDone: boolean;
 
-  @Column({ default: 'course' })
-  type: string; // 'session', 'course_plus', 'package'
-
-  @Column({ nullable: true })
+  @Column()
   studentId: number;
 
-  @Column({ nullable: true })
+  @Column()
   studentName: string;
 
-  @Column({ nullable: true })
+  @Column()
   courseName: string;
 
-  @OneToOne(() => CoursePlus)
-  @JoinColumn({ name: 'coursePlusId' })
-  coursePlus: CoursePlus;
-
-  @OneToOne(() => Session, { nullable: true })
-  @JoinColumn({ name: 'sessionId', foreignKeyConstraintName: null }) // Disable FK constraint
-  session: Session;
+  @Column('json')
+  sessionGroups: Array<{
+    sessionId: string;
+    transactionType: 'course' | 'courseplus' | 'package';
+    actualId: string;
+  }>;
 
   @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true })
   items: InvoiceItem[];

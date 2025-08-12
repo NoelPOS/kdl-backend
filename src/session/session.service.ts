@@ -10,7 +10,10 @@ import {
 } from './entities/session.entity';
 import { Repository, ILike } from 'typeorm';
 import { Schedule } from '../schedule/entities/schedule.entity';
-import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import {
+  CreateInvoiceDto,
+  CreateInvoiceLegacyDto,
+} from './dto/create-invoice.dto';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { InvoiceFilterDto } from './dto/invoice-filter.dto';
 import { PackageEntity } from '../package/entities/package.entity';
@@ -21,7 +24,7 @@ import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
 import { CourseEntity } from '../course/entities/course.entity';
-import { console } from 'inspector';
+import { DocumentCounter } from './entities/document-counter.entity';
 import { parse } from 'path';
 
 @Injectable()
@@ -51,8 +54,57 @@ export class SessionService {
     @InjectRepository(PackageEntity)
     private readonly packageRepo: Repository<PackageEntity>,
 
+    @InjectRepository(DocumentCounter)
+    private readonly documentCounterRepo: Repository<DocumentCounter>,
+
     private readonly dataSource: DataSource,
   ) {}
+
+  async generateDocumentId(): Promise<string> {
+    return this.dataSource.transaction(async (manager) => {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const yearMonthDay = dateStr.replace(/-/g, ''); // YYYYMMDD format
+
+      // Try to find existing counter for today
+      let counter = await manager.getRepository(DocumentCounter).findOne({
+        where: { date: dateStr },
+      });
+
+      if (!counter) {
+        // Create new counter for today
+        counter = manager.getRepository(DocumentCounter).create({
+          date: dateStr,
+          counter: 1,
+        });
+      } else {
+        // Increment existing counter
+        counter.counter += 1;
+      }
+
+      // Save the updated counter
+      await manager.getRepository(DocumentCounter).save(counter);
+
+      // Generate document ID: YYYYMMDDXXXX (where XXXX is 4-digit counter)
+      const documentId = `${yearMonthDay}${counter.counter.toString().padStart(4, '0')}`;
+
+      return documentId;
+    });
+  }
+
+  async getNextDocumentId(): Promise<string> {
+    // Preview next document ID without incrementing counter
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const yearMonthDay = dateStr.replace(/-/g, ''); // YYYYMMDD format
+
+    const counter = await this.documentCounterRepo.findOne({
+      where: { date: dateStr },
+    });
+
+    const nextCounter = counter ? counter.counter + 1 : 1;
+    return `${yearMonthDay}${nextCounter.toString().padStart(4, '0')}`;
+  }
 
   async create(dto: CreateSessionDto) {
     // Check for existing session with same studentId, courseId, and classOptionId
@@ -82,31 +134,6 @@ export class SessionService {
     session.invoiceDone = dto.isFromPackage ? true : false; // If from package, invoice is already handled
     session.isFromPackage = dto.isFromPackage || false;
     session.packageId = dto.packageId || null;
-
-    // If this is from a package, we might want to update the package status
-    if (dto.isFromPackage && dto.packageId) {
-      try {
-        // First get the course details to update package redemption info
-        const course = await this.dataSource
-          .getRepository(CourseEntity)
-          .findOne({
-            where: { id: dto.courseId },
-          });
-
-        // Update the package to mark it as used/redeemed
-        await this.packageRepo.update(dto.packageId, {
-          isRedeemed: true,
-          status: 'used',
-          redeemedAt: new Date().toISOString(),
-          redeemedCourseId: dto.courseId,
-          redeemedCourseName: course?.title || 'Unknown Course',
-        });
-      } catch (error) {
-        console.error('Error updating package status:', error);
-        // You might want to throw an error here or handle it differently
-        throw new BadRequestException('Failed to update package status');
-      }
-    }
 
     return await this.sessionRepository.save(session);
   }
@@ -165,10 +192,9 @@ export class SessionService {
       sessionId: sessionId,
       classNo: additionalClasses,
       amount: totalAmount,
-      payment: false,
+      status: 'unpaid',
       description: `Additional ${additionalClasses} classes for ${session.course.title}`,
       invoiceGenerated: false,
-      receiptGenerated: false,
     });
 
     const savedCoursePlus = await this.coursePlusRepo.save(coursePlus);
@@ -182,10 +208,8 @@ export class SessionService {
         studentId: session.studentId,
         teacherId: session.teacherId,
         coursePlusId: savedCoursePlus.id,
-        // Default values - can be updated later by admin
-        date: new Date(), // Placeholder date
-        startTime: '09:00', // Placeholder time
-        endTime: '10:00', // Placeholder time
+        startTime: 'TBD', // Placeholder time
+        endTime: 'TBD', // Placeholder time
         room: 'TBD', // To be determined
         attendance: '',
         remark: '',
@@ -965,61 +989,110 @@ export class SessionService {
 
   async createInvoiceAndMarkSession(dto: CreateInvoiceDto) {
     return this.dataSource.transaction(async (manager) => {
-      // Validate that the correct ID is provided based on type
-      if (dto.transactionType === 'course' && !dto.sessionId) {
-        throw new BadRequestException('sessionId is required for course type');
-      }
-      if (dto.transactionType === 'courseplus' && !dto.coursePlusId) {
-        throw new BadRequestException(
-          'coursePlusId is required for courseplus type',
-        );
-      }
-      if (dto.transactionType === 'package' && !dto.packageId) {
-        throw new BadRequestException('packageId is required for package type');
-      }
+      // Generate document ID if not provided
+      const documentId = await this.generateDocumentId();
 
+      // Create the invoice with session groups stored
       const invoiceRepo = manager.getRepository(Invoice);
       const invoice = invoiceRepo.create({
         studentId: dto.studentId,
         studentName: dto.studentName,
         courseName: dto.courseName,
-        sessionId: dto.sessionId || null,
-        coursePlusId: dto.coursePlusId || null,
-        packageId: dto.packageId || null,
-        type: dto.transactionType,
-        documentId: dto.documentId,
+        documentId: documentId,
         date: new Date(dto.date),
         paymentMethod: dto.paymentMethod,
         totalAmount: dto.totalAmount,
+        sessionGroups: dto.sessionGroups, // Store session groups for later reference
         items: dto.items.map((item) =>
           manager.getRepository(InvoiceItem).create(item),
         ),
       });
       const savedInvoice = await invoiceRepo.save(invoice);
 
-      // Update the respective entity based on type
-      if (dto.transactionType === 'course' && dto.sessionId) {
-        const sessionRepo = manager.getRepository(Session);
-        await sessionRepo.update(dto.sessionId, { invoiceDone: true });
-      } else if (dto.transactionType === 'courseplus' && dto.coursePlusId) {
-        const coursePlusRepo = manager.getRepository(CoursePlus);
-        const coursePlusId = parseInt(
-          (dto.coursePlusId as string).replace('cp-', ''),
-        );
-        await coursePlusRepo.update(coursePlusId, {
-          invoiceGenerated: true,
-        });
-      } else if (dto.transactionType === 'package' && dto.packageId) {
-        const packageId = parseInt(
-          (dto.packageId as string).replace('pkg-', ''),
-        );
-        const packageRepo = manager.getRepository(PackageEntity);
-        await packageRepo.update(packageId, { invoiceGenerated: true });
+      // Update the status of all related entities based on sessionGroups
+      for (const sessionGroup of dto.sessionGroups) {
+        const { transactionType, actualId } = sessionGroup;
+
+        if (transactionType === 'course') {
+          const sessionRepo = manager.getRepository(Session);
+          await sessionRepo.update(parseInt(actualId), { invoiceDone: true });
+        } else if (transactionType === 'courseplus') {
+          const coursePlusRepo = manager.getRepository(CoursePlus);
+          // Remove 'cp-' prefix if it exists
+          const coursePlusId = actualId.startsWith('cp-')
+            ? parseInt(actualId.replace('cp-', ''))
+            : parseInt(actualId);
+          await coursePlusRepo.update(coursePlusId, {
+            invoiceGenerated: true,
+          });
+        } else if (transactionType === 'package') {
+          const packageRepo = manager.getRepository(PackageEntity);
+          // Remove 'pkg-' prefix if it exists
+          const packageId = actualId.startsWith('pkg-')
+            ? parseInt(actualId.replace('pkg-', ''))
+            : parseInt(actualId);
+          await packageRepo.update(packageId, { invoiceGenerated: true });
+        }
       }
 
       return savedInvoice;
     });
   }
+
+  // Keep legacy method for backward compatibility
+  // async createInvoiceAndMarkSessionLegacy(dto: CreateInvoiceLegacyDto) {
+  //   return this.dataSource.transaction(async (manager) => {
+  //     // Validate that the correct ID is provided based on type
+  //     if (dto.transactionType === 'course' && !dto.sessionId) {
+  //       throw new BadRequestException('sessionId is required for course type');
+  //     }
+  //     if (dto.transactionType === 'courseplus' && !dto.coursePlusId) {
+  //       throw new BadRequestException(
+  //         'coursePlusId is required for courseplus type',
+  //       );
+  //     }
+  //     if (dto.transactionType === 'package' && !dto.packageId) {
+  //       throw new BadRequestException('packageId is required for package type');
+  //     }
+
+  //     const invoiceRepo = manager.getRepository(Invoice);
+  //     const invoice = invoiceRepo.create({
+  //       studentId: dto.studentId,
+  //       studentName: dto.studentName,
+  //       courseName: dto.courseName,
+  //       documentId: dto.documentId,
+  //       date: new Date(dto.date),
+  //       paymentMethod: dto.paymentMethod,
+  //       totalAmount: dto.totalAmount,
+  //       items: dto.items.map((item) =>
+  //         manager.getRepository(InvoiceItem).create(item),
+  //       ),
+  //     });
+  //     const savedInvoice = await invoiceRepo.save(invoice);
+
+  //     // Update the respective entity based on type
+  //     if (dto.transactionType === 'course' && dto.sessionId) {
+  //       const sessionRepo = manager.getRepository(Session);
+  //       await sessionRepo.update(dto.sessionId, { invoiceDone: true });
+  //     } else if (dto.transactionType === 'courseplus' && dto.coursePlusId) {
+  //       const coursePlusRepo = manager.getRepository(CoursePlus);
+  //       const coursePlusId = parseInt(
+  //         (dto.coursePlusId as string).replace('cp-', ''),
+  //       );
+  //       await coursePlusRepo.update(coursePlusId, {
+  //         invoiceGenerated: true,
+  //       });
+  //     } else if (dto.transactionType === 'package' && dto.packageId) {
+  //       const packageId = parseInt(
+  //         (dto.packageId as string).replace('pkg-', ''),
+  //       );
+  //       const packageRepo = manager.getRepository(PackageEntity);
+  //       await packageRepo.update(packageId, { invoiceGenerated: true });
+  //     }
+
+  //     return savedInvoice;
+  //   });
+  // }
 
   async createReceiptAndMarkPaid(dto: CreateReceiptDto) {
     return this.dataSource.transaction(async (manager) => {
@@ -1035,10 +1108,34 @@ export class SessionService {
         where: { id: dto.invoiceId },
       });
       if (!invoice) throw new Error('Invoice not found');
-      const sessionRepo = manager.getRepository(Session);
-      await sessionRepo.update(invoice.sessionId, { payment: 'paid' });
 
+      // Mark the invoice as receipt done
       await invoiceRepo.update(dto.invoiceId, { receiptDone: true });
+
+      // Use stored session groups from the invoice to mark sessions as paid
+      if (invoice.sessionGroups && invoice.sessionGroups.length > 0) {
+        for (const sessionGroup of invoice.sessionGroups) {
+          const { transactionType, actualId } = sessionGroup;
+
+          if (transactionType === 'course') {
+            const sessionRepo = manager.getRepository(Session);
+            await sessionRepo.update(parseInt(actualId), { payment: 'Paid' });
+          } else if (transactionType === 'courseplus') {
+            const coursePlusRepo = manager.getRepository(CoursePlus);
+            const coursePlusId = actualId.startsWith('cp-')
+              ? parseInt(actualId.replace('cp-', ''))
+              : parseInt(actualId);
+            await coursePlusRepo.update(coursePlusId, { status: 'paid' });
+          } else if (transactionType === 'package') {
+            const packageRepo = manager.getRepository(PackageEntity);
+            const packageId = actualId.startsWith('pkg-')
+              ? parseInt(actualId.replace('pkg-', ''))
+              : parseInt(actualId);
+            // Update package payment status - you might need to add a payment field to PackageEntity
+            // await packageRepo.update(packageId, { paymentStatus: 'paid' });
+          }
+        }
+      }
 
       return savedReceipt;
     });

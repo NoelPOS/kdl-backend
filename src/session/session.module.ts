@@ -9,6 +9,7 @@ import {
   Receipt,
   Invoice,
 } from './entities/session.entity';
+import { DocumentCounter } from './entities/document-counter.entity';
 import { Schedule } from '../schedule/entities/schedule.entity';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { PackageEntity } from '../package/entities/package.entity';
@@ -24,6 +25,7 @@ import { PackageEntity } from '../package/entities/package.entity';
       Invoice,
       CoursePlus,
       PackageEntity,
+      DocumentCounter,
     ]),
   ],
   controllers: [SessionController],
