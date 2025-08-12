@@ -51,6 +51,24 @@ export class CoursePlusService {
     return `This action returns a #${id} coursePlus`;
   }
 
+  async updateStatus(id: number, status: string) {
+    const coursePlus = await this.coursePlusRepo.findOne({ where: { id } });
+    if (!coursePlus) {
+      throw new Error(`CoursePlus with ID ${id} not found`);
+    }
+
+    // Validate status value
+    const validStatuses = ['paid', 'unpaid'];
+    if (!validStatuses.includes(status.toLowerCase())) {
+      throw new Error(
+        `Invalid status: ${status}. Valid values are: ${validStatuses.join(', ')}`,
+      );
+    }
+
+    await this.coursePlusRepo.update(id, { status: status.toLowerCase() });
+    return this.coursePlusRepo.findOne({ where: { id } });
+  }
+
   update(id: number, updateCoursePlusDto: UpdateCoursePlusDto) {
     return `This action updates a #${id} coursePlus`;
   }

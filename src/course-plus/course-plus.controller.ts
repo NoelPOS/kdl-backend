@@ -49,6 +49,31 @@ export class CoursePlusController {
     return this.coursePlusService.findOne(+id);
   }
 
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update CoursePlus payment status' })
+  @ApiParam({ name: 'id', type: 'string' })
+  @ApiBody({
+    description: 'Payment status update payload',
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          description: 'Payment status for the course plus',
+          enum: ['paid', 'unpaid'],
+          example: 'paid',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The CoursePlus payment status has been successfully updated.',
+  })
+  updateStatus(@Param('id') id: string, @Body('status') status: string) {
+    return this.coursePlusService.updateStatus(+id, status);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a CoursePlus by ID' })
   @ApiParam({ name: 'id', type: 'string' })

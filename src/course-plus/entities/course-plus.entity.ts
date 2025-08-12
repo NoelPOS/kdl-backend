@@ -32,21 +32,21 @@ export class CoursePlus {
   @ApiProperty({ description: 'Amount' })
   amount: number;
 
-  @Column({ default: false })
-  @ApiProperty({ description: 'Payment status', default: false })
-  payment: boolean;
-
   @Column()
   @ApiProperty({ description: 'Description' })
   description: string;
 
+  @Column({ default: 'unpaid' })
+  @ApiProperty({
+    description: 'Payment status',
+    default: 'unpaid',
+    enum: ['paid', 'unpaid'],
+  })
+  status: string;
+
   @Column({ default: false })
   @ApiProperty({ description: 'Invoice generated status', default: false })
   invoiceGenerated: boolean;
-
-  @Column({ default: false })
-  @ApiProperty({ description: 'Receipt generated status', default: false })
-  receiptGenerated: boolean;
 
   @ManyToOne('Session')
   @JoinColumn({ name: 'sessionId' })
