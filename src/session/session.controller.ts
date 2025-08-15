@@ -23,14 +23,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { Session } from './entities/session.entity';
-import { CreateInvoiceDto } from './dto/create-invoice.dto';
-import { CreateReceiptDto } from './dto/create-receipt.dto';
-import { PaginationDto } from '../common/dto/pagination.dto';
-import { InvoiceFilterDto } from './dto/invoice-filter.dto';
-import { ReceiptFilterDto } from './dto/receipt-filter.dto';
-import { CreateClassOptionDto } from './dto/create-class-option.dto';
 import { PaginatedSessionResponseDto } from './dto/paginated-session-response.dto';
-import { PaginatedInvoiceResponseDto } from './dto/paginated-invoice-response.dto';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
 import { PaginatedSessionOverviewResponseDto } from './dto/paginated-session-overview-response.dto';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
@@ -176,28 +169,7 @@ export class SessionController {
     return this.sessionService.getSessionsByPackage(packageId);
   }
 
-  @ApiTags('Class Options')
-  @Post('class-options')
-  @ApiOperation({ summary: 'Create a new class option' })
-  @ApiBody({ type: CreateClassOptionDto })
-  @ApiResponse({
-    status: 201,
-    description: 'The class option has been successfully created.',
-  })
-  createClassOption(@Body() dto: any) {
-    console.log(dto);
-    return this.sessionService.createClassOption(dto);
-  }
-
-  @ApiTags('Class Options')
-  @Get('class-options')
-  @ApiOperation({ summary: 'Get all class options' })
-  @ApiResponse({ status: 200, description: 'Returns all class options' })
-  listClassOptions() {
-    return this.sessionService.listClassOptions();
-  }
-
-  @ApiTags('Invoices')
+  @ApiTags('Sessions')
   @Get('pending-invoice')
   @ApiOperation({
     summary: 'Get sessions pending invoice with filtering and pagination',
@@ -273,7 +245,7 @@ export class SessionController {
     );
   }
 
-  @ApiTags('Invoices')
+  @ApiTags('Sessions')
   @Get('pending-invoice/:sessionId')
   @ApiOperation({ summary: 'Get a specific session pending invoice' })
   @ApiParam({ name: 'sessionId' })
@@ -286,126 +258,6 @@ export class SessionController {
     @Param('sessionId') sessionId: number | string,
   ) {
     return this.sessionService.getSpecificPendingSessionsForInvoice(sessionId);
-  }
-
-  @ApiTags('Invoices')
-  @Get('invoices/next-document-id')
-  @ApiOperation({ summary: 'Get the next available document ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns the next document ID that would be generated',
-    schema: {
-      type: 'object',
-      properties: {
-        documentId: {
-          type: 'string',
-          example: '202508120001',
-        },
-      },
-    },
-  })
-  getNextDocumentId() {
-    return this.sessionService
-      .getNextDocumentId()
-      .then((documentId) => ({ documentId }));
-  }
-
-  @ApiTags('Invoices')
-  @Post('invoices')
-  @ApiOperation({
-    summary:
-      'Create a new invoice with session groups and mark sessions as invoiced (atomic)',
-  })
-  @ApiBody({ type: CreateInvoiceDto })
-  @ApiResponse({
-    status: 201,
-    description:
-      'The invoice has been successfully created and the sessions marked as invoiced.',
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  createInvoice(@Body() createInvoiceDto: CreateInvoiceDto) {
-    console.log(createInvoiceDto);
-    return this.sessionService.createInvoiceAndMarkSession(createInvoiceDto);
-  }
-
-  @ApiTags('Invoices')
-  @Get('invoices/:id')
-  @ApiOperation({ summary: 'Get an invoice by ID' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiResponse({ status: 200, description: 'The found invoice', type: Session })
-  @ApiResponse({ status: 404, description: 'Invoice not found' })
-  getInvoice(@Param('id', ParseIntPipe) id: number) {
-    return this.sessionService.getInvoice(id);
-  }
-
-  @ApiTags('Invoices')
-  @Get('invoices')
-  @ApiOperation({ summary: 'List all invoices (paginated, filterable)' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'documentId', required: false, type: String })
-  @ApiQuery({ name: 'student', required: false, type: String })
-  @ApiQuery({ name: 'course', required: false, type: String })
-  @ApiQuery({ name: 'receiptDone', required: false, type: Boolean })
-  @ApiResponse({
-    status: 200,
-    description: 'Paginated, filterable list of invoices',
-    type: PaginatedInvoiceResponseDto,
-  })
-  getInvoices(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Query('documentId') documentId?: string,
-    @Query('student') student?: string,
-    @Query('course') course?: string,
-    @Query('receiptDone') receiptDone?: string,
-  ) {
-    return this.sessionService.listInvoices(
-      page,
-      limit,
-      documentId,
-      student,
-      course,
-      receiptDone,
-    );
-  }
-
-  @ApiTags('Receipts')
-  @Post('receipts')
-  @ApiOperation({
-    summary:
-      'Create a new receipt, mark session as paid, and mark invoice as receipt done (atomic)',
-  })
-  @ApiBody({ type: CreateReceiptDto })
-  @ApiResponse({
-    status: 201,
-    description:
-      'The receipt has been successfully created, the session marked as paid, and the invoice marked as receipt done.',
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  createReceipt(@Body() createReceiptDto: CreateReceiptDto) {
-    return this.sessionService.createReceiptAndMarkPaid(createReceiptDto);
-  }
-
-  @ApiTags('Receipts')
-  @Get('receipts/:id')
-  @ApiOperation({ summary: 'Get a receipt by ID' })
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiResponse({ status: 200, description: 'The found receipt', type: Session })
-  @ApiResponse({ status: 404, description: 'Receipt not found' })
-  getReceipt(@Param('id', ParseIntPipe) id: number) {
-    return this.sessionService.getReceipt(id);
-  }
-
-  @ApiTags('Receipts')
-  @Get('receipts')
-  @ApiOperation({ summary: 'List all receipts (paginated, filterable)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Paginated, filterable list of receipts',
-  })
-  getReceipts(@Query() query: ReceiptFilterDto) {
-    return this.sessionService.listReceipts(query);
   }
 
   @ApiTags('Sessions')

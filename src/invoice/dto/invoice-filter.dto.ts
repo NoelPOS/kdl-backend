@@ -1,13 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsInt,
-  IsString,
-  IsDateString,
-  IsBoolean,
-} from 'class-validator';
+import { IsOptional, IsInt, IsString, IsDateString } from 'class-validator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import { Transform } from 'class-transformer';
 
 export class InvoiceFilterDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Start date (YYYY-MM-DD)' })
@@ -20,32 +13,32 @@ export class InvoiceFilterDto extends PaginationDto {
   @IsDateString()
   to?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Session ID to filter by' })
   @IsOptional()
   @IsInt()
   sessionId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Student ID to filter by' })
   @IsOptional()
   @IsInt()
   studentId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Course name to filter by' })
   @IsOptional()
   @IsString()
   courseName?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Document ID to filter by' })
   @IsOptional()
   @IsString()
   documentId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Payment method to filter by' })
   @IsOptional()
   @IsString()
   paymentMethod?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Receipt done status to filter by' })
   @IsOptional()
   @IsString()
   receiptDone?: string;

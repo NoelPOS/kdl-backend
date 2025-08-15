@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ParentEntity } from './parent.entity';
-import { StudentEntity } from './student.entity';
+import { StudentEntity } from '../../student/entities/student.entity';
 
 @Entity('parent_student')
 @Index(['parentId', 'studentId'], { unique: true }) // Prevent duplicate parent-student connections

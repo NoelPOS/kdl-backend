@@ -13,27 +13,27 @@ export class ReceiptFilterDto extends PaginationDto {
   @IsDateString()
   to?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Invoice ID to filter by' })
   @IsOptional()
   @IsInt()
   invoiceId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Session ID to filter by' })
   @IsOptional()
   @IsInt()
   sessionId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Student ID to filter by' })
   @IsOptional()
   @IsInt()
   studentId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Course ID to filter by' })
   @IsOptional()
   @IsInt()
   courseId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Receipt number to search for' })
   @IsOptional()
   @IsString()
   receiptNumber?: string;

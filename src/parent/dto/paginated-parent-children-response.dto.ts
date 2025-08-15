@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ParentStudentEntity } from '../entities/parent-student.entity';
-import { StudentEntity } from '../entities/student.entity';
+import { StudentEntity } from '../../student/entities/student.entity';
 
 export class ParentChildDto {
   @ApiProperty({ description: 'Parent-child relationship ID' })

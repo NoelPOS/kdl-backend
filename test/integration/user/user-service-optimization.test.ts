@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserService } from '../../../src/user/services/user.service';
+import { UserService } from '../../../src/user/user.service';
 import { UserEntity } from '../../../src/user/entities/user.entity';
 import { StudentEntity } from '../../../src/user/entities/student.entity';
 import { TeacherEntity } from '../../../src/user/entities/teacher.entity';

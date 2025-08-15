@@ -3,40 +3,15 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
   CreateDateColumn,
-  OneToOne,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { CourseEntity } from '../../course/entities/course.entity';
-import { StudentEntity } from '../../user/entities/student.entity';
-import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
-import { TeacherEntity } from '../../user/entities/teacher.entity';
+import { StudentEntity } from '../../student/entities/student.entity';
+import { TeacherEntity } from '../../teacher/entities/teacher.entity';
+import { ClassOption } from '../../class-option/entities/class-option.entity';
 
-// --- ClassOption Entity ---
-@Entity('class_options')
-export class ClassOption {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  classMode: string;
-
-  @Column()
-  classLimit: number;
-
-  @Column('decimal')
-  tuitionFee: number;
-
-  @Column()
-  effectiveStartDate: Date;
-
-  @Column({ nullable: true })
-  effectiveEndDate: Date;
-}
-
-// --- Session Entity ---
 @Entity('sessions')
 export class Session {
   @PrimaryGeneratedColumn()
@@ -108,82 +83,4 @@ export class Session {
   @ManyToOne(() => ClassOption)
   @JoinColumn({ name: 'classOptionId' })
   classOption: ClassOption;
-}
-
-// --- Invoice Entity ---
-@Entity('invoices')
-export class Invoice {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  documentId: string;
-
-  @Column()
-  date: Date;
-
-  @Column()
-  paymentMethod: string;
-
-  @Column('decimal')
-  totalAmount: number;
-
-  @Column({ default: false })
-  receiptDone: boolean;
-
-  @Column()
-  studentId: number;
-
-  @Column()
-  studentName: string;
-
-  @Column()
-  courseName: string;
-
-  @Column('json')
-  sessionGroups: Array<{
-    sessionId: string;
-    transactionType: 'course' | 'courseplus' | 'package';
-    actualId: string;
-  }>;
-
-  @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true })
-  items: InvoiceItem[];
-}
-
-// --- InvoiceItem Entity ---
-@Entity('invoice_items')
-export class InvoiceItem {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  invoiceId: number;
-
-  @Column()
-  description: string;
-
-  @Column('decimal')
-  amount: number;
-
-  @ManyToOne(() => Invoice, (invoice) => invoice.items)
-  @JoinColumn({ name: 'invoiceId' })
-  invoice: Invoice;
-}
-
-// --- Receipt Entity ---
-@Entity('receipts')
-export class Receipt {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  invoiceId: number;
-
-  @OneToOne(() => Invoice)
-  @JoinColumn({ name: 'invoiceId' })
-  invoice: Invoice;
-
-  @Column()
-  date: Date;
 }

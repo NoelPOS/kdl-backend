@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { UserService } from '../../user/services/user.service';
+import { UserService } from '../../user/user.service';
 import { UserEntity } from '../../user/entities/user.entity';
 import { LoginDto } from '../dto/login.dto';
 import { JwtService } from '@nestjs/jwt';

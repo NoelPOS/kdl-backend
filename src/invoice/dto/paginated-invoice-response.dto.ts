@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Invoice } from '../entities/session.entity';
+import { Invoice } from '../entities/invoice.entity';
 
 export class PaginationMetadata {
   @ApiProperty({ description: 'Current page number' })

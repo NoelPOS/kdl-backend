@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { StudentEntity } from '../../user/entities/student.entity';
-import { TeacherEntity } from '../../user/entities/teacher.entity';
+import { StudentEntity } from '../../student/entities/student.entity';
+import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
 import {
   Column,

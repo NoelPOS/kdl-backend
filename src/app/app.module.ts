@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
+import { StudentModule } from '../student/student.module';
+import { TeacherModule } from '../teacher/teacher.module';
+import { ParentModule } from '../parent/parent.module';
 
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import configuration from '../config/configuration';
@@ -18,6 +21,9 @@ import { ScheduleModule } from '../schedule/schedule.module';
 import { RoomModule } from '../room/room.module';
 import { DiscountModule } from '../discount/discount.module';
 import { SessionModule } from '../session/session.module';
+import { ClassOptionModule } from '../class-option/class-option.module';
+import { InvoiceModule } from '../invoice/invoice.module';
+import { ReceiptModule } from '../receipt/receipt.module';
 import { CoursePlusModule } from '../course-plus/course-plus.module';
 import { PackageModule } from '../package/package.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -91,12 +97,18 @@ import { DatabaseModule } from '../database/database.module';
     // Application Modules
     AuthModule,
     UserModule,
+    StudentModule,
+    TeacherModule,
+    ParentModule,
     SharedModule,
     CourseModule,
     ScheduleModule,
     RoomModule,
     DiscountModule,
     SessionModule,
+    ClassOptionModule,
+    InvoiceModule,
+    ReceiptModule,
     CoursePlusModule,
     PackageModule,
   ],

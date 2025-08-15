@@ -1,17 +1,15 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { UserEntity } from '../../user/entities/user.entity';
-import { StudentEntity } from '../../user/entities/student.entity';
-import { TeacherEntity } from '../../user/entities/teacher.entity';
-import { ParentEntity } from '../../user/entities/parent.entity';
+import { StudentEntity } from '../../student/entities/student.entity';
+import { TeacherEntity } from '../../teacher/entities/teacher.entity';
+import { ParentEntity } from '../../parent/entities/parent.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
-import {
-  Session,
-  ClassOption,
-  Invoice,
-  InvoiceItem,
-  Receipt,
-} from '../../session/entities/session.entity';
+import { Session } from '../../session/entities/session.entity';
+import { ClassOption } from '../../class-option/entities/class-option.entity';
+import { Invoice } from '../../invoice/entities/invoice.entity';
+import { InvoiceItem } from '../../invoice/entities/invoice-item.entity';
+import { Receipt } from '../../receipt/entities/receipt.entity';
 import { Schedule } from '../../schedule/entities/schedule.entity';
 // import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
 import { RoomEntity } from '../../room/entities/room.entity';

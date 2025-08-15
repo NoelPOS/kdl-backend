@@ -2,30 +2,31 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  ClassOption,
-  InvoiceItem,
-  Receipt,
-  Session,
-} from './entities/session.entity';
+import { Session } from './entities/session.entity';
 import { Repository, ILike } from 'typeorm';
 import { Schedule } from '../schedule/entities/schedule.entity';
-import {
-  CreateInvoiceDto,
-  CreateInvoiceLegacyDto,
-} from './dto/create-invoice.dto';
-import { CreateReceiptDto } from './dto/create-receipt.dto';
-import { InvoiceFilterDto } from './dto/invoice-filter.dto';
 import { PackageEntity } from '../package/entities/package.entity';
-import { ReceiptFilterDto } from './dto/receipt-filter.dto';
-import { Invoice } from '../session/entities/session.entity';
 import { DataSource } from 'typeorm';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
 import { CourseEntity } from '../course/entities/course.entity';
-import { DocumentCounter } from './entities/document-counter.entity';
 import { parse } from 'path';
+// Import separated entities
+import { ClassOption } from '../class-option/entities/class-option.entity';
+import { Invoice } from '../invoice/entities/invoice.entity';
+import { InvoiceItem } from '../invoice/entities/invoice-item.entity';
+import { DocumentCounter } from '../invoice/entities/document-counter.entity';
+import { Receipt } from '../receipt/entities/receipt.entity';
+// Import separated DTOs
+import { CreateInvoiceDto } from '../invoice/dto/create-invoice.dto';
+import { CreateReceiptDto } from '../receipt/dto/create-receipt.dto';
+import { InvoiceFilterDto } from '../invoice/dto/invoice-filter.dto';
+import { ReceiptFilterDto } from '../receipt/dto/receipt-filter.dto';
+// Import services for delegation
+import { ClassOptionService } from '../class-option/class-option.service';
+import { InvoiceService } from '../invoice/invoice.service';
+import { ReceiptService } from '../receipt/receipt.service';
 
 @Injectable()
 export class SessionService {
@@ -58,6 +59,11 @@ export class SessionService {
     private readonly documentCounterRepo: Repository<DocumentCounter>,
 
     private readonly dataSource: DataSource,
+
+    // Service injections for delegation
+    private readonly classOptionService: ClassOptionService,
+    private readonly invoiceService: InvoiceService,
+    private readonly receiptService: ReceiptService,
   ) {}
 
   async generateDocumentId(): Promise<string> {
@@ -1139,5 +1145,54 @@ export class SessionService {
 
       return savedReceipt;
     });
+  }
+
+  // ========== DELEGATION METHODS TO NEW SERVICES ==========
+  // These methods delegate to separated services while maintaining backward compatibility
+
+  // ClassOption delegation methods
+  async createClassOptionDelegated(dto: any) {
+    return this.classOptionService.create(dto);
+  }
+
+  async listClassOptionsDelegated() {
+    return this.classOptionService.findAll();
+  }
+
+  // Invoice delegation methods
+  async getInvoiceDelegated(id: number) {
+    return this.invoiceService.findOne(id);
+  }
+
+  async listInvoicesDelegated(
+    page: number,
+    limit: number,
+    documentId?: string,
+    student?: string,
+    course?: string,
+    receiptDone?: string,
+  ) {
+    return this.invoiceService.findAll({
+      page,
+      limit,
+      documentId,
+      studentId: student ? parseInt(student) : undefined,
+      courseName: course,
+      receiptDone,
+    });
+  }
+
+  // Receipt delegation methods
+  async getReceiptDelegated(id: number) {
+    return this.receiptService.findOne(id);
+  }
+
+  async listReceiptsDelegated(filter: any) {
+    return this.receiptService.findAll(filter);
+  }
+
+  // Generate document ID using InvoiceService
+  async getNextDocumentIdDelegated() {
+    return this.invoiceService.getNextDocumentId();
   }
 }
