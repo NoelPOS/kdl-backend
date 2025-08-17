@@ -1,5 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { VerifyFeedbackDto } from './dto/verify-feedback.dto';
+import { FeedbackFilterDto } from './dto/feedback-filter.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Schedule } from './entities/schedule.entity';
@@ -30,8 +36,22 @@ export class ScheduleService {
 
   async updateSchedule(
     id: number,
-    dto: Partial<CreateScheduleDto & { warning?: string }>,
+    dto: Partial<
+      CreateScheduleDto & {
+        warning?: string;
+        feedback?: string;
+        feedbackDate?: string;
+        verifyFb?: boolean;
+      }
+    >,
+    user?: any,
   ) {
+    // First, get the current schedule to check permissions
+    const existingSchedule = await this.scheduleRepo.findOne({ where: { id } });
+    if (!existingSchedule) {
+      throw new BadRequestException(`Schedule with ID ${id} not found`);
+    }
+
     // Only pick fields that exist in the Schedule entity
     const updateFields: any = {};
     if (dto.date !== undefined) updateFields.date = dto.date;
@@ -42,14 +62,262 @@ export class ScheduleService {
     if (dto.attendance !== undefined) updateFields.attendance = dto.attendance;
     if (dto.teacherId !== undefined) updateFields.teacherId = dto.teacherId;
     if (dto.warning !== undefined) updateFields.warning = dto.warning;
-    // The following fields are not in the entity: teacherName, studentName, nickname, courseName
-    // If you want to update related entities, you need to handle that separately
+
+    // Handle feedback updates with role-based permissions
+    if (dto.feedback !== undefined) {
+      if (user && user.role === 'TEACHER') {
+        // Teachers can only update feedback for their own schedules
+        if (existingSchedule.teacherId !== user.id) {
+          throw new BadRequestException(
+            'Teachers can only update feedback for their own schedules',
+          );
+        }
+        updateFields.feedback = dto.feedback;
+        // When teacher updates feedback, reset verification status and set feedback date
+        updateFields.verifyFb = false;
+        updateFields.feedbackDate = dto.feedbackDate
+          ? new Date(dto.feedbackDate)
+          : new Date();
+      } else if (user && (user.role === 'ADMIN' || user.role === 'REGISTRAR')) {
+        // Admin/Registrar can update any feedback
+        updateFields.feedback = dto.feedback;
+        if (dto.feedbackDate) {
+          updateFields.feedbackDate = new Date(dto.feedbackDate);
+        }
+        if (dto.verifyFb !== undefined) {
+          updateFields.verifyFb = dto.verifyFb;
+        }
+      } else {
+        updateFields.feedback = dto.feedback;
+        if (dto.feedbackDate) {
+          updateFields.feedbackDate = new Date(dto.feedbackDate);
+        }
+        if (dto.verifyFb !== undefined) {
+          updateFields.verifyFb = dto.verifyFb;
+        }
+      }
+    }
+
+    // Handle verifyFb separately if provided without feedback
+    if (dto.verifyFb !== undefined && dto.feedback === undefined) {
+      if (user && user.role === 'TEACHER') {
+        throw new BadRequestException(
+          'Teachers cannot verify their own feedback',
+        );
+      }
+      updateFields.verifyFb = dto.verifyFb;
+    }
 
     const result = await this.scheduleRepo.update(id, updateFields);
     if (result.affected === 0) {
       return null; // Schedule not found
     }
     return this.scheduleRepo.findOne({ where: { id } });
+  }
+
+  async verifyFeedback(id: number, dto: VerifyFeedbackDto, user: any) {
+    // First, get the current schedule
+    const existingSchedule = await this.scheduleRepo.findOne({
+      where: { id },
+      relations: ['student', 'teacher', 'course'],
+    });
+
+    if (!existingSchedule) {
+      throw new NotFoundException(`Schedule with ID ${id} not found`);
+    }
+
+    // Only admin and registrar can verify feedback
+    if (user.role !== 'admin' && user.role !== 'registrar') {
+      throw new BadRequestException(
+        'Only admin and registrar can verify feedback',
+      );
+    }
+
+    // Update the feedback and set it as verified
+    const updateFields = {
+      feedback: dto.feedback,
+      verifyFb: true,
+    };
+
+    const result = await this.scheduleRepo.update(id, updateFields);
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Failed to update schedule with ID ${id}`);
+    }
+
+    return {
+      success: true,
+      message: 'Feedback has been verified and updated successfully',
+      scheduleId: id,
+      updatedFeedback: dto.feedback,
+      verifiedBy: user.role,
+      verifiedAt: new Date().toISOString(),
+      verificationNote: dto.verificationNote || null,
+      scheduleDetails: {
+        studentName: existingSchedule.student?.name,
+        teacherName: existingSchedule.teacher?.name,
+        courseName: existingSchedule.course?.title,
+        date: existingSchedule.date,
+      },
+    };
+  }
+
+  async getSchedulesWithPendingFeedback(page: number = 1, limit: number = 10) {
+    // Validate pagination parameters
+    const validatedPage = Math.max(1, page);
+    const validatedLimit = Math.min(Math.max(1, limit), 100);
+
+    // Get schedules that have feedback but are not verified
+    const queryBuilder = this.scheduleRepo
+      .createQueryBuilder('schedule')
+      .leftJoinAndSelect('schedule.student', 'student')
+      .leftJoinAndSelect('schedule.teacher', 'teacher')
+      .leftJoinAndSelect('schedule.course', 'course')
+      .leftJoinAndSelect('schedule.session', 'session')
+      .where('schedule.feedback IS NOT NULL')
+      .andWhere('schedule.feedback != :emptyFeedback', { emptyFeedback: '' })
+      .andWhere('schedule.verifyFb = :verifyFb', { verifyFb: false })
+      .orderBy('schedule.createdAt', 'DESC');
+
+    // Get total count for pagination
+    const totalCount = await queryBuilder.getCount();
+
+    // Apply pagination
+    const offset = (validatedPage - 1) * validatedLimit;
+    const schedules = await queryBuilder
+      .skip(offset)
+      .take(validatedLimit)
+      .getMany();
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / validatedLimit);
+    const hasNext = validatedPage < totalPages;
+    const hasPrev = validatedPage > 1;
+
+    return {
+      schedules,
+      pagination: {
+        currentPage: validatedPage,
+        totalPages,
+        totalCount,
+        hasNext,
+        hasPrev,
+      },
+    };
+  }
+
+  async getFilteredFeedbacks(filterDto: FeedbackFilterDto) {
+    const {
+      studentName,
+      courseName,
+      teacherName,
+      startDate,
+      endDate,
+      status,
+      page = 1,
+      limit = 10,
+    } = filterDto;
+
+    // Validate pagination parameters
+    const validatedPage = Math.max(1, page);
+    const validatedLimit = Math.min(Math.max(1, limit), 100);
+
+    // Build query for schedules with unverified feedback
+    // Note: status='all' or undefined both fetch unverified feedbacks (verifyFb = false)
+    const queryBuilder = this.scheduleRepo
+      .createQueryBuilder('schedule')
+      .leftJoinAndSelect('schedule.student', 'student')
+      .leftJoinAndSelect('schedule.teacher', 'teacher')
+      .leftJoinAndSelect('schedule.course', 'course')
+      .leftJoinAndSelect('schedule.session', 'session')
+      .where('schedule.feedback IS NOT NULL')
+      .andWhere('schedule.feedback != :emptyFeedback', { emptyFeedback: '' })
+      .andWhere('schedule.verifyFb = :verifyFb', { verifyFb: false }) // Always fetch unverified feedbacks
+      .orderBy('schedule.feedbackDate', 'DESC');
+
+    // Handle status parameter (currently only 'all' is supported, which is default behavior)
+    if (status && status !== 'all') {
+      // Future: could add other status types like 'verified', 'pending', etc.
+      // For now, we only support 'all' which fetches unverified feedbacks
+    }
+
+    // Apply filters
+    if (studentName) {
+      queryBuilder.andWhere('student.name ILIKE :studentName', {
+        studentName: `%${studentName}%`,
+      });
+    }
+
+    if (courseName) {
+      queryBuilder.andWhere('course.title ILIKE :courseName', {
+        courseName: `%${courseName}%`,
+      });
+    }
+
+    if (teacherName) {
+      queryBuilder.andWhere('teacher.name ILIKE :teacherName', {
+        teacherName: `%${teacherName}%`,
+      });
+    }
+
+    if (startDate) {
+      queryBuilder.andWhere('schedule.feedbackDate >= :startDate', {
+        startDate: new Date(startDate),
+      });
+    }
+
+    if (endDate) {
+      queryBuilder.andWhere('schedule.feedbackDate <= :endDate', {
+        endDate: new Date(endDate),
+      });
+    }
+
+    // Get total count for pagination
+    const totalCount = await queryBuilder.getCount();
+
+    // Apply pagination
+    const offset = (validatedPage - 1) * validatedLimit;
+    const schedules = await queryBuilder
+      .skip(offset)
+      .take(validatedLimit)
+      .getMany();
+
+    // Transform the data to match the frontend FeedbackItem interface
+    const feedbacks = schedules.map((schedule) => ({
+      id: schedule.id.toString(),
+      scheduleId: schedule.id.toString(),
+      studentId: schedule.student?.id?.toString() || '',
+      studentName: schedule.student?.name || '',
+      studentNickname: schedule.student?.nickname || '',
+      studentProfilePicture: schedule.student?.profilePicture || '',
+      courseTitle: schedule.course?.title || '',
+      teacherName: schedule.teacher?.name || '',
+      feedback: schedule.feedback || '',
+      feedbackDate: schedule.feedbackDate
+        ? schedule.feedbackDate.toISOString()
+        : '',
+      sessionDate: schedule.date ? schedule.date.toString() : '',
+      sessionTime:
+        schedule.startTime && schedule.endTime
+          ? `${schedule.startTime} - ${schedule.endTime}`
+          : '',
+    }));
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / validatedLimit);
+    const hasNext = validatedPage < totalPages;
+    const hasPrev = validatedPage > 1;
+
+    return {
+      feedbacks,
+      pagination: {
+        currentPage: validatedPage,
+        totalPages,
+        totalCount,
+        hasNext,
+        hasPrev,
+      },
+    };
   }
 
   async remove(id: number) {
@@ -381,16 +649,25 @@ export class ScheduleService {
     return query.getMany();
   }
 
-  async getTodaySchedules(): Promise<any[]> {
+  async getTodaySchedules(id?: number): Promise<any[]> {
     const today = new Date();
     const todayDateString = today.toLocaleDateString('en-CA');
 
-    return this.scheduleRepo
+    const queryBuilder = this.scheduleRepo
       .createQueryBuilder('schedule')
       .leftJoinAndSelect('schedule.student', 'student')
       .leftJoinAndSelect('schedule.teacher', 'teacher')
       .leftJoinAndSelect('schedule.course', 'course')
-      .where('DATE(schedule.date) = :today', { today: todayDateString })
+      .where('DATE(schedule.date) = :today', { today: todayDateString });
+
+    // If teacher ID is provided, filter by that teacher
+    if (id) {
+      queryBuilder.andWhere('schedule.teacherId = :teacherId', {
+        teacherId: id,
+      });
+    }
+
+    return queryBuilder
       .select([
         'schedule.id',
         'schedule.date',
@@ -630,6 +907,24 @@ export class ScheduleService {
       ])
       .where('schedule.sessionId = :sessionId', { sessionId })
       .andWhere('schedule.studentId = :studentId', { studentId })
+      .getRawMany();
+  }
+
+  async getSchedulesBySession(sessionId: number) {
+    // Get schedules by session only - no need for studentId since each session belongs to one student
+    return this.scheduleRepo
+      .createQueryBuilder('schedule')
+      .leftJoin('schedule.student', 'student')
+      .leftJoin('schedule.teacher', 'teacher')
+      .leftJoin('schedule.course', 'course')
+      .addSelect([
+        'student.name',
+        'student.profilePicture',
+        'teacher.name',
+        'course.title',
+      ])
+      .where('schedule.sessionId = :sessionId', { sessionId })
+      .orderBy('schedule.createdAt', 'ASC')
       .getRawMany();
   }
 }
