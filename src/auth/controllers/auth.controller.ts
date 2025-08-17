@@ -1,4 +1,11 @@
-import { Controller, Post, Body, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpStatus,
+  UseGuards,
+  Get,
+} from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
 import {
@@ -9,7 +16,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
 import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { UserEntity } from '../../user/entities/user.entity';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -18,6 +27,8 @@ import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { TokenDto } from '../dto/token.dto';
+import { AuthResponseDto } from '../dto/auth-response.dto';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -41,22 +52,6 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
-  @Post('verify-email')
-  @Public()
-  @ApiOperation({ summary: 'Verify user email with a verification code' })
-  @ApiBody({ type: VerifyEmailDto })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Email verification successful.',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid verification code or email.',
-  })
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    return this.authService.verifyEmail(verifyEmailDto);
-  }
-
   @Post('login')
   @Public()
   @ApiOperation({ summary: 'User login' })
@@ -64,11 +59,11 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User login successful.',
-    type: TokenDto,
+    type: AuthResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid credentials or email not verified.',
+    description: 'Invalid credentials.',
   })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -110,23 +105,6 @@ export class AuthController {
     );
   }
 
-  @Post('refresh')
-  @Public()
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({ type: RefreshTokenDto })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Tokens refreshed successfully.',
-    type: TokenDto,
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid refresh token.',
-  })
-  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto);
-  }
-
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -135,9 +113,52 @@ export class AuthController {
     status: HttpStatus.OK,
     description: 'User logged out successfully.',
   })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
-  async logout(@GetUser() user: UserEntity) {
-    await this.authService.logout(user.id);
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  async logout() {
+    await this.authService.logout();
     return { message: 'Logout successful' };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get current user info' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Current user information.',
+  })
+  async getCurrentUser(@GetUser() user: any) {
+    return this.authService.getCurrentUser(user.id, user.role);
+  }
+
+  // Example protected endpoints with role-based access
+  @Get('admin-only')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin only endpoint' })
+  async adminOnly() {
+    return { message: 'This endpoint is only accessible by admins' };
+  }
+
+  @Get('teacher-only')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.TEACHER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Teacher only endpoint' })
+  async teacherOnly() {
+    return { message: 'This endpoint is only accessible by teachers' };
+  }
+
+  @Get('admin-registrar')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin and Registrar only endpoint' })
+  async adminRegistrarOnly() {
+    return { message: 'This endpoint is accessible by admins and registrars' };
   }
 }

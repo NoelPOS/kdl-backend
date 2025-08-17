@@ -6,7 +6,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { UserService } from '../../user/user.service';
+import { TeacherService } from '../../teacher/teacher.service';
 import { UserEntity } from '../../user/entities/user.entity';
+import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { LoginDto } from '../dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { MoreThan, Repository } from 'typeorm';
@@ -23,6 +25,7 @@ import {
 } from '../../config/emailTemplates';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { Token, TokenType } from '../entities/opt.entity';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Injectable()
 export class AuthService {
@@ -30,11 +33,15 @@ export class AuthService {
 
   constructor(
     private usersService: UserService,
+    private teacherService: TeacherService,
     private resendService: ResendService,
     private jwtService: JwtService,
     private configService: ConfigService,
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
+
+    @InjectRepository(TeacherEntity)
+    private teacherRepository: Repository<TeacherEntity>,
 
     @InjectRepository(Token)
     private tokenRepository: Repository<Token>,
@@ -42,7 +49,7 @@ export class AuthService {
 
   async register(
     userDto: RegisterDto,
-  ): Promise<UserEntity & { accessToken: string; refreshToken: string }> {
+  ): Promise<UserEntity & { accessToken: string }> {
     try {
       // Check if email already exists
       const existingUser = await this.userRepository.findOneBy({
@@ -60,43 +67,11 @@ export class AuthService {
       user.password = await bcrypt.hash(userDto.password, salt);
       const savedUser = await this.userRepository.save(user);
       delete savedUser.password;
-      const tokens = await this.generateTokens(savedUser);
-
-      // Send verification email
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-      // Create a verification token
-      const verificationToken = new Token();
-      verificationToken.userId = savedUser.id.toString();
-      verificationToken.token = otp;
-      verificationToken.type = TokenType.VERIFY_EMAIL;
-      verificationToken.expireIn = new Date(
-        Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-      );
-      await this.tokenRepository.save(verificationToken);
-
-      // Prepare the verification email
-      const emailTemplate = VERIFICATION_EMAIL_TEMPLATE.replace(
-        '{{verificationCode}}',
-        otp,
-      )
-        .replace('{{verifyLink}}', '') // TODO User actual frontend route
-        .replace('{{name}}', savedUser.userName);
-
-      await this.resendService.send({
-        from: this.configService.get<string>('RESEND_FROM_EMAIL'),
-        to: savedUser.email,
-        subject: 'Please verify your email',
-        html: emailTemplate,
-      });
-
-      // Store the refresh token in the database
-      await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+      const accessToken = await this.generateAccessToken(savedUser);
 
       return {
         ...savedUser,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: accessToken,
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -106,93 +81,71 @@ export class AuthService {
     }
   }
 
-  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
-    const { email, verificationCode } = verifyEmailDto;
-    try {
-      // Find the user by email
-      const user = await this.usersService.findOne({ email });
-
-      if (!user) {
-        throw new BadRequestException('User not found');
-      }
-
-      // Check if the verification code matches
-      const token = await this.tokenRepository.findOne({
-        where: {
-          userId: user.id.toString(),
-          token: verificationCode,
-          type: TokenType.VERIFY_EMAIL,
-          expireIn: MoreThan(new Date()),
-        },
-      });
-
-      if (!token) {
-        throw new BadRequestException('Invalid verification code');
-      }
-
-      // Mark the user as verified
-      user.isVerified = true;
-      await this.userRepository.save(user);
-
-      // Optionally, delete the token after successful verification
-      await this.tokenRepository.remove(token);
-
-      const emailTemplate = WELCOME_TEMPLATE.replace('{{name}}', user.userName);
-
-      await this.resendService.send({
-        from: this.configService.get<string>('RESEND_FROM_EMAIL'),
-        to: user.email,
-        subject: 'Welcome to Our Service',
-        html: emailTemplate,
-      });
-
-      return { message: 'Email verified successfully' };
-    } catch (error) {
-      this.logger.error(`Email verification failed: ${error.message}`);
-      throw new BadRequestException(
-        `Email verification failed: ${error.message}`,
-      );
-    }
-  }
+  // Email verification removed - not needed
 
   async login(loginDTO: LoginDto): Promise<{
     user: {
+      id: string;
       name: string;
       email: string;
+      role: UserRole;
     };
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
+    accessToken: string;
   }> {
     try {
-      const user = await this.usersService.findOne(loginDTO);
+      let user: UserEntity | TeacherEntity;
+      let passwordMatched: boolean;
 
-      const passwordMatched = await bcrypt.compare(
-        loginDTO.password,
-        user.password,
-      );
+      // Determine which entity to authenticate based on role
+      if (loginDTO.role === UserRole.TEACHER) {
+        console.log('Authenticating teacher:', loginDTO.email);
+        user = await this.teacherService.findByEmail(loginDTO.email);
+        passwordMatched = await bcrypt.compare(
+          loginDTO.password,
+          user.password,
+        );
+      } else {
+        // For ADMIN and REGISTRAR roles, use UserEntity
+        user = await this.usersService.findOne({ email: loginDTO.email });
+
+        // Verify that the user has the correct role
+        if (user.role !== loginDTO.role) {
+          throw new UnauthorizedException('Invalid role for this user');
+        }
+
+        passwordMatched = await bcrypt.compare(
+          loginDTO.password,
+          user.password,
+        );
+      }
 
       if (!passwordMatched) {
+        this.logger.warn(`Login failed for user: ${loginDTO.email}`);
         throw new UnauthorizedException('Password does not match');
       }
 
       delete user.password;
 
-      const tokens = await this.generateTokens(user);
+      const accessToken = await this.generateAccessToken(user, loginDTO.role);
 
-      // Store the refresh token in the database
-      await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+      console.log('returning user and accessToken', {
+        user: {
+          id: user.id.toString(),
+          name: (user as TeacherEntity).name || (user as UserEntity).userName,
+          email: user.email,
+          role: loginDTO.role,
+        },
+        accessToken: accessToken,
+      });
 
       return {
         user: {
-          name: user.userName,
+          id: user.id.toString(),
+          name: (user as TeacherEntity).name || (user as UserEntity).userName,
           email: user.email,
+          role: loginDTO.role,
         },
-        tokens: {
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-        },
+        accessToken: accessToken,
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -286,72 +239,57 @@ export class AuthService {
     }
   }
 
-  async refreshToken(
-    refreshTokenDto: RefreshTokenDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
-    try {
-      const { refreshToken } = refreshTokenDto;
+  // Refresh token feature removed
 
-      // Verify the refresh token
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      });
+  async logout(): Promise<void> {
+    // Simple logout - client should discard the token
+    return;
+  }
 
-      // Find the user with this refresh token
-      const user = await this.usersService.findById(payload.sub);
+  async getCurrentUser(
+    userId: number,
+    role: UserRole,
+  ): Promise<{
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  }> {
+    let user: UserEntity | TeacherEntity;
 
-      // Validate that the refresh token matches what's stored
-      if (
-        !user ||
-        !user.refreshToken ||
-        !(await bcrypt.compare(refreshToken, user.refreshToken))
-      ) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      // Generate new tokens
-      const tokens = await this.generateTokens(user);
-
-      // Update the refresh token in the database
-      await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
-
-      return tokens;
-    } catch (error) {
-      this.logger.error(`Refresh token failed: ${error.message}`);
-      throw new UnauthorizedException('Invalid refresh token');
+    if (role === UserRole.TEACHER) {
+      user = await this.teacherService.findById(userId);
+    } else {
+      user = await this.usersService.findById(userId);
     }
+
+    return {
+      id: user.id.toString(),
+      name: (user as TeacherEntity).name || (user as UserEntity).userName,
+      email: user.email,
+      role: role,
+    };
   }
 
-  async logout(userId: number): Promise<void> {
-    // Clear the refresh token when logging out
-    await this.usersService.removeRefreshToken(userId);
-  }
+  private async generateAccessToken(
+    user: UserEntity | TeacherEntity,
+    role?: UserRole,
+  ): Promise<string> {
+    const userRole = role || (user as UserEntity).role || UserRole.TEACHER;
 
-  private async generateTokens(
-    user: UserEntity,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = {
       email: user.email,
       sub: user.id,
-      userName: user.userName,
-      role: user.role,
+      name: (user as TeacherEntity).name || (user as UserEntity).userName,
+      role: userRole,
     };
 
     // Generate access token
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_EXPIRATION', '15m'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION', '8h'),
     });
 
-    // Generate refresh token with longer expiration
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d'),
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-    };
+    return accessToken;
   }
 }

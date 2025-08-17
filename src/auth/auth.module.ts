@@ -9,12 +9,14 @@ import { AuthController } from './controllers/auth.controller';
 import { CommonModule } from '../common/common.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../user/entities/user.entity';
+import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { Token } from './entities/opt.entity';
+import { TeacherModule } from '../teacher/teacher.module';
 
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([UserEntity, Token]),
+    TypeOrmModule.forFeature([UserEntity, TeacherEntity, Token]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -26,6 +28,7 @@ import { Token } from './entities/opt.entity';
       }),
     }),
     UserModule,
+    TeacherModule,
     CommonModule,
   ],
   controllers: [AuthController],
