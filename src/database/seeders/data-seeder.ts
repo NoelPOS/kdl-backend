@@ -14,6 +14,7 @@ import { Schedule } from '../../schedule/entities/schedule.entity';
 // import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
 import { RoomEntity } from '../../room/entities/room.entity';
 import * as bcrypt from 'bcrypt';
+import { UserRole } from '../../common/enums/user-role.enum';
 import { DiscountEntity } from '../../discount/entities/discount.entity';
 
 export class DataSeeder {
@@ -116,8 +117,7 @@ export class DataSeeder {
     adminUser.userName = 'admin';
     adminUser.email = 'admin@test.com';
     adminUser.password = hashedPassword;
-    adminUser.role = 'admin';
-    adminUser.isVerified = true;
+    adminUser.role = UserRole.ADMIN;
     users.push(adminUser);
 
     return await userRepo.save(users);
