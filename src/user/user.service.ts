@@ -52,14 +52,14 @@ export class UserService {
     return this.userRepository.find({
       take: limit,
       skip: skip,
-      select: ['id', 'userName', 'email', 'role', 'isVerified', 'createdAt'],
+      select: ['id', 'userName', 'email', 'role', 'createdAt'],
     });
   }
 
   async findById(id: number): Promise<UserEntity> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ['id', 'userName', 'email', 'role', 'isVerified', 'createdAt'],
+      select: ['id', 'userName', 'email', 'role', 'createdAt'],
     });
 
     if (!user) {
@@ -114,8 +114,6 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
-    user.isVerified = true;
     return await this.userRepository.save(user);
   }
 
@@ -131,14 +129,5 @@ export class UserService {
     return this.userRepository.findOne({ where: criteria });
   }
 
-  async updateRefreshToken(
-    userId: number,
-    refreshToken: string,
-  ): Promise<void> {
-    await this.userRepository.update(userId, { refreshToken });
-  }
-
-  async removeRefreshToken(userId: number): Promise<void> {
-    await this.userRepository.update(userId, { refreshToken: null });
-  }
+  // Refresh token methods removed
 }

@@ -27,6 +27,7 @@ import { UserEntity } from './entities/user.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Controller('users')
 export class UserController {
@@ -52,9 +53,9 @@ export class UserController {
   @ApiTags('Users')
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get all users (Admin only)' })
+  @ApiOperation({ summary: 'Get all users (Admin and Registrar only)' })
   @ApiQuery({ type: PaginationDto })
   @ApiResponse({
     status: 200,
@@ -67,7 +68,8 @@ export class UserController {
 
   @ApiTags('Users')
   @Get('profile')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
@@ -81,7 +83,8 @@ export class UserController {
 
   @ApiTags('Users')
   @Put('profile')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiBody({ type: UpdateUserDto })
@@ -99,7 +102,8 @@ export class UserController {
 
   @ApiTags('Users')
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', description: 'User ID' })
@@ -119,7 +123,8 @@ export class UserController {
 
   @ApiTags('Users')
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update user' })
   @ApiParam({ name: 'id', description: 'User ID' })
@@ -139,7 +144,8 @@ export class UserController {
 
   @ApiTags('Users')
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete user' })
   @ApiParam({ name: 'id', description: 'User ID' })
