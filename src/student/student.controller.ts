@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   NotFoundException,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -19,8 +20,14 @@ import {
   ApiQuery,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { StudentEntity } from './entities/student.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { GetUser } from '../common/decorators/get-user.decorator';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Controller('students')
 export class StudentController {
@@ -28,6 +35,9 @@ export class StudentController {
 
   @ApiTags('Students')
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR) // Only admins and registrars can create students
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new student' })
   @ApiBody({ type: CreateStudentDto })
   @ApiResponse({
@@ -42,6 +52,9 @@ export class StudentController {
 
   @ApiTags('Students')
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR) // Only admins and registrars can view all students
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all students with pagination' })
   @ApiQuery({
     name: 'page',
@@ -114,6 +127,9 @@ export class StudentController {
 
   @ApiTags('Students')
   @Get('search')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Search students by name' })
   @ApiQuery({
     name: 'name',
@@ -131,6 +147,9 @@ export class StudentController {
 
   @ApiTags('Students')
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get a student by ID' })
   @ApiParam({ name: 'id', required: true, description: 'Student ID' })
   @ApiResponse({
@@ -149,6 +168,9 @@ export class StudentController {
 
   @ApiTags('Students')
   @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update a student by ID' })
   @ApiParam({ name: 'id', required: true, description: 'Student ID' })
   @ApiBody({ type: UpdateStudentDto })
