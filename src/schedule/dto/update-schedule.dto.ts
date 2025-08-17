@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsInt } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsInt,
+  IsDateString,
+} from 'class-validator';
 
 export class UpdateScheduleDto {
   @ApiProperty({ required: false })
@@ -16,6 +22,14 @@ export class UpdateScheduleDto {
   @IsOptional()
   @IsString()
   feedback?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Date when feedback was submitted',
+  })
+  @IsOptional()
+  @IsDateString()
+  feedbackDate?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

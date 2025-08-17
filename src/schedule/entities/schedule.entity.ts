@@ -90,6 +90,10 @@ export class Schedule {
   @ApiProperty({ description: 'Feedback' })
   feedback: string;
 
+  @Column({ type: 'timestamp', nullable: true })
+  @ApiProperty({ description: 'Date when feedback was submitted' })
+  feedbackDate: Date;
+
   @Column()
   @ApiProperty({ description: 'Verify feedback' })
   verifyFb: boolean;
