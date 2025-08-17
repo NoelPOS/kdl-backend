@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,14 +15,22 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ClassOptionService } from './class-option.service';
 import { CreateClassOptionDto } from './dto/create-class-option.dto';
 import { UpdateClassOptionDto } from './dto/update-class-option.dto';
 import { ClassOption } from './entities/class-option.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Controller('class-options')
 @ApiTags('Class Options')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+@ApiBearerAuth('JWT-auth')
 export class ClassOptionController {
   constructor(private readonly classOptionService: ClassOptionService) {}
 

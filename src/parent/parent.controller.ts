@@ -9,6 +9,7 @@ import {
   Query,
   DefaultValuePipe,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { ParentService } from './parent.service';
 import {
@@ -18,6 +19,7 @@ import {
   ApiQuery,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ParentEntity } from './entities/parent.entity';
 import { CreateParentDto } from './dto/create-parent.dto';
@@ -26,9 +28,16 @@ import { AssignChildrenToParentDto } from './dto/assign-children-parent.dto';
 import { ConnectParentStudentDto } from './dto/connect-parent-student.dto';
 import { PaginatedParentChildrenResponseDto } from './dto/paginated-parent-children-response.dto';
 import { ParentStudentEntity } from './entities/parent-student.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @ApiTags('Parents')
 @Controller('parents')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+@ApiBearerAuth('JWT-auth')
 export class ParentController {
   constructor(private readonly parentService: ParentService) {}
 

@@ -7,6 +7,7 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,14 +15,22 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ReceiptService } from './receipt.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { ReceiptFilterDto } from './dto/receipt-filter.dto';
 import { Receipt } from './entities/receipt.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Controller('receipts')
 @ApiTags('Receipts')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+@ApiBearerAuth('JWT-auth')
 export class ReceiptController {
   constructor(private readonly receiptService: ReceiptService) {}
 

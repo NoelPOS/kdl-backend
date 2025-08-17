@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,15 +17,23 @@ import {
   ApiParam,
   ApiBody,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { InvoiceService } from './invoice.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { InvoiceFilterDto } from './dto/invoice-filter.dto';
 import { PaginatedInvoiceResponseDto } from './dto/paginated-invoice-response.dto';
 import { Invoice } from './entities/invoice.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Controller('invoices')
 @ApiTags('Invoices')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+@ApiBearerAuth('JWT-auth')
 export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 
