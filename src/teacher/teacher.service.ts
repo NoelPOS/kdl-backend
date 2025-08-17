@@ -11,6 +11,7 @@ import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { CourseEntity } from '../course/entities/course.entity';
 import { Session } from '../session/entities/session.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class TeacherService {
@@ -406,5 +407,30 @@ export class TeacherService {
         `Failed to find teacher with ID ${id}: ${error.message}`,
       );
     }
+  }
+
+  // Authentication methods
+  async findByEmail(email: string): Promise<TeacherEntity> {
+    const teacher = await this.teacherRepository.findOne({
+      where: { email },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    return teacher;
+  }
+
+  async findById(id: number): Promise<TeacherEntity> {
+    const teacher = await this.teacherRepository.findOne({
+      where: { id },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    return teacher;
   }
 }
