@@ -8,6 +8,8 @@ import { Schedule } from '../schedule/entities/schedule.entity';
 import { PackageEntity } from '../package/entities/package.entity';
 import { DataSource } from 'typeorm';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
+import { TeacherSessionFilterDto } from './dto/teacher-session-filter.dto';
+import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
 import { CourseEntity } from '../course/entities/course.entity';
@@ -115,25 +117,6 @@ export class SessionService {
   async create(dto: CreateSessionDto) {
     // Check for existing session with same studentId, courseId, and classOptionId
     console.log('Creating session with data:', dto);
-
-    // For package-based sessions, we might allow multiple sessions from the same package
-    // So we need to modify the duplicate check logic
-    if (!dto.isFromPackage) {
-      const existing = await this.sessionRepository.findOne({
-        where: {
-          studentId: dto.studentId,
-          courseId: dto.courseId,
-          classOptionId: dto.classOptionId,
-          teacherId: dto.teacherId,
-          isFromPackage: false, // Only check for non-package sessions
-        },
-      });
-      if (existing) {
-        throw new BadRequestException(
-          'A session with the same student, course, and class option already exists.',
-        );
-      }
-    }
 
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
@@ -336,6 +319,127 @@ export class SessionService {
         queryBuilder.andWhere('session.payment = :payment', {
           payment: 'Unpaid',
         });
+      }
+    }
+
+    // Get total count for pagination
+    const totalCount = await queryBuilder.getCount();
+
+    // Apply pagination
+    const offset = (validatedPage - 1) * validatedLimit;
+    queryBuilder.skip(offset).take(validatedLimit);
+
+    // Order by creation date (newest first)
+    queryBuilder.orderBy('session.createdAt', 'DESC');
+
+    // Optimize: Add subqueries to get progress data in one query instead of N+1
+    queryBuilder
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id')
+          .andWhere('schedule.attendance = :attendance', {
+            attendance: 'completed',
+          });
+      }, 'completedCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id');
+      }, 'totalScheduledCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id')
+          .andWhere('schedule.attendance = :canceledAttendance', {
+            canceledAttendance: 'cancelled',
+          });
+      }, 'canceledCount');
+
+    // Get the sessions with progress data in one query
+    const result = await queryBuilder.getRawAndEntities();
+
+    // Transform the result to match the expected format
+    const transformedResult = result.entities.map((session, index) => {
+      const completedCount = parseInt(result.raw[index].completedCount || '0');
+      const totalScheduledCount = parseInt(
+        result.raw[index].totalScheduledCount || '0',
+      );
+      const canceledCount = parseInt(result.raw[index].canceledCount || '0');
+
+      // Calculate progress percentage
+      const progressPercentage =
+        totalScheduledCount > 0
+          ? Math.round((completedCount / totalScheduledCount) * 100)
+          : 0;
+
+      return {
+        sessionId: session.id,
+        courseTitle: session.course?.title,
+        courseDescription: session.course?.description,
+        mode: session.classOption.classMode,
+        payment: session.payment,
+        completedCount,
+        classCancel: canceledCount,
+        progress: `${progressPercentage}%`,
+        medium: session.course.medium,
+        status: session.status,
+        isFromPackage: session.isFromPackage,
+        packageId: session.packageId,
+      };
+    });
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / validatedLimit);
+    const hasNext = validatedPage < totalPages;
+    const hasPrev = validatedPage > 1;
+
+    return {
+      sessions: transformedResult,
+      pagination: {
+        currentPage: validatedPage,
+        totalPages,
+        totalCount,
+        hasNext,
+        hasPrev,
+      },
+    };
+  }
+
+  async getTeacherSessionsFiltered(
+    teacherId: number,
+    filterDto: TeacherSessionFilterDto,
+  ) {
+    const { courseName, status, page = 1, limit = 12 } = filterDto;
+
+    // Validate pagination parameters
+    const validatedPage = Math.max(1, page);
+    const validatedLimit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
+
+    // Build the query
+    const queryBuilder = this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.course', 'course')
+      .leftJoinAndSelect('session.classOption', 'classOption')
+      .where('session.teacherId = :teacherId', { teacherId });
+
+    // Apply filters
+    if (courseName) {
+      queryBuilder.andWhere('course.title ILIKE :courseName', {
+        courseName: `%${courseName}%`,
+      });
+    }
+
+    if (status) {
+      if (status === 'completed') {
+        queryBuilder.andWhere('session.status = :status', {
+          status: 'Completed',
+        });
+      } else if (status === 'wip') {
+        queryBuilder.andWhere('session.status = :status', { status: 'WP' });
       }
     }
 
@@ -1145,6 +1249,56 @@ export class SessionService {
 
       return savedReceipt;
     });
+  }
+
+  async submitFeedback(dto: SubmitFeedbackDto) {
+    const { sessionId, studentId, feedback, timestamp } = dto;
+
+    // First, verify that the session exists and belongs to the student
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId, studentId },
+      relations: ['course', 'student'],
+    });
+
+    if (!session) {
+      throw new BadRequestException(
+        `Session with ID ${sessionId} not found for student ${studentId}`,
+      );
+    }
+
+    // Prepare the feedback date
+    const feedbackDate = timestamp ? new Date(timestamp) : new Date();
+
+    // Update feedback for all schedules in this session
+    const result = await this.scheduleRepo
+      .createQueryBuilder()
+      .update(Schedule)
+      .set({
+        feedback: feedback,
+        feedbackDate: feedbackDate,
+        verifyFb: false, // Mark feedback as not verified (teacher submitted)
+      })
+      .where('sessionId = :sessionId', { sessionId })
+      .andWhere('studentId = :studentId', { studentId })
+      .execute();
+
+    const updatedSchedules = result.affected || 0;
+
+    if (updatedSchedules === 0) {
+      throw new BadRequestException(
+        `No schedules found for session ${sessionId} and student ${studentId}`,
+      );
+    }
+
+    return {
+      success: true,
+      message: `Feedback successfully submitted for session ${sessionId}`,
+      updatedSchedules,
+      sessionId,
+      studentId,
+      courseName: session.course?.title,
+      studentName: session.student?.name,
+    };
   }
 
   // ========== DELEGATION METHODS TO NEW SERVICES ==========

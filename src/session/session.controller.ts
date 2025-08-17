@@ -4,12 +4,14 @@ import {
   Post,
   Body,
   Patch,
+  Put,
   Param,
   Delete,
   ParseIntPipe,
   NotFoundException,
   Query,
   DefaultValuePipe,
+  UseGuards,
 } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -21,14 +23,24 @@ import {
   ApiParam,
   ApiBody,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Session } from './entities/session.entity';
 import { PaginatedSessionResponseDto } from './dto/paginated-session-response.dto';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
+import { TeacherSessionFilterDto } from './dto/teacher-session-filter.dto';
+import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 import { PaginatedSessionOverviewResponseDto } from './dto/paginated-session-overview-response.dto';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Controller('sessions')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+@ApiBearerAuth('JWT-auth')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
@@ -137,6 +149,46 @@ export class SessionController {
     @Query() filterDto: StudentSessionFilterDto,
   ) {
     return this.sessionService.getStudentSessionsFiltered(studentId, filterDto);
+  }
+
+  @ApiTags('Sessions')
+  @Get('teacher/:teacherId/filtered')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
+  @ApiOperation({ summary: 'Get filtered teacher sessions with pagination' })
+  @ApiParam({ name: 'teacherId', type: 'number' })
+  @ApiQuery({
+    name: 'courseName',
+    required: false,
+    description: 'Filter by course name',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status (completed/wip)',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page (default: 12)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Filtered teacher sessions with pagination',
+    type: PaginatedSessionOverviewResponseDto,
+  })
+  getTeacherSessionsFiltered(
+    @Param('teacherId', ParseIntPipe) teacherId: number,
+    @Query() filterDto: TeacherSessionFilterDto,
+  ) {
+    return this.sessionService.getTeacherSessionsFiltered(teacherId, filterDto);
   }
 
   @ApiTags('Sessions')
@@ -275,6 +327,39 @@ export class SessionController {
   }
 
   @ApiTags('Sessions')
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a session' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({ type: UpdateSessionDto })
+  @ApiResponse({
+    status: 200,
+    description: 'The session has been successfully updated.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: {
+          type: 'boolean',
+          example: true,
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async updateSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateSessionDto: UpdateSessionDto,
+  ) {
+    const updatedSession = await this.sessionService.update(
+      id,
+      updateSessionDto,
+    );
+    if (!updatedSession) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+    return { success: true };
+  }
+
+  @ApiTags('Sessions')
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update session status' })
   @ApiParam({ name: 'id', type: 'number' })
@@ -343,6 +428,30 @@ export class SessionController {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
     return updatedSession;
+  }
+
+  @ApiTags('Sessions')
+  @Post('feedback')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
+  @ApiOperation({ summary: 'Submit teacher feedback for a session' })
+  @ApiBody({ type: SubmitFeedbackDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Feedback has been successfully submitted.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+        updatedSchedules: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @ApiResponse({ status: 404, description: 'Session not found.' })
+  async submitFeedback(@Body() submitFeedbackDto: SubmitFeedbackDto) {
+    return this.sessionService.submitFeedback(submitFeedbackDto);
   }
 
   @ApiTags('Sessions')
