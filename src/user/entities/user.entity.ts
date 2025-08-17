@@ -1,10 +1,19 @@
-import { Entity, Column, OneToMany, Relation, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToMany,
+  Relation,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { Token } from '../../auth/entities/opt.entity';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Entity('users')
-export class UserEntity  {
+export class UserEntity {
   @PrimaryGeneratedColumn()
   @ApiProperty({ description: 'Unique identifier' })
   id: number;
@@ -41,26 +50,15 @@ export class UserEntity  {
 
   @ApiProperty({
     description: 'User role for authorization',
-    enum: ['user', 'admin'],
-    default: 'user',
+    enum: UserRole,
+    default: UserRole.REGISTRAR,
   })
-  @Column({ type: 'varchar', default: 'user' })
-  role: string;
-
-  @ApiProperty({
-    description: 'Refresh token for JWT authentication',
-    required: false,
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.REGISTRAR,
   })
-  @Column({ nullable: true, type: 'text' })
-  @Exclude()
-  refreshToken: string;
-
-  @ApiProperty({
-    description: 'Indicates whether the user has verified their email',
-    default: false,
-  })
-  @Column({ default: false, type: 'boolean' })
-  isVerified: boolean;
+  role: UserRole;
 
   @ApiProperty({
     description: 'Tokens associated with the user',
