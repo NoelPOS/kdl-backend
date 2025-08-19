@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateTeacherDto {
   @ApiProperty({
@@ -21,6 +21,16 @@ export class UpdateTeacherDto {
   @IsString()
   @IsOptional()
   email?: string;
+
+  @ApiProperty({
+    example: 'newpassword123',
+    description: 'Teacher password',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  password?: string;
 
   @ApiProperty({
     example: '+1234567890',

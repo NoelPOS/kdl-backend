@@ -4,7 +4,7 @@ import {
   IsString,
   IsOptional,
   IsPhoneNumber,
-  isString,
+  MinLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -21,26 +21,36 @@ export class CreateTeacherDto {
     example: 'teacher@gmail.com',
     description: 'Teacher email',
   })
-  // @IsEmail({}, { message: 'Invalid email format' })
+  @IsString()
   @IsNotEmpty({ message: 'Email is required' })
+  // @IsEmail({}, { message: 'Invalid email format' })
   email: string;
+
+  @ApiProperty({
+    example: 'password123',
+    description: 'Teacher password',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Password is required' })
+  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  password: string;
 
   @ApiProperty({
     example: '+1234567890',
     description: 'Teacher contact number',
   })
-  // @IsPhoneNumber(null, { message: 'Invalid contact number format' })
+  @IsString()
   @IsNotEmpty({ message: 'Contact number is required' })
+  // @IsPhoneNumber(null, { message: 'Invalid contact number format' })
   contactNo: string;
 
   @ApiProperty({
     example: 'teacher_line_id',
     description: 'Teacher line ID',
-    required: false,
   })
   @IsString()
-  @IsOptional()
-  lineId?: string;
+  @IsNotEmpty({ message: 'Line ID is required' })
+  lineId: string;
 
   @ApiProperty({
     example: '123 Main St, City, Country',
@@ -55,15 +65,15 @@ export class CreateTeacherDto {
     description: 'Teacher profile picture',
   })
   @IsString()
-  @IsOptional()
-  profilePicture?: string;
+  @IsNotEmpty({ message: 'Profile picture is required' })
+  profilePicture: string;
 
   @ApiProperty({
     example: 'profile-key-123',
     description: 'Key for the teacher profile picture',
     required: false,
   })
-  @IsString()
   @IsOptional()
+  @IsString()
   profileKey?: string;
 }

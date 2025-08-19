@@ -33,18 +33,40 @@ export class TeacherService {
     createTeacherDto: CreateTeacherDto,
   ): Promise<TeacherEntity> {
     try {
+      // Check if teacher with email already exists
+      const existingTeacher = await this.teacherRepository.findOne({
+        where: { email: createTeacherDto.email },
+      });
+
+      if (existingTeacher) {
+        throw new BadRequestException(
+          `Teacher with email ${createTeacherDto.email} already exists`,
+        );
+      }
+
+      // Hash the password before saving
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(
+        createTeacherDto.password,
+        saltRounds,
+      );
+
       const teacher = new TeacherEntity();
       teacher.name = createTeacherDto.name;
       teacher.email = createTeacherDto.email;
+      teacher.password = hashedPassword;
       teacher.contactNo = createTeacherDto.contactNo;
-      teacher.lineId = createTeacherDto.lineId || '';
+      teacher.lineId = createTeacherDto.lineId;
       teacher.address = createTeacherDto.address;
-      teacher.profilePicture = createTeacherDto.profilePicture || '';
-      teacher.profileKey = createTeacherDto.profileKey || '';
+      teacher.profilePicture = createTeacherDto.profilePicture;
+      teacher.profileKey = createTeacherDto.profileKey || null;
 
       const savedTeacher = await this.teacherRepository.save(teacher);
       return savedTeacher;
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException(
         'Failed to create teacher: ' + error.message,
       );
@@ -379,6 +401,16 @@ export class TeacherService {
       if (!teacher) {
         throw new NotFoundException(`Teacher with ID ${id} not found`);
       }
+
+      // If password is being updated, hash it first
+      if (updateTeacherDto.password) {
+        const saltRounds = 10;
+        updateTeacherDto.password = await bcrypt.hash(
+          updateTeacherDto.password,
+          saltRounds,
+        );
+      }
+
       Object.assign(teacher, updateTeacherDto);
       const updatedTeacher = await this.teacherRepository.save(teacher);
       return updatedTeacher;
