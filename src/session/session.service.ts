@@ -149,6 +149,43 @@ export class SessionService {
     return this.findOne(id);
   }
 
+  async cancelSession(id: number) {
+    return this.dataSource.transaction(async (manager) => {
+      // Check if session exists
+      const session = await manager.getRepository(Session).findOne({
+        where: { id },
+      });
+
+      if (!session) {
+        return null;
+      }
+
+      // Update session status to 'cancelled'
+      await manager.getRepository(Session).update(id, {
+        status: 'cancelled',
+      });
+
+      // Update all non-completed schedules to 'cancelled'
+      // Non-completed means attendance is not 'present' (already attended)
+      const updateResult = await manager
+        .getRepository(Schedule)
+        .createQueryBuilder()
+        .update(Schedule)
+        .set({ attendance: 'cancelled' })
+        .where('sessionId = :sessionId', { sessionId: id })
+        .andWhere('attendance != :completedStatus', {
+          completedStatus: 'completed',
+        })
+        .execute();
+
+      return {
+        success: true,
+        message: 'Session has been successfully cancelled',
+        updatedSchedules: updateResult.affected || 0,
+      };
+    });
+  }
+
   async remove(id: number) {
     const session = await this.findOne(id);
     if (!session) {

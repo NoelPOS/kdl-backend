@@ -431,6 +431,31 @@ export class SessionController {
   }
 
   @ApiTags('Sessions')
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: 'Cancel a session and update related schedules' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiResponse({
+    status: 200,
+    description: 'The session has been successfully cancelled.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+        updatedSchedules: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async cancelSession(@Param('id', ParseIntPipe) id: number) {
+    const result = await this.sessionService.cancelSession(id);
+    if (!result) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+    return result;
+  }
+
+  @ApiTags('Sessions')
   @Post('feedback')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
