@@ -23,7 +23,7 @@ import { TeacherModule } from '../teacher/teacher.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRATION', '15m'),
+          expiresIn: configService.get<string>('JWT_EXPIRATION', '1d'),
         },
       }),
     }),
