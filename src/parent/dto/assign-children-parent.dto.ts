@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, ArrayNotEmpty } from 'class-validator';
+import { IsArray, IsNumber, ArrayNotEmpty, IsBoolean } from 'class-validator';
 
 export class AssignChildrenToParentDto {
   @ApiProperty({
@@ -11,4 +11,11 @@ export class AssignChildrenToParentDto {
   @ArrayNotEmpty()
   @IsNumber({}, { each: true })
   studentIds: number[];
+
+  @ApiProperty({
+    description: 'Indicates if the parent is the primary guardian',
+    example: true,
+  })
+  @IsBoolean()
+  isPrimary: boolean;
 }

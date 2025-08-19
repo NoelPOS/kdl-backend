@@ -13,6 +13,7 @@ import { UpdateParentDto } from './dto/update-parent.dto';
 import { ConnectParentStudentDto } from './dto/connect-parent-student.dto';
 import { PaginatedParentResponseDto } from './dto/paginated-parent-response.dto';
 import { PaginatedParentChildrenResponseDto } from './dto/paginated-parent-children-response.dto';
+import { AssignChildrenToParentDto } from './dto/assign-children-parent.dto';
 
 @Injectable()
 export class ParentService {
@@ -74,7 +75,13 @@ export class ParentService {
     };
   }
 
-  async searchParentsByName(
+  async findParentByName(name: string): Promise<ParentEntity[]> {
+    return this.parentRepository.find({
+      where: { name: ILike(`%${name}%`) },
+    });
+  }
+
+  async searchParentsByFilter(
     query?: string,
     child?: string,
     address?: string,
@@ -194,12 +201,13 @@ export class ParentService {
 
   async assignChildrenToParent(
     parentId: number,
-    studentIds: number[],
+    dto: AssignChildrenToParentDto,
   ): Promise<ParentStudentEntity[]> {
-    const assignments = studentIds.map((studentId) => {
+    const assignments = dto.studentIds.map((studentId) => {
       const entry = new ParentStudentEntity();
       entry.parentId = parentId;
       entry.studentId = studentId;
+      entry.isPrimary = dto.isPrimary;
       return entry;
     });
 

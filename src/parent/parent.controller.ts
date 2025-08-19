@@ -42,14 +42,8 @@ export class ParentController {
   constructor(private readonly parentService: ParentService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all parents' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns all parents',
-    type: [ParentEntity],
-  })
-  findAllParents() {
-    return this.parentService.findAllParents();
+  findParentByName(@Query('name') name: string) {
+    return this.parentService.findParentByName(name);
   }
 
   @Get('search')
@@ -95,7 +89,7 @@ export class ParentController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ) {
-    return this.parentService.searchParentsByName(
+    return this.parentService.searchParentsByFilter(
       query,
       child,
       address,
@@ -134,7 +128,7 @@ export class ParentController {
     @Param('parentId', ParseIntPipe) parentId: number,
     @Body() dto: AssignChildrenToParentDto,
   ) {
-    return this.parentService.assignChildrenToParent(parentId, dto.studentIds);
+    return this.parentService.assignChildrenToParent(parentId, dto);
   }
 
   @Get(':parentId/children')
