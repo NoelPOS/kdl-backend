@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsArray, IsOptional, IsString, IsBoolean } from 'class-validator';
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsNumber,
+} from 'class-validator';
 
 export class UpdateStudentDto {
   @ApiProperty({
@@ -87,6 +93,15 @@ export class UpdateStudentDto {
   @IsString()
   @IsOptional()
   parent?: string;
+
+  @ApiProperty({
+    example: 33,
+    description: "Parent's ID of the student",
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  parentId?: number;
 
   @ApiProperty({
     example: '+1234567890',

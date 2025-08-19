@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+} from 'class-validator';
 
 export class CreateStudentDto {
   @ApiProperty({
@@ -80,6 +86,14 @@ export class CreateStudentDto {
   parent?: string;
 
   @ApiProperty({
+    example: 33,
+    description: "Parent's ID of the student",
+  })
+  @IsNumber()
+  @IsOptional()
+  parentId?: number;
+
+  @ApiProperty({
     example: '+1234567890',
     description: 'Phone number of the student',
   })
@@ -100,6 +114,4 @@ export class CreateStudentDto {
   @IsString()
   @IsOptional()
   profileKey?: string;
-
-  // parent
 }
