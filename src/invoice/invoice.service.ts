@@ -78,8 +78,7 @@ export class InvoiceService {
   async create(createInvoiceDto: CreateInvoiceDto): Promise<Invoice> {
     return this.dataSource.transaction(async (manager) => {
       // Generate document ID if not provided
-      const documentId =
-        createInvoiceDto.documentId || (await this.generateDocumentId());
+      const documentId = await this.generateDocumentId();
 
       // Extract items from DTO to avoid cascade save duplication
       const { items, ...invoiceData } = createInvoiceDto;
