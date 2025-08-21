@@ -108,7 +108,6 @@ export class ParentController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   createParent(@Body() createParentDto: CreateParentDto) {
-    console.log(createParentDto);
     return this.parentService.createParent(createParentDto);
   }
 

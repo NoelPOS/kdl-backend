@@ -25,7 +25,6 @@ export class ScheduleService {
   }
 
   async createBulkSchedules(dtos: CreateScheduleDto[]) {
-    console.log('Creating bulk schedules:', dtos);
     const schedules = dtos.map((dto) => this.scheduleRepo.create(dto));
     return await this.scheduleRepo.save(schedules);
   }
@@ -137,6 +136,7 @@ export class ScheduleService {
     const updateFields = {
       feedback: dto.feedback,
       verifyFb: true,
+      feedbackDate: new Date(),
     };
 
     const result = await this.scheduleRepo.update(id, updateFields);
@@ -237,8 +237,6 @@ export class ScheduleService {
 
     // Handle status parameter (currently only 'all' is supported, which is default behavior)
     if (status && status !== 'all') {
-      // Future: could add other status types like 'verified', 'pending', etc.
-      // For now, we only support 'all' which fetches unverified feedbacks
     }
 
     // Apply filters
@@ -667,10 +665,10 @@ export class ScheduleService {
       });
     }
 
-    return queryBuilder
+    const schedules = await queryBuilder
       .select([
         'schedule.id',
-        'schedule.date',
+        'DATE(schedule.date) as schedule_date', // Format date directly in SQL
         'schedule.startTime',
         'schedule.endTime',
         'schedule.room',
@@ -690,11 +688,11 @@ export class ScheduleService {
       ])
       .orderBy('schedule.startTime', 'ASC')
       .getRawMany();
+
+    return schedules;
   }
 
   async getSchedulesByRangeAndFilters(filterDto: FilterScheduleDto) {
-    console.log('Filter Schedule DTO:', filterDto);
-
     const {
       startDate,
       endDate,
@@ -874,6 +872,8 @@ export class ScheduleService {
       student_profilePicture: schedule.student?.profilePicture || null,
       class_option: schedule.session?.classOption?.classMode || null,
     }));
+
+    console.log('Schedules are as follows', schedules);
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / actualPageSize);

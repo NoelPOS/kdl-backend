@@ -10,6 +10,8 @@ import { StudentEntity } from './entities/student.entity';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { Session } from '../session/entities/session.entity';
+import { ParentEntity } from '../parent/entities/parent.entity';
+import { ParentStudentEntity } from '../parent/entities/parent-student.entity';
 
 @Injectable()
 export class StudentService {
@@ -21,6 +23,12 @@ export class StudentService {
 
     @InjectRepository(Session)
     private sessionRepo: Repository<Session>,
+
+    @InjectRepository(ParentEntity)
+    private parentRepository: Repository<ParentEntity>,
+
+    @InjectRepository(ParentStudentEntity)
+    private parentStudentRepository: Repository<ParentStudentEntity>,
 
     private configService: ConfigService,
   ) {
@@ -71,14 +79,6 @@ export class StudentService {
       hasPrev: boolean;
     };
   }> {
-    console.log('Fetching students with filters (OPTIMIZED FIXED):', {
-      query,
-      active,
-      course,
-      page,
-      limit,
-    });
-
     try {
       // Validate pagination parameters
       page = Math.max(1, page);
@@ -214,18 +214,19 @@ export class StudentService {
 
   // search students function with typeorm ILike
   async searchStudents(
-    query: Partial<StudentEntity>,
+    query: Partial<StudentEntity & { id?: number }>,
   ): Promise<StudentEntity[]> {
     try {
       const where: any = {};
+
       if (query.name) {
         where.name = ILike(`%${query.name}%`);
       }
       if (query.nickname) {
         where.nickname = ILike(`%${query.nickname}%`);
       }
-      if (query.school) {
-        where.school = ILike(`%${query.school}%`);
+      if (query.id) {
+        where.id = query.id;
       }
 
       const students = await this.studentRepository.find({
@@ -243,14 +244,30 @@ export class StudentService {
     }
   }
 
-  async findStudentById(id: string): Promise<StudentEntity> {
+  async findStudentById(
+    id: string,
+  ): Promise<StudentEntity & { parent: string }> {
     try {
       const studentId = Number(id);
       const student = await this.studentRepository.findOneBy({ id: studentId });
       if (!student) {
         throw new NotFoundException(`Student with ID ${id} not found`);
       }
-      return student;
+
+      // Get parent information
+      const parentStudentRelations = await this.parentStudentRepository.find({
+        where: {
+          studentId,
+          isPrimary: true,
+        },
+
+        relations: ['parent'],
+      });
+
+      return {
+        ...student,
+        parent: parentStudentRelations[0]?.parent.name,
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -271,8 +288,59 @@ export class StudentService {
         throw new NotFoundException(`Student with ID ${id} not found`);
       }
 
+      // Handle parent connection if parentId is provided
+      if (updateStudentDto.parentId) {
+        // Verify parent exists
+        const parent = await this.parentRepository.findOneBy({
+          id: updateStudentDto.parentId,
+        });
+        if (!parent) {
+          throw new NotFoundException(
+            `Parent with ID ${updateStudentDto.parentId} not found`,
+          );
+        }
+
+        // Check if connection already exists
+        const existingConnection = await this.parentStudentRepository.findOne({
+          where: { parentId: updateStudentDto.parentId, studentId: id },
+        });
+
+        if (!existingConnection) {
+          // First, set all existing primary parents for this student to false
+          await this.parentStudentRepository.update(
+            { studentId: id, isPrimary: true },
+            { isPrimary: false },
+          );
+
+          // Create new parent-student connection and mark it as primary
+          const parentStudentConnection = new ParentStudentEntity();
+          parentStudentConnection.parentId = updateStudentDto.parentId;
+          parentStudentConnection.studentId = id;
+          parentStudentConnection.isPrimary = true; // Set as primary when connecting through student update
+
+          await this.parentStudentRepository.save(parentStudentConnection);
+        } else if (!existingConnection.isPrimary) {
+          // If connection exists but is not primary, make it primary and demote others
+          await this.parentStudentRepository.update(
+            { studentId: id, isPrimary: true },
+            { isPrimary: false },
+          );
+
+          // Set this connection as primary
+          await this.parentStudentRepository.update(
+            { id: existingConnection.id },
+            { isPrimary: true },
+          );
+        }
+        // If connection already exists and is already primary, no action needed
+      }
+
+      // Remove parentId from updateStudentDto before updating student entity
+      // since it's not a direct field on the student entity
+      const { parentId, ...studentUpdateData } = updateStudentDto;
+
       // Update only the fields that are provided
-      Object.assign(student, updateStudentDto);
+      Object.assign(student, studentUpdateData);
 
       const updatedStudent = await this.studentRepository.save(student);
       return updatedStudent;
@@ -282,6 +350,19 @@ export class StudentService {
       }
       throw new BadRequestException(
         `Failed to update student with ID ${id}: ${error.message}`,
+      );
+    }
+  }
+
+  async searchParentsByName(name: string): Promise<ParentEntity[]> {
+    try {
+      return this.parentRepository.find({
+        where: { name: ILike(`%${name}%`) },
+        order: { name: 'ASC' },
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to search parents: ' + error.message,
       );
     }
   }

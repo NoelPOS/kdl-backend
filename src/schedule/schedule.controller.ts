@@ -81,7 +81,7 @@ export class ScheduleController {
 
   @Get('filter')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
   @ApiOperation({ summary: 'Get schedules within a date range' })
   @ApiQuery({ name: 'startDate', required: false, type: String })
   @ApiQuery({ name: 'endDate', required: false, type: String })
@@ -139,7 +139,6 @@ export class ScheduleController {
     type: [Schedule],
   })
   getTodaySchedules(@GetUser() user: any) {
-    console.log('user is here pr', user);
     if (user.role === UserRole.TEACHER) {
       return this.scheduleService.getTodaySchedules(user.id);
     }
@@ -347,7 +346,6 @@ export class ScheduleController {
       page,
       limit,
     };
-    console.log('filterDto', filterDto);
     return this.scheduleService.getFilteredFeedbacks(filterDto);
   }
 

@@ -346,7 +346,6 @@ export class ParentService {
       if (!parent) {
         throw new NotFoundException(`Parent with ID ${id} not found`);
       }
-      console.log('Found parent:', parent);
       return parent;
     } catch (error) {
       if (error instanceof NotFoundException) {

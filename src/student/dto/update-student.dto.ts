@@ -86,15 +86,6 @@ export class UpdateStudentDto {
   adConcent?: boolean;
 
   @ApiProperty({
-    example: 'Jane Doe',
-    description: "Parent's name of the student",
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  parent?: string;
-
-  @ApiProperty({
     example: 33,
     description: "Parent's ID of the student",
     required: false,

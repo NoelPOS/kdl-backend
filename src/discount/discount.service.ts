@@ -49,8 +49,6 @@ export class DiscountService {
   }
 
   async findOne(name: string): Promise<DiscountEntity[]> {
-    console.log('Finding discount with name: ', name);
-
     // Optimized query using query builder for better performance with ILIKE
     const discount = await this.discountRepository
       .createQueryBuilder('discount')

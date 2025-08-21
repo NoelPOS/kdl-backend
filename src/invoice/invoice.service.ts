@@ -100,8 +100,6 @@ export class InvoiceService {
         }),
       );
 
-      console.log('invoice items to save:', invoiceItems);
-
       await manager.getRepository(InvoiceItem).save(invoiceItems);
 
       // CRITICAL: Update the status of all related entities based on sessionGroups

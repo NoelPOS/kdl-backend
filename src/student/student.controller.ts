@@ -130,19 +130,58 @@ export class StudentController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Search students by name' })
+  @ApiOperation({ summary: 'Search students by name, nickname, or id' })
   @ApiQuery({
     name: 'name',
     required: false,
     description: 'Search query for student name',
+  })
+  @ApiQuery({
+    name: 'nickname',
+    required: false,
+    description: 'Search query for student nickname',
+  })
+  @ApiQuery({
+    name: 'id',
+    required: false,
+    type: 'number',
+    description: 'Search by student ID',
   })
   @ApiResponse({
     status: 200,
     description: 'Returns students that match the search query',
     type: [StudentEntity],
   })
-  findStudentsBySearch(@Query('name') query?: string) {
-    return this.studentService.searchStudents({ name: query });
+  findStudentsBySearch(
+    @Query('name') name?: string,
+    @Query('nickname') nickname?: string,
+    @Query('id') id?: number,
+  ) {
+    const searchQuery: any = {};
+    if (name) searchQuery.name = name;
+    if (nickname) searchQuery.nickname = nickname;
+    if (id) searchQuery.id = Number(id);
+
+    return this.studentService.searchStudents(searchQuery);
+  }
+
+  @ApiTags('Students')
+  @Get('parents/search')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Search parents by name for student assignment' })
+  @ApiQuery({
+    name: 'name',
+    required: true,
+    description: 'Search query for parent name',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns parents that match the search query',
+  })
+  searchParentsByName(@Query('name') name: string) {
+    return this.studentService.searchParentsByName(name);
   }
 
   @ApiTags('Students')

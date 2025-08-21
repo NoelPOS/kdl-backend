@@ -44,7 +44,6 @@ export class DiscountController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   create(@Body() createDiscountDto: CreateDiscountDto) {
-    console.log('Creating discount:', createDiscountDto);
     return this.discountService.create(createDiscountDto);
   }
 

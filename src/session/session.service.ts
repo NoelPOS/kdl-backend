@@ -926,14 +926,12 @@ export class SessionService {
     // Check if this is a Package ID (prefixed with 'pkg-')
     if (typeof sessionId === 'string' && sessionId.startsWith('pkg-')) {
       const packageId = parseInt(sessionId.replace('pkg-', ''));
-      console.log('Fetching Package record with ID:', packageId);
 
       const packageRecord = await this.packageRepo.findOne({
         where: { id: packageId },
       });
 
       if (!packageRecord) {
-        console.log('Package record not found with ID:', packageId);
         return null;
       }
 
@@ -953,8 +951,6 @@ export class SessionService {
         purchaseDate: packageRecord.purchaseDate,
         isRedeemed: packageRecord.isRedeemed,
       };
-
-      console.log('Fetched specific Package for invoice:', transformedPackage);
       return transformedPackage;
     }
 
@@ -978,8 +974,6 @@ export class SessionService {
     if (session) {
       session.type = 'session'; // Add type for consistency
     }
-
-    console.log('Fetched specific pending session for invoice:', session);
     return session;
   }
 
@@ -1062,7 +1056,6 @@ export class SessionService {
     const invoices = await queryBuilder.offset(offset).limit(limit).getMany();
 
     const totalPages = Math.ceil(totalCount / limit);
-    console.log('Invoices fetched:', invoices);
     return {
       invoices,
       pagination: {

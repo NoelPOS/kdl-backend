@@ -109,7 +109,6 @@ export class PackageController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ) {
-    console.log(query, status, classMode, page, limit);
     return this.packageService.filter(status, classMode, query, page, limit);
   }
 
