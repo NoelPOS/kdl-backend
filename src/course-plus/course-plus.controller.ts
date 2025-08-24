@@ -84,18 +84,70 @@ export class CoursePlusController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a CoursePlus by ID' })
+  @ApiOperation({
+    summary: 'Update CoursePlus attributes (unified endpoint)',
+    description:
+      'Update CoursePlus payment status and invoiceGenerated. Used by frontend for unified course plus updates.',
+  })
   @ApiParam({ name: 'id', type: 'string' })
-  @ApiBody({ type: UpdateCoursePlusDto })
+  @ApiBody({
+    description: 'Update payload with support for multiple attributes',
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          description: 'Payment status for the course plus',
+          enum: ['paid', 'unpaid'],
+          example: 'paid',
+        },
+        payment: {
+          type: 'string',
+          description: 'Payment status (alias for status field)',
+          enum: ['paid', 'unpaid'],
+          example: 'paid',
+        },
+        invoiceDone: {
+          type: 'boolean',
+          description: 'Whether invoice is generated for the course plus',
+          example: true,
+        },
+        invoiceGenerated: {
+          type: 'boolean',
+          description: 'Whether invoice is generated (alias for invoiceDone)',
+          example: true,
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'The CoursePlus has been successfully updated.',
   })
-  update(
+  async update(
     @Param('id') id: string,
-    @Body() updateCoursePlusDto: UpdateCoursePlusDto,
+    @Body()
+    updateData: {
+      status?: string;
+      payment?: string;
+      invoiceDone?: boolean;
+      invoiceGenerated?: boolean;
+    },
   ) {
-    return this.coursePlusService.update(+id, updateCoursePlusDto);
+    // Map payment to status for compatibility
+    if (updateData.payment && !updateData.status) {
+      updateData.status = updateData.payment;
+    }
+
+    // Map invoiceDone to invoiceGenerated for compatibility
+    if (
+      updateData.invoiceDone !== undefined &&
+      updateData.invoiceGenerated === undefined
+    ) {
+      updateData.invoiceGenerated = updateData.invoiceDone;
+    }
+
+    return this.coursePlusService.updateMultipleFields(+id, updateData);
   }
 
   @Delete(':id')

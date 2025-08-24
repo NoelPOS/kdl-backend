@@ -69,6 +69,49 @@ export class CoursePlusService {
     return this.coursePlusRepo.findOne({ where: { id } });
   }
 
+  async updateMultipleFields(
+    id: number,
+    updateData: {
+      status?: string;
+      payment?: string;
+      invoiceDone?: boolean;
+      invoiceGenerated?: boolean;
+    },
+  ) {
+    const coursePlus = await this.coursePlusRepo.findOne({ where: { id } });
+    if (!coursePlus) {
+      throw new Error(`CoursePlus with ID ${id} not found`);
+    }
+
+    const updatePayload: Partial<CoursePlus> = {};
+
+    // Handle status/payment update
+    const statusToUpdate = updateData.status || updateData.payment;
+    if (statusToUpdate) {
+      const validStatuses = ['paid', 'unpaid'];
+      if (!validStatuses.includes(statusToUpdate.toLowerCase())) {
+        throw new Error(
+          `Invalid status: ${statusToUpdate}. Valid values are: ${validStatuses.join(', ')}`,
+        );
+      }
+      updatePayload.status = statusToUpdate.toLowerCase();
+    }
+
+    // Handle invoiceGenerated/invoiceDone update
+    const invoiceGeneratedValue =
+      updateData.invoiceGenerated !== undefined
+        ? updateData.invoiceGenerated
+        : updateData.invoiceDone;
+
+    if (invoiceGeneratedValue !== undefined) {
+      updatePayload.invoiceGenerated = invoiceGeneratedValue;
+    }
+
+    // Perform the update
+    await this.coursePlusRepo.update(id, updatePayload);
+    return this.coursePlusRepo.findOne({ where: { id } });
+  }
+
   update(id: number, updateCoursePlusDto: UpdateCoursePlusDto) {
     return `This action updates a #${id} coursePlus`;
   }
