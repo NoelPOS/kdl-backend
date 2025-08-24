@@ -24,6 +24,10 @@ export class StudentEntity {
   @ApiProperty({ description: 'Student nickname' })
   nickname: string;
 
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'Student national ID' })
+  nationalId: string;
+
   @Column()
   @ApiProperty({ description: 'Student date of birth' })
   dob: string;

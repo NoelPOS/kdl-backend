@@ -227,7 +227,7 @@ export class TeacherService {
       if (status === 'active' || status === 'inactive') {
         // Get teachers who have pending sessions (active)
         const pendingSessions = await this.sessionRepo.find({
-          where: { status: 'WP' },
+          where: { status: 'wip' },
         });
 
         // Get unique teacher IDs from teacher-course assignments for sessions

@@ -65,7 +65,7 @@ export class CreateTeacherDto {
     description: 'Teacher profile picture',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Profile picture is required' })
+  @IsOptional()
   profilePicture: string;
 
   @ApiProperty({

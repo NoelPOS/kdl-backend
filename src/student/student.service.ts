@@ -44,6 +44,7 @@ export class StudentService {
       const student = new StudentEntity();
       student.name = createStudentDto.name;
       student.nickname = createStudentDto.nickname;
+      student.nationalId = createStudentDto.nationalId || '';
       student.dob = createStudentDto.dob;
       student.gender = createStudentDto.gender;
       student.school = createStudentDto.school;
@@ -91,6 +92,7 @@ export class StudentService {
           'student.id',
           'student.name',
           'student.nickname',
+          'student.nationalId',
           'student.dob',
           'student.phone',
           'student.allergic',
@@ -111,12 +113,12 @@ export class StudentService {
       if (active === 'active') {
         queryBuilder
           .innerJoin('sessions', 'session', 'session.studentId = student.id')
-          .andWhere('session.status = :status', { status: 'WP' });
+          .andWhere('session.status = :status', { status: 'wip' });
       } else if (active === 'inactive') {
         // Use NOT EXISTS subquery for inactive students
         queryBuilder.andWhere(
           'NOT EXISTS (SELECT 1 FROM sessions s WHERE s."studentId" = student.id AND s.status = :status)',
-          { status: 'WP' },
+          { status: 'wip' },
         );
       }
 
@@ -151,11 +153,11 @@ export class StudentService {
       if (active === 'active') {
         countQueryBuilder
           .innerJoin('sessions', 'session', 'session.studentId = student.id')
-          .andWhere('session.status = :status', { status: 'WP' });
+          .andWhere('session.status = :status', { status: 'wip' });
       } else if (active === 'inactive') {
         countQueryBuilder.andWhere(
           'NOT EXISTS (SELECT 1 FROM sessions s WHERE s."studentId" = student.id AND s.status = :status)',
-          { status: 'WP' },
+          { status: 'wip' },
         );
       }
 

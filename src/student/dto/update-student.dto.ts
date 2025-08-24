@@ -30,6 +30,16 @@ export class UpdateStudentDto {
   nickname?: string;
 
   @ApiProperty({
+    example: '1234567890123',
+    description: 'National ID of the student',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value?.trim())
+  nationalId?: string;
+
+  @ApiProperty({
     example: '2005-05-15',
     description: 'Date of birth of the student in YYYY-MM-DD format',
     required: false,

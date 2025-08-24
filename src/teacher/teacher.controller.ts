@@ -25,7 +25,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { TeacherEntity } from './entities/teacher.entity';
-import { CourseEntity } from '../course/entities/course.entity';
 import { PaginatedTeacherResponseDto } from './dto/paginated-teacher-response.dto';
 import { PaginatedTeacherCoursesResponseDto } from './dto/paginated-teacher-courses-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
