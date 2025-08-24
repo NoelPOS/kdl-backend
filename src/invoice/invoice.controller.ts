@@ -130,4 +130,121 @@ export class InvoiceController {
   markReceiptDone(@Param('id', ParseIntPipe) id: number) {
     return this.invoiceService.markReceiptDone(id);
   }
+
+  @Patch(':id/payment-method')
+  @ApiOperation({
+    summary: 'Update invoice payment method',
+    description:
+      'Update the payment method of an existing invoice. Used by frontend when payment method is changed.',
+  })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({
+    description: 'Payment method update payload',
+    schema: {
+      type: 'object',
+      properties: {
+        paymentMethod: {
+          type: 'string',
+          description: 'New payment method for the invoice',
+          example: 'Credit Card',
+          enum: ['Credit Card', 'Debit Card', 'Cash', 'Bank Transfer'],
+        },
+      },
+      required: ['paymentMethod'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice payment method has been successfully updated.',
+    type: Invoice,
+  })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  updatePaymentMethod(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('paymentMethod') paymentMethod: string,
+  ) {
+    return this.invoiceService.updatePaymentMethod(id, paymentMethod);
+  }
+
+  @Patch(':id/cancel')
+  @ApiOperation({
+    summary: 'Cancel an invoice',
+    description:
+      'Cancel an invoice and revert all associated sessions back to pending status. This will delete the invoice and all its items, and update session statuses.',
+  })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice has been successfully cancelled.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Invoice cancelled successfully' },
+        updatedSessions: { type: 'number', example: 2 },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invoice cannot be cancelled (already has receipt)',
+  })
+  cancelInvoice(@Param('id', ParseIntPipe) id: number) {
+    return this.invoiceService.cancelInvoice(id);
+  }
+
+  @Patch(':id/confirm-payment')
+  @ApiOperation({
+    summary: 'Confirm payment for an invoice',
+    description:
+      'Confirms payment for an invoice in a single transaction. This will: 1) Update payment method if provided, 2) Mark all associated sessions/courseplus/packages as paid, 3) Create a receipt, 4) Mark invoice as receipt done. All operations are atomic.',
+  })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({
+    description: 'Payment confirmation payload',
+    schema: {
+      type: 'object',
+      properties: {
+        paymentMethod: {
+          type: 'string',
+          description: 'Payment method to update (optional)',
+          example: 'Credit Card',
+          enum: ['Credit Card', 'Debit Card', 'Cash', 'Bank Transfer'],
+        },
+        receiptDate: {
+          type: 'string',
+          description:
+            'Receipt date in YYYY-MM-DD format (optional, defaults to today)',
+          example: '2025-08-24',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment has been successfully confirmed.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Payment confirmed successfully' },
+        updatedSessions: { type: 'number', example: 2 },
+        receiptId: { type: 'number', example: 123 },
+        invoice: { type: 'object', description: 'Updated invoice object' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invoice cannot be confirmed (already has receipt or other validation error)',
+  })
+  confirmPayment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { paymentMethod?: string; receiptDate?: string },
+  ) {
+    return this.invoiceService.confirmPayment(id, body);
+  }
 }

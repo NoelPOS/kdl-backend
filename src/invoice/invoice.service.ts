@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, ILike } from 'typeorm';
 import { Invoice } from './entities/invoice.entity';
@@ -11,6 +15,7 @@ import { PaginatedInvoiceResponseDto } from './dto/paginated-invoice-response.dt
 import { Session } from '../session/entities/session.entity';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { PackageEntity } from '../package/entities/package.entity';
+import { Receipt } from '../receipt/entities/receipt.entity';
 
 @Injectable()
 export class InvoiceService {
@@ -23,6 +28,9 @@ export class InvoiceService {
 
     @InjectRepository(DocumentCounter)
     private readonly documentCounterRepository: Repository<DocumentCounter>,
+
+    @InjectRepository(Receipt)
+    private readonly receiptRepository: Repository<Receipt>,
 
     private readonly dataSource: DataSource,
   ) {}
@@ -142,6 +150,116 @@ export class InvoiceService {
     });
   }
 
+  async confirmPayment(
+    id: number,
+    options: { paymentMethod?: string; receiptDate?: string },
+  ): Promise<{
+    success: boolean;
+    message: string;
+    updatedSessions: number;
+    receiptId: number;
+    invoice: Invoice;
+  }> {
+    return this.dataSource.transaction(async (manager) => {
+      // First, get the invoice with all its details
+      const invoice = await manager.getRepository(Invoice).findOne({
+        where: { id },
+        relations: ['items'],
+      });
+
+      if (!invoice) {
+        throw new NotFoundException(`Invoice with ID ${id} not found`);
+      }
+
+      // Check if invoice already has a receipt (cannot confirm payment again)
+      if (invoice.receiptDone) {
+        throw new BadRequestException(
+          'Cannot confirm payment: Receipt has already been generated',
+        );
+      }
+
+      let updatedSessionCount = 0;
+
+      // Step 1: Update payment method if provided
+      if (
+        options.paymentMethod &&
+        options.paymentMethod !== invoice.paymentMethod
+      ) {
+        const validPaymentMethods = [
+          'Credit Card',
+          'Debit Card',
+          'Cash',
+          'Bank Transfer',
+        ];
+        if (!validPaymentMethods.includes(options.paymentMethod)) {
+          throw new BadRequestException(
+            `Invalid payment method: ${options.paymentMethod}. Valid values are: ${validPaymentMethods.join(', ')}`,
+          );
+        }
+
+        await manager.getRepository(Invoice).update(id, {
+          paymentMethod: options.paymentMethod,
+        });
+      }
+
+      // Step 2: Mark all associated sessions/courseplus/packages as paid
+      if (invoice.sessionGroups && invoice.sessionGroups.length > 0) {
+        for (const sessionGroup of invoice.sessionGroups) {
+          const { transactionType, actualId } = sessionGroup;
+
+          if (transactionType === 'course') {
+            // Mark session as paid
+            const sessionRepo = manager.getRepository(Session);
+            await sessionRepo.update(parseInt(actualId), {
+              payment: 'Paid',
+            });
+            updatedSessionCount++;
+          } else if (transactionType === 'courseplus') {
+            // Mark course plus as paid
+            const coursePlusRepo = manager.getRepository(CoursePlus);
+            const coursePlusId = actualId.startsWith('cp-')
+              ? parseInt(actualId.replace('cp-', ''))
+              : parseInt(actualId);
+            await coursePlusRepo.update(coursePlusId, {
+              status: 'paid',
+            });
+            updatedSessionCount++;
+          }
+        }
+      }
+
+      // Step 3: Create receipt
+      const receiptDate = options.receiptDate
+        ? new Date(options.receiptDate)
+        : new Date();
+
+      const receipt = manager.getRepository(Receipt).create({
+        invoiceId: id,
+        date: receiptDate,
+      });
+      const savedReceipt = await manager.getRepository(Receipt).save(receipt);
+
+      // Step 4: Mark invoice as receipt done
+      await manager.getRepository(Invoice).update(id, {
+        receiptDone: true,
+      });
+
+      // Get the updated invoice to return
+      const updatedInvoice = await manager.getRepository(Invoice).findOne({
+        where: { id },
+        relations: ['items'],
+      });
+
+      return {
+        success: true,
+        message: 'Payment confirmed successfully',
+        updatedSessions: updatedSessionCount,
+        receiptId: savedReceipt.id,
+        invoice: updatedInvoice,
+      };
+    });
+  }
+
   async findAll(
     filterDto: InvoiceFilterDto,
   ): Promise<PaginatedInvoiceResponseDto> {
@@ -225,5 +343,95 @@ export class InvoiceService {
     const invoice = await this.findOne(id);
     invoice.receiptDone = true;
     return await this.invoiceRepository.save(invoice);
+  }
+
+  async updatePaymentMethod(
+    id: number,
+    paymentMethod: string,
+  ): Promise<Invoice> {
+    const invoice = await this.findOne(id);
+
+    // Validate payment method
+    const validPaymentMethods = [
+      'Credit Card',
+      'Debit Card',
+      'Cash',
+      'Bank Transfer',
+    ];
+    if (!validPaymentMethods.includes(paymentMethod)) {
+      throw new BadRequestException(
+        `Invalid payment method: ${paymentMethod}. Valid values are: ${validPaymentMethods.join(', ')}`,
+      );
+    }
+
+    invoice.paymentMethod = paymentMethod;
+    return await this.invoiceRepository.save(invoice);
+  }
+
+  async cancelInvoice(id: number): Promise<{
+    success: boolean;
+    message: string;
+    updatedSessions: number;
+  }> {
+    return this.dataSource.transaction(async (manager) => {
+      // First, get the invoice with all its details
+      const invoice = await manager.getRepository(Invoice).findOne({
+        where: { id },
+        relations: ['items'],
+      });
+
+      if (!invoice) {
+        throw new NotFoundException(`Invoice with ID ${id} not found`);
+      }
+
+      // Check if invoice already has a receipt (cannot cancel if receipt is done)
+      if (invoice.receiptDone) {
+        throw new BadRequestException(
+          'Cannot cancel invoice: Receipt has already been generated',
+        );
+      }
+
+      let updatedSessionCount = 0;
+
+      // Revert all session statuses based on sessionGroups
+      if (invoice.sessionGroups && invoice.sessionGroups.length > 0) {
+        for (const sessionGroup of invoice.sessionGroups) {
+          const { transactionType, actualId } = sessionGroup;
+
+          if (transactionType === 'course') {
+            // Revert session back to unpaid and invoiceDone = false
+            const sessionRepo = manager.getRepository(Session);
+            await sessionRepo.update(parseInt(actualId), {
+              payment: 'Unpaid',
+              invoiceDone: false,
+            });
+            updatedSessionCount++;
+          } else if (transactionType === 'courseplus') {
+            // Revert course plus back to unpaid and invoiceGenerated = false
+            const coursePlusRepo = manager.getRepository(CoursePlus);
+            const coursePlusId = actualId.startsWith('cp-')
+              ? parseInt(actualId.replace('cp-', ''))
+              : parseInt(actualId);
+            await coursePlusRepo.update(coursePlusId, {
+              status: 'unpaid',
+              invoiceGenerated: false,
+            });
+            updatedSessionCount++;
+          }
+        }
+      }
+
+      // First, manually delete all invoice items
+      await manager.getRepository(InvoiceItem).delete({ invoiceId: id });
+
+      // Then delete the invoice
+      await manager.getRepository(Invoice).delete({ id });
+
+      return {
+        success: true,
+        message: 'Invoice cancelled successfully',
+        updatedSessions: updatedSessionCount,
+      };
+    });
   }
 }
