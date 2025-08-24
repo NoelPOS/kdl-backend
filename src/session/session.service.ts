@@ -120,7 +120,7 @@ export class SessionService {
 
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
-    session.invoiceDone = dto.isFromPackage ? true : false; // If from package, invoice is already handled
+    session.invoiceDone = dto.isFromPackage ? true : false;
     session.isFromPackage = dto.isFromPackage || false;
     session.packageId = dto.packageId || null;
 
@@ -272,6 +272,21 @@ export class SessionService {
     });
   }
 
+  async checkStudentHasWipSession(
+    studentId: number,
+    courseId: number,
+  ): Promise<boolean> {
+    const session = await this.sessionRepository.findOne({
+      where: {
+        studentId,
+        courseId,
+        status: 'wip',
+      },
+    });
+
+    return !!session; // Return true if session exists, false if not
+  }
+
   async getSessionsByPackage(packageId: number) {
     return this.sessionRepository.find({
       where: { packageId, isFromPackage: true },
@@ -340,10 +355,12 @@ export class SessionService {
     if (status) {
       if (status === 'completed') {
         queryBuilder.andWhere('session.status = :status', {
-          status: 'Completed',
+          status: 'completed',
         });
-      } else if (status === 'wip') {
-        queryBuilder.andWhere('session.status = :status', { status: 'WP' });
+      } else if (status === 'Pending') {
+        queryBuilder.andWhere('session.status = :status', {
+          status: 'Pending',
+        });
       }
     }
 
@@ -473,10 +490,10 @@ export class SessionService {
     if (status) {
       if (status === 'completed') {
         queryBuilder.andWhere('session.status = :status', {
-          status: 'Completed',
+          status: 'completed',
         });
       } else if (status === 'wip') {
-        queryBuilder.andWhere('session.status = :status', { status: 'WP' });
+        queryBuilder.andWhere('session.status = :status', { status: 'wip' });
       }
     }
 
@@ -602,7 +619,7 @@ export class SessionService {
 
     // Helper function to apply filters
     const applySessionFilters = (qb: any, useSessionAlias = true) => {
-      const sessionAlias = useSessionAlias ? 'session' : 'session';
+      const sessionAlias = useSessionAlias ? 'session' : 'coursePlus';
 
       if (date) {
         qb.andWhere(`DATE(${sessionAlias}.createdAt) = :sessionDate`, {
@@ -622,25 +639,6 @@ export class SessionService {
       if (student) {
         qb.andWhere('student.name ILIKE :sessionStudent', {
           sessionStudent: `%${student}%`,
-        });
-      }
-      return qb;
-    };
-
-    const applyPackageFilters = (qb: any) => {
-      if (date) {
-        qb.andWhere('DATE(package.createdAt) = :packageDate', {
-          packageDate: date,
-        });
-      }
-      if (course) {
-        qb.andWhere('package.classOptionTitle ILIKE :packageCourse', {
-          packageCourse: `%${course}%`,
-        });
-      }
-      if (student && student.trim() !== '') {
-        qb.andWhere('package.studentName ILIKE :packageStudent', {
-          packageStudent: `%${student}%`,
         });
       }
       return qb;
@@ -712,7 +710,7 @@ export class SessionService {
           cpInvoiceGenerated: false,
         });
 
-      applySessionFilters(coursePlusCountQuery);
+      applySessionFilters(coursePlusCountQuery, false);
 
       const coursePlusDataQuery = this.coursePlusRepo
         .createQueryBuilder('coursePlus')
@@ -724,9 +722,9 @@ export class SessionService {
         .where('coursePlus.invoiceGenerated = :cpInvoiceGenerated2', {
           cpInvoiceGenerated2: false,
         })
-        .orderBy('session.createdAt', 'DESC');
+        .orderBy('coursePlus.createdAt', 'DESC');
 
-      applySessionFilters(coursePlusDataQuery);
+      applySessionFilters(coursePlusDataQuery, false);
 
       promises.push(coursePlusCountQuery.getCount());
       promises.push(coursePlusDataQuery.getMany());
@@ -735,48 +733,12 @@ export class SessionService {
       promises.push(Promise.resolve([]));
     }
 
-    // Packages
-    if (
-      !transactionType ||
-      transactionType === 'all' ||
-      transactionType === 'package'
-    ) {
-      const packageCountQuery = this.packageRepo
-        .createQueryBuilder('package')
-        .where('package.invoiceGenerated = :pkgInvoiceGenerated', {
-          pkgInvoiceGenerated: false,
-        });
-
-      applyPackageFilters(packageCountQuery);
-
-      const packageDataQuery = this.packageRepo
-        .createQueryBuilder('package')
-        .where('package.invoiceGenerated = :pkgInvoiceGenerated2', {
-          pkgInvoiceGenerated2: false,
-        })
-        .orderBy('package.createdAt', 'DESC');
-
-      applyPackageFilters(packageDataQuery);
-
-      promises.push(packageCountQuery.getCount());
-      promises.push(packageDataQuery.getMany());
-    } else {
-      promises.push(Promise.resolve(0));
-      promises.push(Promise.resolve([]));
-    }
-
     // Execute all queries in parallel
-    const [
-      sessionCount,
-      sessionData,
-      coursePlusCount,
-      coursePlusData,
-      packageCount,
-      packageData,
-    ] = await Promise.all(promises);
+    const [sessionCount, sessionData, coursePlusCount, coursePlusData] =
+      await Promise.all(promises);
 
     // Calculate total count and pagination
-    const totalCountWithExtras = sessionCount + coursePlusCount + packageCount;
+    const totalCountWithExtras = sessionCount + coursePlusCount;
     const totalPages = Math.ceil(totalCountWithExtras / limit);
 
     // Combine all data and sort by creation date
@@ -791,7 +753,7 @@ export class SessionService {
     if (coursePlusData.length > 0) {
       const coursePlusAsEnrollments = coursePlusData.map((coursePlus) => ({
         session_id: `cp-${coursePlus.id}`,
-        session_createdAt: coursePlus.session.createdAt,
+        session_createdAt: coursePlus.createdAt,
         session_status: coursePlus.session.status,
         session_payment: coursePlus.session.payment,
         session_invoiceDone: false,
@@ -809,32 +771,6 @@ export class SessionService {
         description: coursePlus.description,
       }));
       allEnrollments.push(...coursePlusAsEnrollments);
-    }
-
-    // Transform and add package enrollments
-    if (packageData.length > 0) {
-      const packagesAsEnrollments = packageData.map((pkg) => ({
-        session_id: `pkg-${pkg.id}`,
-        session_createdAt: pkg.createdAt,
-        session_status: pkg.status,
-        session_payment: 'pending',
-        session_invoiceDone: false,
-        student_id: pkg.studentId,
-        student_name: pkg.studentName,
-        course_id: pkg.classOptionId,
-        course_title: `${pkg.classOptionTitle} (Package)`,
-        teacher_id: null,
-        teacher_name: null,
-        classOption_tuitionFee: pkg.tuitionFee,
-        // Additional fields
-        packageId: pkg.id,
-        type: 'package',
-        classMode: pkg.classMode,
-        classLimit: pkg.classLimit,
-        purchaseDate: pkg.purchaseDate,
-        isRedeemed: pkg.isRedeemed,
-      }));
-      allEnrollments.push(...packagesAsEnrollments);
     }
 
     // Sort all enrollments by creation date (newest first)

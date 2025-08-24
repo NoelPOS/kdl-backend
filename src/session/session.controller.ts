@@ -120,7 +120,7 @@ export class SessionController {
   @ApiQuery({
     name: 'status',
     required: false,
-    description: 'Filter by status (completed/wip)',
+    description: 'Filter by status (completed/Pending)',
   })
   @ApiQuery({
     name: 'payment',
@@ -209,6 +209,42 @@ export class SessionController {
   }
 
   @ApiTags('Sessions')
+  @Get('student/:studentId/course/:courseId/has-wip')
+  @ApiOperation({
+    summary:
+      'Check if student has a WIP (Work In Progress) session for a specific course',
+    description:
+      'Returns true if the student already has a session with WIP status for the given course, false otherwise. This prevents creating duplicate WIP sessions for the same course.',
+  })
+  @ApiParam({ name: 'studentId', type: 'number', description: 'Student ID' })
+  @ApiParam({ name: 'courseId', type: 'number', description: 'Course ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Boolean indicating if student has WIP session for the course',
+    schema: {
+      type: 'object',
+      properties: {
+        hasWipSession: {
+          type: 'boolean',
+          description:
+            'True if student has WIP session for the course, false otherwise',
+          example: true,
+        },
+      },
+    },
+  })
+  async checkStudentHasWipSession(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('courseId', ParseIntPipe) courseId: number,
+  ) {
+    const hasWipSession = await this.sessionService.checkStudentHasWipSession(
+      studentId,
+      courseId,
+    );
+    return { hasWipSession };
+  }
+
+  @ApiTags('Sessions')
   @Get('package/:packageId')
   @ApiOperation({ summary: 'Get sessions created from a specific package' })
   @ApiParam({ name: 'packageId', type: 'number' })
@@ -266,9 +302,8 @@ export class SessionController {
   @ApiQuery({
     name: 'transactionType',
     required: false,
-    description:
-      'Filter by transaction type: course, courseplus, package, or all',
-    enum: ['course', 'courseplus', 'package', 'all'],
+    description: 'Filter by transaction type: course, courseplus, or all',
+    enum: ['course', 'courseplus', 'all'],
   })
   @ApiResponse({
     status: 200,
@@ -361,32 +396,47 @@ export class SessionController {
 
   @ApiTags('Sessions')
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update session status' })
+  @ApiOperation({
+    summary: 'Update session status and other attributes',
+    description:
+      'Update session status, payment, and invoiceDone attributes. Used by frontend for unified session status updates.',
+  })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiBody({
-    description: 'Status update payload',
+    description: 'Status update payload with support for multiple attributes',
     schema: {
       type: 'object',
       properties: {
         status: {
           type: 'string',
           description: 'New status for the session',
-          example: 'Completed',
+          example: 'completed',
+        },
+        payment: {
+          type: 'string',
+          description: 'New payment status for the session',
+          example: 'paid',
+        },
+        invoiceDone: {
+          type: 'boolean',
+          description: 'Whether invoice is done for the session',
+          example: true,
         },
       },
     },
   })
   @ApiResponse({
     status: 200,
-    description: 'The session status has been successfully updated.',
+    description: 'The session has been successfully updated.',
     type: Session,
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body('status') status: string,
+    @Body()
+    updateData: { status?: string; payment?: string; invoiceDone?: boolean },
   ) {
-    const updatedSession = await this.sessionService.update(id, { status });
+    const updatedSession = await this.sessionService.update(id, updateData);
     if (!updatedSession) {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
