@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Schedule } from './entities/schedule.entity';
 import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
+import { time } from 'console';
 
 @Injectable()
 export class ScheduleService {
@@ -394,6 +395,10 @@ export class ScheduleService {
 
       return {
         conflictType,
+        room: existing.room || 'Unknown',
+        time: `${existing.startTime} - ${existing.endTime}`,
+        startTime: existing.startTime,
+        endTime: existing.endTime,
         courseTitle: existing.course?.title || 'Unknown',
         teacherName: existing.teacher?.name || 'Unknown',
         studentName: existing.student?.name || 'Unknown',
@@ -402,113 +407,10 @@ export class ScheduleService {
     return null;
   }
 
-  // async checkConflicts(schedules: CheckScheduleConflictDto[]) {
-  //   const conflicts: {
-  //     date: string;
-  //     room: string;
-  //     startTime: string;
-  //     endTime: string;
-  //     conflictType:
-  //       | 'room'
-  //       | 'teacher'
-  //       | 'student'
-  //       | 'room_teacher'
-  //       | 'room_student'
-  //       | 'teacher_student'
-  //       | 'all';
-  //     courseTitle: string;
-  //     teacherName: string;
-  //     studentName: string;
-  //   }[] = [];
-
-  //   if (schedules.length === 0) return conflicts;
-
-  //   // Extract unique dates, teachers, students, rooms for batch query
-  //   const dates = Array.from(new Set(schedules.map((s) => s.date)));
-  //   const teacherIds = Array.from(new Set(schedules.map((s) => s.teacherId)));
-  //   const studentIds = Array.from(new Set(schedules.map((s) => s.studentId)));
-  //   const rooms = Array.from(new Set(schedules.map((s) => s.room)));
-
-  //   // Single query to get all potential conflicts
-  //   const existingSchedules = await this.scheduleRepo
-  //     .createQueryBuilder('s')
-  //     .leftJoinAndSelect('s.course', 'course')
-  //     .leftJoinAndSelect('s.teacher', 'teacher')
-  //     .leftJoinAndSelect('s.student', 'student')
-  //     .where('s.date IN (:...dates)', { dates })
-  //     .andWhere(
-  //       '(s.room IN (:...rooms) OR s.teacherId IN (:...teacherIds) OR s.studentId IN (:...studentIds))',
-  //       { rooms, teacherIds, studentIds },
-  //     )
-  //     .getMany();
-
-  //   // Check each schedule against existing ones
-  //   for (const {
-  //     date,
-  //     room,
-  //     startTime,
-  //     endTime,
-  //     teacherId,
-  //     studentId,
-  //   } of schedules) {
-  //     // Find conflicts for this specific schedule
-  //     const existing = existingSchedules.find(
-  //       (s) =>
-  //         s.date.toISOString().split('T')[0] === date &&
-  //         (s.room === room ||
-  //           s.teacher?.id === teacherId ||
-  //           s.student?.id === studentId) &&
-  //         s.startTime < endTime &&
-  //         s.endTime > startTime,
-  //     );
-
-  //     if (existing) {
-  //       const isRoomConflict = existing.room === room;
-  //       const isTeacherConflict = existing.teacher?.id === teacherId;
-  //       const isStudentConflict = existing.student?.id === studentId;
-
-  //       let conflictType:
-  //         | 'room'
-  //         | 'teacher'
-  //         | 'student'
-  //         | 'room_teacher'
-  //         | 'room_student'
-  //         | 'teacher_student'
-  //         | 'all' = 'room';
-
-  //       if (isRoomConflict && isTeacherConflict && isStudentConflict) {
-  //         conflictType = 'all';
-  //       } else if (isRoomConflict && isTeacherConflict) {
-  //         conflictType = 'room_teacher';
-  //       } else if (isRoomConflict && isStudentConflict) {
-  //         conflictType = 'room_student';
-  //       } else if (isTeacherConflict && isStudentConflict) {
-  //         conflictType = 'teacher_student';
-  //       } else if (isTeacherConflict) {
-  //         conflictType = 'teacher';
-  //       } else if (isStudentConflict) {
-  //         conflictType = 'student';
-  //       }
-
-  //       conflicts.push({
-  //         date,
-  //         room,
-  //         startTime,
-  //         endTime,
-  //         conflictType,
-  //         courseTitle: existing.course?.title || 'Unknown',
-  //         teacherName: existing.teacher?.name || 'Unknown',
-  //         studentName: existing.student?.name || 'Unknown',
-  //       });
-  //     }
-  //   }
-
-  //   return conflicts;
-  // }
-
   async checkConflicts(schedules: CheckScheduleConflictDto[]) {
     const conflicts: {
       date: string;
+      time: string;
       room: string;
       startTime: string;
       endTime: string;
@@ -583,7 +485,8 @@ export class ScheduleService {
 
         conflicts.push({
           date,
-          room,
+          time: `${existing.startTime} - ${existing.endTime}`,
+          room: existing.room || 'Unknown',
           startTime,
           endTime,
           conflictType,

@@ -585,7 +585,8 @@ export class SessionService {
   }
 
   async getPendingSessionsForInvoice(
-    date?: string,
+    startDate?: string,
+    endDate?: string,
     status?: string,
     course?: string,
     teacher?: string,
@@ -603,16 +604,6 @@ export class SessionService {
       hasPrev: boolean;
     };
   }> {
-    console.log('Fetching pending sessions with filters:', {
-      date,
-      status,
-      course,
-      teacher,
-      student,
-      page,
-      limit,
-    });
-
     // Validate pagination parameters
     page = Math.max(1, page);
     limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
@@ -621,9 +612,15 @@ export class SessionService {
     const applySessionFilters = (qb: any, useSessionAlias = true) => {
       const sessionAlias = useSessionAlias ? 'session' : 'coursePlus';
 
-      if (date) {
-        qb.andWhere(`DATE(${sessionAlias}.createdAt) = :sessionDate`, {
-          sessionDate: date,
+      // Apply date range filters
+      if (startDate) {
+        qb.andWhere(`DATE(${sessionAlias}.createdAt) >= :startDate`, {
+          startDate: startDate,
+        });
+      }
+      if (endDate) {
+        qb.andWhere(`DATE(${sessionAlias}.createdAt) <= :endDate`, {
+          endDate: endDate,
         });
       }
       if (course) {

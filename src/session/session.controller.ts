@@ -263,9 +263,14 @@ export class SessionController {
     summary: 'Get sessions pending invoice with filtering and pagination',
   })
   @ApiQuery({
-    name: 'date',
+    name: 'startDate',
     required: false,
-    description: 'Filter by creation date (YYYY-MM-DD format)',
+    description: 'Filter by start date (YYYY-MM-DD format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'Filter by end date (YYYY-MM-DD format)',
   })
   @ApiQuery({
     name: 'status',
@@ -311,7 +316,8 @@ export class SessionController {
     type: PaginatedSessionResponseDto,
   })
   getPendingSessionsForInvoice(
-    @Query('date') date?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
     @Query('status') status?: string,
     @Query('course') course?: string,
     @Query('teacher') teacher?: string,
@@ -321,7 +327,8 @@ export class SessionController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ) {
     return this.sessionService.getPendingSessionsForInvoice(
-      date,
+      startDate,
+      endDate,
       status,
       course,
       teacher,
