@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +13,20 @@ export class CourseService {
   ) {}
 
   async create(createCourseDto: CreateCourseDto) {
+    const existingCourse = await this.courseRepository.findOne({
+      where: {
+        title: createCourseDto.title,
+        ageRange: createCourseDto.ageRange,
+        medium: createCourseDto.medium,
+      },
+    });
+
+    if (existingCourse) {
+      throw new BadRequestException(
+        'A course with the same title, description, age range, and medium already exists.',
+      );
+    }
+
     const course = this.courseRepository.create(createCourseDto);
     return this.courseRepository.save(course);
   }

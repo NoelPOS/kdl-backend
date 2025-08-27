@@ -52,6 +52,8 @@ export class ScheduleService {
       throw new BadRequestException(`Schedule with ID ${id} not found`);
     }
 
+    const prevAttendance = existingSchedule.attendance;
+
     // Only pick fields that exist in the Schedule entity
     const updateFields: any = {};
     if (dto.date !== undefined) updateFields.date = dto.date;
@@ -112,7 +114,65 @@ export class ScheduleService {
     if (result.affected === 0) {
       return null; // Schedule not found
     }
+
+    await this.revalidateWarningsAfterCancellation(existingSchedule);
+
     return this.scheduleRepo.findOne({ where: { id } });
+  }
+
+  private generateConflictWarning = (conflict: any) => {
+    const { conflictType, courseTitle, teacherName, studentName, room, time } =
+      conflict;
+
+    switch (conflictType) {
+      case 'room':
+        return `${room} is not available. There is a ${courseTitle} class at ${time}.`;
+      case 'teacher':
+        return `Teacher ${teacherName} is not available. Teacher ${teacherName} is teaching ${courseTitle} at ${time}.`;
+      case 'student':
+        return `Student ${studentName} is not available. Student ${studentName} is learning ${courseTitle} at ${time}.`;
+      case 'room_teacher':
+        return `${room} is not available. Teacher ${teacherName} is teaching ${courseTitle} at ${time}.`;
+      case 'room_student':
+        return `${room} is not available. Student ${studentName} is learning ${courseTitle} at ${time}.`;
+      case 'teacher_student':
+        return `Teacher ${teacherName} is not available. Student ${studentName} is learning ${courseTitle} at ${time}.`;
+      case 'all':
+        return `Room ${room} is not available. Teacher ${teacherName} is teaching ${courseTitle} at ${time}. Student ${studentName} is learning ${courseTitle} at ${time}.`;
+      default:
+        return `Conflict with ${courseTitle}`;
+    }
+  };
+
+  private async revalidateWarningsAfterCancellation(
+    cancelledSchedule: Schedule,
+  ) {
+    // Find schedules on the same date that might have conflicted
+    const potentiallyConflicted = await this.scheduleRepo.find({
+      where: { date: cancelledSchedule.date },
+    });
+
+    for (const schedule of potentiallyConflicted) {
+      const conflict = await this.checkConflict({
+        date: schedule.date.toString(),
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        room: schedule.room,
+        teacherId: schedule.teacherId,
+        studentId: schedule.studentId,
+        excludeId: schedule.id,
+      });
+
+      if (!conflict) {
+        // No more conflicts → clear warning
+        await this.scheduleRepo.update(schedule.id, { warning: '' });
+      } else {
+        // Still conflicting → update warning text if needed
+        await this.scheduleRepo.update(schedule.id, {
+          warning: this.generateConflictWarning(conflict),
+        });
+      }
+    }
   }
 
   async verifyFeedback(id: number, dto: VerifyFeedbackDto, user: any) {
@@ -219,6 +279,8 @@ export class ScheduleService {
       limit = 10,
     } = filterDto;
 
+    console.log('Filter DTO received:', filterDto);
+
     // Validate pagination parameters
     const validatedPage = Math.max(1, page);
     const validatedLimit = Math.min(Math.max(1, limit), 100);
@@ -261,13 +323,15 @@ export class ScheduleService {
 
     if (startDate) {
       queryBuilder.andWhere('schedule.feedbackDate >= :startDate', {
-        startDate: new Date(startDate),
+        startDate: new Date(startDate).toISOString(),
       });
     }
 
     if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // include the entire day
       queryBuilder.andWhere('schedule.feedbackDate <= :endDate', {
-        endDate: new Date(endDate),
+        endDate: end.toISOString(),
       });
     }
 
@@ -346,6 +410,7 @@ export class ScheduleService {
       .leftJoinAndSelect('s.teacher', 'teacher')
       .leftJoinAndSelect('s.student', 'student')
       .where('s.date = :date', { date })
+      .andWhere('s.attendance != :attendance', { attendance: 'cancelled' })
       .andWhere(
         '(s.room = :room OR s.teacher.id = :teacherId OR s.student.id = :studentId)',
         {
@@ -441,6 +506,7 @@ export class ScheduleService {
         .leftJoinAndSelect('s.teacher', 'teacher')
         .leftJoinAndSelect('s.student', 'student')
         .where('s.date = :date', { date })
+        .andWhere('s.attendance != :attendance', { attendance: 'cancelled' })
         .andWhere(
           '(s.room = :room OR s.teacher.id = :teacherId OR s.student.id = :studentId)',
           {
@@ -810,6 +876,7 @@ export class ScheduleService {
       ])
       .where('schedule.sessionId = :sessionId', { sessionId })
       .andWhere('schedule.studentId = :studentId', { studentId })
+      .orderBy('schedule.date', 'ASC')
       .getRawMany();
   }
 

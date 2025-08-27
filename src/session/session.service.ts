@@ -284,7 +284,7 @@ export class SessionService {
       },
     });
 
-    return !!session; // Return true if session exists, false if not
+    return !!session;
   }
 
   async getSessionsByPackage(packageId: number) {
@@ -357,9 +357,13 @@ export class SessionService {
         queryBuilder.andWhere('session.status = :status', {
           status: 'completed',
         });
-      } else if (status === 'Pending') {
+      } else if (status === 'wip') {
         queryBuilder.andWhere('session.status = :status', {
-          status: 'Pending',
+          status: 'wip',
+        });
+      } else if (status === 'cancelled') {
+        queryBuilder.andWhere('session.status = :status', {
+          status: 'cancelled',
         });
       }
     }
