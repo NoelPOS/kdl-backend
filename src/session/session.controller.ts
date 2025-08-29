@@ -245,19 +245,6 @@ export class SessionController {
   }
 
   @ApiTags('Sessions')
-  @Get('package/:packageId')
-  @ApiOperation({ summary: 'Get sessions created from a specific package' })
-  @ApiParam({ name: 'packageId', type: 'number' })
-  @ApiResponse({
-    status: 200,
-    description: 'Sessions created from the specified package',
-    type: [Session],
-  })
-  getSessionsByPackage(@Param('packageId', ParseIntPipe) packageId: number) {
-    return this.sessionService.getSessionsByPackage(packageId);
-  }
-
-  @ApiTags('Sessions')
   @Get('pending-invoice')
   @ApiOperation({
     summary: 'Get sessions pending invoice with filtering and pagination',

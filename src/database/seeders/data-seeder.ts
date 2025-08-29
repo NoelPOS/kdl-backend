@@ -11,7 +11,7 @@ import { Invoice } from '../../invoice/entities/invoice.entity';
 import { InvoiceItem } from '../../invoice/entities/invoice-item.entity';
 import { Receipt } from '../../receipt/entities/receipt.entity';
 import { Schedule } from '../../schedule/entities/schedule.entity';
-// import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
+import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
 import { RoomEntity } from '../../room/entities/room.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from '../../common/enums/user-role.enum';
@@ -23,7 +23,7 @@ export class DataSeeder {
   async seed() {
     console.log('🌱 Starting data seeding...');
 
-    // Clear all existing data
+    // Uncomment the line below to clear existing data before seeding
     // await this.clearData();
 
     // Create test data
@@ -57,7 +57,7 @@ export class DataSeeder {
     const invoices = await this.createInvoices(sessions, classOptions);
     const invoiceItems = await this.createInvoiceItems(invoices, discounts);
     const receipts = await this.createReceipts(invoices);
-    // const coursePlus = await this.createCoursePlus(sessions);
+    const coursePlus = await this.createCoursePlus(sessions);
 
     console.log('✅ Data seeding completed!');
     console.log(`Created:
@@ -73,6 +73,7 @@ export class DataSeeder {
     - ${invoices.length} invoices
     - ${invoiceItems.length} invoice items
     - ${receipts.length} receipts
+    - ${coursePlus.length} course plus records
     `);
   }
 
@@ -89,18 +90,22 @@ export class DataSeeder {
       'class_options',
       'rooms',
       'teacher_course', // Clear this before courses
+      'parent_student', // Clear this before parents and students
       'courses',
       'parents',
       'teachers',
       'students',
-      'tokens',
       'users',
       'discounts',
     ];
 
     for (const entity of entities) {
-      await this.dataSource.query(`DELETE FROM ${entity}`);
-      console.log(`Cleared ${entity}`);
+      try {
+        await this.dataSource.query(`DELETE FROM ${entity}`);
+        console.log(`✅ Cleared ${entity}`);
+      } catch (error) {
+        console.warn(`⚠️ Could not clear ${entity}:`, error.message);
+      }
     }
   }
 
@@ -120,6 +125,14 @@ export class DataSeeder {
     adminUser.role = UserRole.ADMIN;
     users.push(adminUser);
 
+    // Add registrar user
+    const registrarUser = new UserEntity();
+    registrarUser.userName = 'registrar';
+    registrarUser.email = 'registrar@test.com';
+    registrarUser.password = hashedPassword;
+    registrarUser.role = UserRole.REGISTRAR;
+    users.push(registrarUser);
+
     return await userRepo.save(users);
   }
 
@@ -132,6 +145,7 @@ export class DataSeeder {
       const student = new StudentEntity();
       student.name = faker.person.fullName();
       student.nickname = faker.person.firstName();
+      student.nationalId = faker.string.numeric(13); // Thai National ID format
       student.dob = faker.date
         .birthdate({ min: 5, max: 18, mode: 'age' })
         .toISOString()
@@ -158,6 +172,7 @@ export class DataSeeder {
       student.adConcent = faker.datatype.boolean();
       student.phone = faker.phone.number();
       student.profilePicture = faker.image.avatar();
+      student.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
       students.push(student);
     }
 
@@ -169,14 +184,20 @@ export class DataSeeder {
     const teacherRepo = this.dataSource.getRepository(TeacherEntity);
     const teachers = [];
 
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash('password123', salt);
+
     for (let i = 0; i < 15; i++) {
       const teacher = new TeacherEntity();
       teacher.name = faker.person.fullName();
       teacher.email = faker.internet.email();
+      teacher.password = hashedPassword;
+      teacher.role = UserRole.TEACHER;
       teacher.contactNo = faker.phone.number();
       teacher.lineId = faker.internet.userName();
       teacher.address = faker.location.streetAddress();
       teacher.profilePicture = faker.image.avatar();
+      teacher.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
       teachers.push(teacher);
     }
 
@@ -195,6 +216,8 @@ export class DataSeeder {
       parent.contactNo = faker.phone.number();
       parent.lineId = faker.internet.userName();
       parent.address = faker.location.streetAddress();
+      parent.profilePicture = faker.image.avatar();
+      parent.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
       parents.push(parent);
     }
 
@@ -210,49 +233,49 @@ export class DataSeeder {
       {
         title: 'Mathematics Basic',
         description: 'Basic mathematics for elementary students',
-        ageRange: '5-6',
+        ageRange: '5-6 yrs',
         medium: 'Tablet',
       },
       {
         title: 'English Conversation',
         description: 'Conversational English for all levels',
-        ageRange: '7-8',
+        ageRange: '7-8 yrs',
         medium: 'Computer',
       },
       {
         title: 'Science Exploration',
         description: 'Basic science concepts and experiments',
-        ageRange: '7-8',
+        ageRange: '7-8 yrs',
         medium: 'Tablet',
       },
       {
         title: 'Art & Creativity',
         description: 'Creative arts and crafts for children',
-        ageRange: '5-6',
+        ageRange: '5-6 yrs',
         medium: 'Tablet',
       },
       {
         title: 'Computer Programming',
         description: 'Introduction to programming concepts',
-        ageRange: '9-12',
+        ageRange: '9-12 yrs',
         medium: 'Computer',
       },
       {
         title: 'Music Theory',
         description: 'Basic music theory and practice',
-        ageRange: '9-12',
+        ageRange: '9-12 yrs',
         medium: 'Tablet',
       },
       {
         title: 'Chinese Language',
         description: 'Mandarin Chinese for beginners',
-        ageRange: '13-18',
+        ageRange: '13-18 yrs',
         medium: 'Tablet',
       },
       {
         title: 'Physics Advanced',
         description: 'Advanced physics concepts',
-        ageRange: '13-18',
+        ageRange: '13-18 yrs',
         medium: 'Computer',
       },
     ];
@@ -347,7 +370,7 @@ export class DataSeeder {
       session.teacherId = faker.helpers.arrayElement(availableTeachers).id;
       session.classCancel = faker.number.int({ min: 0, max: 3 });
       session.payment = faker.helpers.arrayElement(['Paid', 'Unpaid']);
-      session.status = faker.helpers.arrayElement(['WP', 'Completed']);
+      session.status = faker.helpers.arrayElement(['wip', 'completed']);
       session.invoiceDone = faker.datatype.boolean();
       sessions.push(session);
     }
@@ -415,7 +438,7 @@ export class DataSeeder {
         schedule.attendance = faker.helpers.arrayElement([
           'pending',
           'confirmed',
-          'present',
+          'completed',
           'cancelled',
           'absent',
         ]);
@@ -424,8 +447,12 @@ export class DataSeeder {
           ? faker.lorem.sentence()
           : '';
         schedule.feedback = faker.lorem.paragraph();
+        schedule.feedbackDate = faker.date.recent({ days: 30 }); // Feedback date within last 30 days
         schedule.verifyFb = faker.datatype.boolean();
         schedule.classNumber = i + 1; // Class number starts from 1
+        schedule.coursePlusId = faker.datatype.boolean({ probability: 0.1 })
+          ? faker.number.int({ min: 1, max: 5 })
+          : null; // 10% chance of having coursePlusId
         schedules.push(schedule);
       }
     }
@@ -438,6 +465,8 @@ export class DataSeeder {
   ) {
     console.log('🧾 Creating invoices...');
     const invoiceRepo = this.dataSource.getRepository(Invoice);
+    const studentRepo = this.dataSource.getRepository(StudentEntity);
+    const courseRepo = this.dataSource.getRepository(CourseEntity);
     const invoices = [];
 
     // Create a shuffled copy of sessions to avoid duplicates
@@ -460,6 +489,14 @@ export class DataSeeder {
         continue;
       }
 
+      // Get student and course details
+      const student = await studentRepo.findOne({
+        where: { id: session.studentId },
+      });
+      const course = await courseRepo.findOne({
+        where: { id: session.courseId },
+      });
+
       const invoice = new Invoice();
       invoice.documentId = `INV-${faker.string.alphanumeric(6).toUpperCase()}`;
       invoice.date = faker.date.recent();
@@ -467,9 +504,23 @@ export class DataSeeder {
         'Cash',
         'QR Code',
         'Credit Card',
+        'Bank Transfer',
       ]);
       invoice.totalAmount = classOption.tuitionFee;
       invoice.receiptDone = faker.datatype.boolean();
+      invoice.studentId = session.studentId;
+      invoice.studentName = student ? student.name : 'Unknown Student';
+      invoice.courseName = course ? course.title : 'Unknown Course';
+
+      // Create session groups for the invoice
+      invoice.sessionGroups = [
+        {
+          sessionId: session.id.toString(),
+          transactionType: 'course' as const,
+          actualId: session.id.toString(),
+        },
+      ];
+
       invoices.push(invoice);
     }
 
@@ -485,14 +536,14 @@ export class DataSeeder {
       {
         title: 'Admission Fee',
         usage: 'One-time fee for new students',
-        amount: 2000,
+        amount: -2000,
         effective_start_date: faker.date.past({ years: 1 }),
         effective_end_date: null, // No end date
       },
       {
         title: 'Promotional Discount',
         usage: 'Seasonal promotion for all courses',
-        amount: 700,
+        amount: -700,
         effective_start_date: faker.date.past({ years: 1 }),
         effective_end_date: faker.date.future({ years: 1 }), // Valid for 1 year
       },
@@ -519,20 +570,34 @@ export class DataSeeder {
     const invoiceItemRepo = this.dataSource.getRepository(InvoiceItem);
     const invoiceItems = [];
 
-    // create invoice from some of the existing sessions
+    // Create invoice items for some of the existing invoices
     const invoicesWithItems = faker.helpers.arrayElements(invoices, {
-      min: 20,
-      max: 30,
+      min: Math.min(5, invoices.length),
+      max: Math.min(invoices.length, 10),
     });
+
     for (const invoice of invoicesWithItems) {
-      const invoiceItem = new InvoiceItem();
-      invoiceItem.invoiceId = invoice.id;
-      invoiceItem.description = faker.lorem.sentence();
-      invoiceItem.amount = faker.number.int({
-        min: 1000,
-        max: 5000,
-      });
+      // Create 1-3 items per invoice
+      const numItems = faker.number.int({ min: 1, max: 3 });
+
+      for (let i = 0; i < numItems; i++) {
+        const invoiceItem = new InvoiceItem();
+        invoiceItem.invoiceId = invoice.id;
+        invoiceItem.description = faker.helpers.arrayElement([
+          'Tuition Fee',
+          'Registration Fee',
+          'Material Fee',
+          'Lab Fee',
+          'Activity Fee',
+        ]);
+        invoiceItem.amount = faker.number.int({
+          min: 500,
+          max: 3000,
+        });
+        invoiceItems.push(invoiceItem);
+      }
     }
+
     return await invoiceItemRepo.save(invoiceItems);
   }
 
@@ -541,10 +606,10 @@ export class DataSeeder {
     const receiptRepo = this.dataSource.getRepository(Receipt);
     const receipts = [];
 
-    // Create receipts for some invoices
+    // Create receipts for some invoices (not more than available)
     const invoicesWithReceipts = faker.helpers.arrayElements(invoices, {
-      min: 30,
-      max: 50,
+      min: Math.min(3, invoices.length),
+      max: Math.min(invoices.length, 8),
     });
 
     for (const invoice of invoicesWithReceipts) {
@@ -620,27 +685,28 @@ export class DataSeeder {
     return result;
   }
 
-  //   private async createCoursePlus(sessions: Session[]) {
-  //     console.log('📚+ Creating course plus...');
-  //     const coursePlusRepo = this.dataSource.getRepository(CoursePlus);
-  //     const coursePlus = [];
+  private async createCoursePlus(sessions: Session[]) {
+    console.log('📚+ Creating course plus...');
+    const coursePlusRepo = this.dataSource.getRepository(CoursePlus);
+    const coursePlus = [];
 
-  //     // Create course plus for some sessions
-  //     const sessionsWithPlus = faker.helpers.arrayElements(sessions, {
-  //       min: 20,
-  //       max: 40,
-  //     });
+    // Create course plus for some sessions
+    const sessionsWithPlus = faker.helpers.arrayElements(sessions, {
+      min: 5,
+      max: 15,
+    });
 
-  //     for (const session of sessionsWithPlus) {
-  //       const plus = new CoursePlus();
-  //       plus.sessionId = session.id;
-  //       plus.classNo = faker.number.int({ min: 1, max: 20 });
-  //       plus.amount = faker.number.int({ min: 200, max: 1000 });
-  //       plus.payment = faker.datatype.boolean();
-  //       plus.description = faker.lorem.sentence();
-  //       coursePlus.push(plus);
-  //     }
+    for (const session of sessionsWithPlus) {
+      const plus = new CoursePlus();
+      plus.sessionId = session.id;
+      plus.classNo = faker.number.int({ min: 1, max: 5 });
+      plus.amount = faker.number.int({ min: 200, max: 1000 });
+      plus.description = faker.lorem.sentence();
+      plus.status = faker.helpers.arrayElement(['paid', 'unpaid']);
+      plus.invoiceGenerated = faker.datatype.boolean({ probability: 0.3 }); // 30% chance
+      coursePlus.push(plus);
+    }
 
-  //     return await coursePlusRepo.save(coursePlus);
-  //   }
+    return await coursePlusRepo.save(coursePlus);
+  }
 }

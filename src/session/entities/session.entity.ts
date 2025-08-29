@@ -52,16 +52,6 @@ export class Session {
   @ApiProperty({ description: 'Invoice done' })
   invoiceDone: boolean;
 
-  @Column({ default: false })
-  @ApiProperty({
-    description: 'Whether this session is created from a package',
-  })
-  isFromPackage: boolean;
-
-  @Column({ nullable: true })
-  @ApiProperty({ description: 'Package ID if session is from a package' })
-  packageId: number;
-
   @CreateDateColumn()
   @ApiProperty({ description: 'Session creation date' })
   createdAt: Date;

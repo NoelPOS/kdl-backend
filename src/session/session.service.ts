@@ -11,8 +11,6 @@ import { TeacherSessionFilterDto } from './dto/teacher-session-filter.dto';
 import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
-import { CourseEntity } from '../course/entities/course.entity';
-import { parse } from 'path';
 // Import separated entities
 import { ClassOption } from '../class-option/entities/class-option.entity';
 import { Invoice } from '../invoice/entities/invoice.entity';
@@ -117,8 +115,6 @@ export class SessionService {
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
     session.invoiceDone = dto.isFromPackage ? true : false;
-    session.isFromPackage = dto.isFromPackage || false;
-    session.packageId = dto.packageId || null;
 
     return await this.sessionRepository.save(session);
   }
@@ -283,14 +279,6 @@ export class SessionService {
     return !!session;
   }
 
-  async getSessionsByPackage(packageId: number) {
-    return this.sessionRepository.find({
-      where: { packageId, isFromPackage: true },
-      relations: ['course', 'teacher', 'classOption'],
-      order: { createdAt: 'DESC' },
-    });
-  }
-
   async getSessionOverviewByStudentId(studentId: number) {
     // Optimized query: Join with schedules and use subquery to avoid N+1
     const result = await this.sessionRepository
@@ -319,8 +307,6 @@ export class SessionService {
       completedCount: parseInt(result.raw[index].completedCount || '0'),
       classCancel: session.classCancel,
       medium: session.course.medium,
-      isFromPackage: session.isFromPackage,
-      packageId: session.packageId,
     }));
   }
 
@@ -441,8 +427,6 @@ export class SessionService {
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
         status: session.status,
-        isFromPackage: session.isFromPackage,
-        packageId: session.packageId,
       };
     });
 
@@ -562,8 +546,6 @@ export class SessionService {
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
         status: session.status,
-        isFromPackage: session.isFromPackage,
-        packageId: session.packageId,
       };
     });
 
