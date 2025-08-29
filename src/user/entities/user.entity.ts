@@ -1,15 +1,12 @@
 import {
   Entity,
   Column,
-  OneToMany,
-  Relation,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   CreateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { Token } from '../../auth/entities/opt.entity';
 import { UserRole } from '../../common/enums/user-role.enum';
 
 @Entity('users')
@@ -59,12 +56,4 @@ export class UserEntity {
     default: UserRole.REGISTRAR,
   })
   role: UserRole;
-
-  @ApiProperty({
-    description: 'Tokens associated with the user',
-    type: [Token],
-    required: false,
-  })
-  @OneToMany(() => Token, (token) => token.user, { cascade: true })
-  tokens: Relation<Token>[];
 }

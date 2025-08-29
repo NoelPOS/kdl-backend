@@ -25,7 +25,6 @@ import { ClassOptionModule } from '../class-option/class-option.module';
 import { InvoiceModule } from '../invoice/invoice.module';
 import { ReceiptModule } from '../receipt/receipt.module';
 import { CoursePlusModule } from '../course-plus/course-plus.module';
-import { PackageModule } from '../package/package.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { DatabaseModule } from '../database/database.module';
@@ -110,7 +109,6 @@ import { DatabaseModule } from '../database/database.module';
     InvoiceModule,
     ReceiptModule,
     CoursePlusModule,
-    PackageModule,
   ],
   providers: [
     // Global Guards

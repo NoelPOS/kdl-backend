@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
 import { Repository, ILike } from 'typeorm';
 import { Schedule } from '../schedule/entities/schedule.entity';
-import { PackageEntity } from '../package/entities/package.entity';
 import { DataSource } from 'typeorm';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
 import { TeacherSessionFilterDto } from './dto/teacher-session-filter.dto';
@@ -53,9 +52,6 @@ export class SessionService {
 
     @InjectRepository(CoursePlus)
     private readonly coursePlusRepo: Repository<CoursePlus>,
-
-    @InjectRepository(PackageEntity)
-    private readonly packageRepo: Repository<PackageEntity>,
 
     @InjectRepository(DocumentCounter)
     private readonly documentCounterRepo: Repository<DocumentCounter>,
@@ -860,37 +856,6 @@ export class SessionService {
       return transformedCoursePlus;
     }
 
-    // Check if this is a Package ID (prefixed with 'pkg-')
-    if (typeof sessionId === 'string' && sessionId.startsWith('pkg-')) {
-      const packageId = parseInt(sessionId.replace('pkg-', ''));
-
-      const packageRecord = await this.packageRepo.findOne({
-        where: { id: packageId },
-      });
-
-      if (!packageRecord) {
-        return null;
-      }
-
-      // Transform Package to match the expected session format
-      const transformedPackage = {
-        session_id: packageId,
-        session_createdat: packageRecord.createdAt,
-        student_id: packageRecord.studentId,
-        student_name: packageRecord.studentName,
-        course_title: `${packageRecord.classOptionTitle} (Package)`,
-        classoption_tuitionfee: packageRecord.tuitionFee,
-        // Additional Package specific fields
-        type: 'package',
-        packageId: packageRecord.id,
-        classMode: packageRecord.classMode,
-        classLimit: packageRecord.classLimit,
-        purchaseDate: packageRecord.purchaseDate,
-        isRedeemed: packageRecord.isRedeemed,
-      };
-      return transformedPackage;
-    }
-
     // Handle regular session (original logic)
     const session = await this.sessionRepository
       .createQueryBuilder('session')
@@ -1102,13 +1067,6 @@ export class SessionService {
           await coursePlusRepo.update(coursePlusId, {
             invoiceGenerated: true,
           });
-        } else if (transactionType === 'package') {
-          const packageRepo = manager.getRepository(PackageEntity);
-          // Remove 'pkg-' prefix if it exists
-          const packageId = actualId.startsWith('pkg-')
-            ? parseInt(actualId.replace('pkg-', ''))
-            : parseInt(actualId);
-          await packageRepo.update(packageId, { invoiceGenerated: true });
         }
       }
 
@@ -1203,13 +1161,6 @@ export class SessionService {
               ? parseInt(actualId.replace('cp-', ''))
               : parseInt(actualId);
             await coursePlusRepo.update(coursePlusId, { status: 'paid' });
-          } else if (transactionType === 'package') {
-            const packageRepo = manager.getRepository(PackageEntity);
-            const packageId = actualId.startsWith('pkg-')
-              ? parseInt(actualId.replace('pkg-', ''))
-              : parseInt(actualId);
-            // Update package payment status - you might need to add a payment field to PackageEntity
-            // await packageRepo.update(packageId, { paymentStatus: 'paid' });
           }
         }
       }

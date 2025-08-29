@@ -14,7 +14,6 @@ import { PaginatedInvoiceResponseDto } from './dto/paginated-invoice-response.dt
 // Import entities that need to be updated after invoice creation
 import { Session } from '../session/entities/session.entity';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
-import { PackageEntity } from '../package/entities/package.entity';
 import { Receipt } from '../receipt/entities/receipt.entity';
 
 @Injectable()
@@ -131,13 +130,6 @@ export class InvoiceService {
             await coursePlusRepo.update(coursePlusId, {
               invoiceGenerated: true,
             });
-          } else if (transactionType === 'package') {
-            const packageRepo = manager.getRepository(PackageEntity);
-            // Remove 'pkg-' prefix if it exists
-            const packageId = actualId.startsWith('pkg-')
-              ? parseInt(actualId.replace('pkg-', ''))
-              : parseInt(actualId);
-            await packageRepo.update(packageId, { invoiceGenerated: true });
           }
         }
       }
