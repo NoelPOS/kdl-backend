@@ -26,6 +26,7 @@ import { RegisterDto } from '../dto/register.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { VerifyResetTokenDto } from '../dto/verify-reset-token.dto';
 import { TokenDto } from '../dto/token.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
@@ -82,7 +83,27 @@ export class AuthController {
     description: 'Email address not found.',
   })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(forgotPasswordDto.email);
+    return this.authService.forgotPassword(forgotPasswordDto.email, forgotPasswordDto.role);
+  }
+
+  @Post('verify-reset-token')
+  @Public()
+  @ApiOperation({ summary: 'Verify password reset token' })
+  @ApiBody({ type: VerifyResetTokenDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Token verified successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid or expired token.',
+  })
+  async verifyResetToken(@Body() verifyResetTokenDto: VerifyResetTokenDto) {
+    return this.authService.verifyResetToken(
+      verifyResetTokenDto.token,
+      verifyResetTokenDto.email,
+      verifyResetTokenDto.role,
+    );
   }
 
   @Post('reset-password')
@@ -99,9 +120,10 @@ export class AuthController {
   })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(
-      resetPasswordDto.email,
-      resetPasswordDto.verificationCode,
+      resetPasswordDto.token,
       resetPasswordDto.newPassword,
+      resetPasswordDto.email,
+      resetPasswordDto.role,
     );
   }
 

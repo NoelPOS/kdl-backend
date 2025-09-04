@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './services/auth.service';
+import { TokenStorageService } from './services/token-storage.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -31,7 +32,7 @@ import { TeacherModule } from '../teacher/teacher.module';
     CommonModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, TokenStorageService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
