@@ -5,6 +5,7 @@ import { UserModule } from '../user/user.module';
 import { StudentModule } from '../student/student.module';
 import { TeacherModule } from '../teacher/teacher.module';
 import { ParentModule } from '../parent/parent.module';
+import { RegistrarModule } from '../registrar/registrar.module';
 
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import configuration from '../config/configuration';
@@ -99,6 +100,7 @@ import { DatabaseModule } from '../database/database.module';
     StudentModule,
     TeacherModule,
     ParentModule,
+    RegistrarModule,
     SharedModule,
     CourseModule,
     ScheduleModule,

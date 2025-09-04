@@ -56,4 +56,20 @@ export class UserEntity {
     default: UserRole.REGISTRAR,
   })
   role: UserRole;
+
+  @ApiProperty({
+    example: 'https://example.com/profile.jpg',
+    description: 'User profile picture URL',
+    required: false,
+  })
+  @Column({ default: '' })
+  profilePicture: string;
+
+  @ApiProperty({
+    example: 'users/profile-key-123',
+    description: 'Key for the user profile picture',
+    required: false,
+  })
+  @Column({ nullable: true })
+  profileKey: string;
 }
