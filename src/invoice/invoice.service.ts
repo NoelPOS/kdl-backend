@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, ILike } from 'typeorm';
+import { Repository, DataSource, ILike, Not } from 'typeorm';
 import { Invoice } from './entities/invoice.entity';
 import { InvoiceItem } from './entities/invoice-item.entity';
 import { DocumentCounter } from './entities/document-counter.entity';
@@ -120,10 +120,26 @@ export class InvoiceService {
 
           if (transactionType === 'course') {
             const sessionRepo = manager.getRepository(Session);
-            await sessionRepo.update(parseInt(actualId), { invoiceDone: true });
+            const sessionId = parseInt(actualId);
+            
+            // Update the main session
+            await sessionRepo.update(sessionId, { invoiceDone: true });
+            
+            // Check if this is a package session and update related TBC sessions
+            const session = await sessionRepo.findOne({
+              where: { id: sessionId },
+              select: ['id', 'packageGroupId']
+            });
+            
+            if (session && session.packageGroupId === session.id) {
+              // This is a package session, update all related TBC sessions
+              await sessionRepo.update(
+                { packageGroupId: session.id, id: Not(session.id) },
+                { invoiceDone: true }
+              );
+            }
           } else if (transactionType === 'courseplus') {
             const coursePlusRepo = manager.getRepository(CoursePlus);
-            // Remove 'cp-' prefix if it exists
             const coursePlusId = actualId.startsWith('cp-')
               ? parseInt(actualId.replace('cp-', ''))
               : parseInt(actualId);
@@ -202,10 +218,28 @@ export class InvoiceService {
           if (transactionType === 'course') {
             // Mark session as paid
             const sessionRepo = manager.getRepository(Session);
-            await sessionRepo.update(parseInt(actualId), {
+            const sessionId = parseInt(actualId);
+            
+            // Update the main session
+            await sessionRepo.update(sessionId, {
               payment: 'Paid',
             });
             updatedSessionCount++;
+            
+            // Check if this is a package session and update related TBC sessions
+            const session = await sessionRepo.findOne({
+              where: { id: sessionId },
+              select: ['id', 'packageGroupId']
+            });
+            
+            if (session && session.packageGroupId === session.id) {
+              // This is a package session, update all related TBC sessions
+              const updatedTbcSessions = await sessionRepo.update(
+                { packageGroupId: session.id, id: Not(session.id) },
+                { payment: 'Paid' }
+              );
+              updatedSessionCount += updatedTbcSessions.affected || 0;
+            }
           } else if (transactionType === 'courseplus') {
             // Mark course plus as paid
             const coursePlusRepo = manager.getRepository(CoursePlus);
@@ -393,11 +427,29 @@ export class InvoiceService {
           if (transactionType === 'course') {
             // Revert session back to unpaid and invoiceDone = false
             const sessionRepo = manager.getRepository(Session);
-            await sessionRepo.update(parseInt(actualId), {
+            const sessionId = parseInt(actualId);
+            
+            // Update the main session
+            await sessionRepo.update(sessionId, {
               payment: 'Unpaid',
               invoiceDone: false,
             });
             updatedSessionCount++;
+            
+            // Check if this is a package session and revert related TBC sessions
+            const session = await sessionRepo.findOne({
+              where: { id: sessionId },
+              select: ['id', 'packageGroupId']
+            });
+            
+            if (session && session.packageGroupId === session.id) {
+              // This is a package session, revert all related TBC sessions
+              const updatedTbcSessions = await sessionRepo.update(
+                { packageGroupId: session.id, id: Not(session.id) },
+                { payment: 'Unpaid', invoiceDone: false }
+              );
+              updatedSessionCount += updatedTbcSessions.affected || 0;
+            }
           } else if (transactionType === 'courseplus') {
             // Revert course plus back to unpaid and invoiceGenerated = false
             const coursePlusRepo = manager.getRepository(CoursePlus);

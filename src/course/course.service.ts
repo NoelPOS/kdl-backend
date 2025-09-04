@@ -3,7 +3,7 @@ import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CourseEntity } from './entities/course.entity';
-import { ILike, Repository } from 'typeorm';
+import { ILike, Not, Repository } from 'typeorm';
 
 @Injectable()
 export class CourseService {
@@ -32,7 +32,13 @@ export class CourseService {
   }
 
   async findAll() {
-    return this.courseRepository.find();
+    return this.courseRepository
+      .createQueryBuilder('course')
+      .where('course.title NOT ILIKE :package', { package: '%package%' })
+      .andWhere('course.title NOT ILIKE :tbc', { tbc: '%TBC%' })
+      .andWhere('course.title NOT ILIKE :courses', { courses: '%courses%' })
+      .orderBy('course.id', 'ASC')
+      .getMany();
   }
 
   async findOne(id: number) {
@@ -40,12 +46,14 @@ export class CourseService {
   }
 
   async search(name: string) {
-    return this.courseRepository.find({
-      where: {
-        title: ILike(`%${name}%`),
-      },
-      select: ['id', 'title'],
-    });
+    return this.courseRepository
+      .createQueryBuilder('course')
+      .where('course.title ILIKE :name', { name: `%${name}%` })
+      .andWhere('course.title NOT ILIKE :package', { package: '%package%' })
+      .andWhere('course.title NOT ILIKE :tbc', { tbc: '%TBC%' })
+      .andWhere('course.title NOT ILIKE :courses', { courses: '%courses%' })
+      .select(['course.id', 'course.title', 'course.ageRange', 'course.medium'])
+      .getMany();
   }
 
   async update(id: number, updateCourseDto: UpdateCourseDto) {
@@ -82,30 +90,36 @@ export class CourseService {
     page = Math.max(1, page);
     limit = Math.min(Math.max(1, limit), 100); // Max 100 items per page
 
-    const where: any = {};
-    if (ageRange && ageRange !== 'all') {
-      where.ageRange = ageRange;
-    }
-    if (medium && medium !== 'all') {
-      where.medium = medium;
-    }
-    if (query && query.trim() !== '') {
-      where.title = ILike(`%${query}%`);
-    }
-
     // Calculate pagination values
     const skip = (page - 1) * limit;
 
+    // Build query with QueryBuilder for better control
+    let queryBuilder = this.courseRepository
+      .createQueryBuilder('course')
+      .where('course.title NOT ILIKE :package', { package: '%package%' })
+      .andWhere('course.title NOT ILIKE :tbc', { tbc: '%TBC%' })
+      .andWhere('course.title NOT ILIKE :courses', { courses: '%courses%' });
+
+    // Add filters
+    if (ageRange && ageRange !== 'all') {
+      queryBuilder = queryBuilder.andWhere('course.ageRange = :ageRange', { ageRange });
+    }
+    if (medium && medium !== 'all') {
+      queryBuilder = queryBuilder.andWhere('course.medium = :medium', { medium });
+    }
+    if (query && query.trim() !== '') {
+      queryBuilder = queryBuilder.andWhere('course.title ILIKE :query', { query: `%${query}%` });
+    }
+
     // Get total count for pagination
-    const totalCount = await this.courseRepository.count({ where });
+    const totalCount = await queryBuilder.getCount();
 
     // Get paginated results
-    const courses = await this.courseRepository.find({
-      where,
-      skip,
-      take: limit,
-      order: { id: 'ASC' },
-    });
+    const courses = await queryBuilder
+      .orderBy('course.id', 'ASC')
+      .skip(skip)
+      .take(limit)
+      .getMany();
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / limit);

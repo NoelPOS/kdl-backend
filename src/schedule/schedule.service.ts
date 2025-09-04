@@ -625,7 +625,10 @@ export class ScheduleService {
       .leftJoinAndSelect('schedule.student', 'student')
       .leftJoinAndSelect('schedule.teacher', 'teacher')
       .leftJoinAndSelect('schedule.course', 'course')
-      .where('DATE(schedule.date) = :today', { today: todayDateString });
+      .where('DATE(schedule.date) = :today', { today: todayDateString })
+      .andWhere('schedule.attendance != :attendance', {
+        attendance: 'cancelled',
+      });
 
     // If teacher ID is provided, filter by that teacher
     if (id) {

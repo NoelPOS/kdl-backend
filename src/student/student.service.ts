@@ -12,6 +12,7 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 import { Session } from '../session/entities/session.entity';
 import { ParentEntity } from '../parent/entities/parent.entity';
 import { ParentStudentEntity } from '../parent/entities/parent-student.entity';
+import { StudentCounter } from './entities/student-counter.entity';
 
 @Injectable()
 export class StudentService {
@@ -31,8 +32,16 @@ export class StudentService {
     private parentStudentRepository: Repository<ParentStudentEntity>,
 
     private configService: ConfigService,
+    @InjectRepository(StudentCounter)
+    private studentCounterRepository: Repository<StudentCounter>,
   ) {
-    this.databaseEnabled = this.configService.get<boolean>('DATABASE_ENABLED');
+    // If configService.get is not a function (seeder context), always enable DB
+    if (typeof this.configService.get === 'function') {
+      this.databaseEnabled =
+        this.configService.get<boolean>('DATABASE_ENABLED');
+    } else {
+      this.databaseEnabled = true;
+    }
   }
 
   async createStudent(createStudentDto: CreateStudentDto) {
@@ -41,21 +50,49 @@ export class StudentService {
     }
 
     try {
-      const student = new StudentEntity();
-      student.name = createStudentDto.name;
-      student.nickname = createStudentDto.nickname;
-      student.nationalId = createStudentDto.nationalId || '';
-      student.dob = createStudentDto.dob;
-      student.gender = createStudentDto.gender;
-      student.school = createStudentDto.school;
-      student.allergic = createStudentDto.allergic;
-      student.doNotEat = createStudentDto.doNotEat;
-      student.adConcent = createStudentDto.adConcent;
-      student.phone = createStudentDto.phone;
-      student.profilePicture = createStudentDto.profilePicture || '';
-      student.profileKey = createStudentDto.profileKey || '';
+      // Generate studentId in YYYYMMXXXX format
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      const savedStudent = await this.studentRepository.save(student);
+      // Use transaction for counter update and student creation
+      const savedStudent = await this.studentRepository.manager.transaction(
+        async (entityManager) => {
+          // Lock the counter row for update
+          let counter = await entityManager.findOne(StudentCounter, {
+            where: { yearMonth },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (!counter) {
+            counter = entityManager.create(StudentCounter, {
+              yearMonth,
+              counter: 1,
+            });
+          } else {
+            counter.counter += 1;
+          }
+          await entityManager.save(StudentCounter, counter);
+
+          const serial = String(counter.counter).padStart(4, '0');
+          const studentId = `${yearMonth}${serial}`;
+
+          const student = entityManager.create(StudentEntity, {
+            studentId,
+            name: createStudentDto.name,
+            nickname: createStudentDto.nickname,
+            nationalId: createStudentDto.nationalId || '',
+            dob: createStudentDto.dob,
+            gender: createStudentDto.gender,
+            school: createStudentDto.school,
+            allergic: createStudentDto.allergic,
+            doNotEat: createStudentDto.doNotEat,
+            adConcent: createStudentDto.adConcent,
+            phone: createStudentDto.phone,
+            profilePicture: createStudentDto.profilePicture || '',
+            profileKey: createStudentDto.profileKey || '',
+          });
+          return await entityManager.save(StudentEntity, student);
+        },
+      );
       return savedStudent;
     } catch (error) {
       throw new BadRequestException(
@@ -68,6 +105,7 @@ export class StudentService {
     query?: string,
     active?: string,
     course?: string,
+    courseType?: 'fixed' | 'check' | 'camp' | 'all' | '',
     page: number = 1,
     limit: number = 10,
   ): Promise<{
@@ -81,20 +119,32 @@ export class StudentService {
     };
   }> {
     try {
-      // Validate pagination parameters
+      const courseTypeMap = { fixed: 1, check: 2, camp: 3 };
+
+      // Validate pagination
       page = Math.max(1, page);
       limit = Math.min(Math.max(1, limit), 100);
+      const offset = (page - 1) * limit;
 
-      // Build the main query with joins to eliminate N+1 queries
-      let queryBuilder = this.studentRepository
+      // Base query
+      const queryBuilder = this.studentRepository
         .createQueryBuilder('student')
+        .leftJoinAndSelect(
+          'sessions',
+          'session',
+          'session.studentId = student.id',
+        )
+        .leftJoinAndSelect('courses', 'course', 'course.id = session.courseId')
         .select([
           'student.id',
+          'student.studentId',
           'student.name',
           'student.nickname',
           'student.nationalId',
           'student.dob',
           'student.phone',
+          'student.gender',
+          'student.school',
           'student.allergic',
           'student.doNotEat',
           'student.adConcent',
@@ -102,48 +152,40 @@ export class StudentService {
           'student.createdAt',
         ]);
 
-      // Apply name search filter
+      // Filters
       if (query) {
         queryBuilder.andWhere('student.name ILIKE :query', {
           query: `%${query}%`,
         });
       }
 
-      // Apply active/inactive filtering with proper joins
       if (active === 'active') {
-        queryBuilder
-          .innerJoin('sessions', 'session', 'session.studentId = student.id')
-          .andWhere('session.status = :status', { status: 'wip' });
+        queryBuilder.andWhere('session.status = :status', { status: 'wip' });
       } else if (active === 'inactive') {
-        // Use NOT EXISTS subquery for inactive students
         queryBuilder.andWhere(
           'NOT EXISTS (SELECT 1 FROM sessions s WHERE s."studentId" = student.id AND s.status = :status)',
           { status: 'wip' },
         );
       }
 
-      // Apply course filtering
       if (course) {
-        if (active !== 'active') {
-          // Add join only if not already joined for active filter
-          queryBuilder.leftJoin(
-            'sessions',
-            'session',
-            'session.studentId = student.id',
-          );
-        }
-        queryBuilder
-          .leftJoin('courses', 'course', 'course.id = session.courseId')
-          .andWhere('course.title ILIKE :course', {
-            course: `%${course}%`,
-          });
+        queryBuilder.andWhere('course.title ILIKE :course', {
+          course: `%${course}%`,
+        });
       }
 
-      // For counting, we need a separate simpler query without DISTINCT
-      const countQueryBuilder =
-        this.studentRepository.createQueryBuilder('student');
+      if (courseType && courseType !== 'all') {
+        queryBuilder.andWhere('session.classOptionId = :courseType', {
+          courseType: courseTypeMap[courseType],
+        });
+      }
 
-      // Apply the same filters for counting
+      // Count query (must mirror main query)
+      const countQueryBuilder = this.studentRepository
+        .createQueryBuilder('student')
+        .leftJoin('sessions', 'session', 'session.studentId = student.id')
+        .leftJoin('courses', 'course', 'course.id = session.courseId');
+
       if (query) {
         countQueryBuilder.andWhere('student.name ILIKE :query', {
           query: `%${query}%`,
@@ -151,9 +193,9 @@ export class StudentService {
       }
 
       if (active === 'active') {
-        countQueryBuilder
-          .innerJoin('sessions', 'session', 'session.studentId = student.id')
-          .andWhere('session.status = :status', { status: 'wip' });
+        countQueryBuilder.andWhere('session.status = :status', {
+          status: 'wip',
+        });
       } else if (active === 'inactive') {
         countQueryBuilder.andWhere(
           'NOT EXISTS (SELECT 1 FROM sessions s WHERE s."studentId" = student.id AND s.status = :status)',
@@ -162,38 +204,31 @@ export class StudentService {
       }
 
       if (course) {
-        if (active !== 'active') {
-          countQueryBuilder.leftJoin(
-            'sessions',
-            'session',
-            'session.studentId = student.id',
-          );
-        }
-        countQueryBuilder
-          .leftJoin('courses', 'course', 'course.id = session.courseId')
-          .andWhere('course.title ILIKE :course', {
-            course: `%${course}%`,
-          });
+        countQueryBuilder.andWhere('course.title ILIKE :course', {
+          course: `%${course}%`,
+        });
       }
 
-      // Get total count with DISTINCT to handle duplicates from joins
+      if (courseType && courseType !== 'all') {
+        countQueryBuilder.andWhere('session.classOptionId = :courseType', {
+          courseType: courseTypeMap[courseType],
+        });
+      }
+
+      // Total count
       const totalCount = await countQueryBuilder
         .select('COUNT(DISTINCT student.id)', 'count')
         .getRawOne()
-        .then((result) => parseInt(result.count));
+        .then((res) => parseInt(res.count));
 
       const totalPages = Math.ceil(totalCount / limit);
 
-      // Apply DISTINCT and pagination to main query
+      // Pagination and ordering
       queryBuilder.distinctOn(['student.id']);
       queryBuilder.orderBy('student.id', 'DESC');
       queryBuilder.addOrderBy('student.createdAt', 'DESC');
-
-      // Apply pagination
-      const offset = (page - 1) * limit;
       queryBuilder.skip(offset).take(limit);
 
-      // Execute the main query
       const students = await queryBuilder.getMany();
 
       return {
@@ -207,7 +242,7 @@ export class StudentService {
         },
       };
     } catch (error) {
-      console.error('Error in optimized findAllStudents:', error);
+      console.error('Error in findAllStudents:', error);
       throw new BadRequestException(
         'Failed to fetch students: ' + error.message,
       );
@@ -228,7 +263,7 @@ export class StudentService {
         where.nickname = ILike(`%${query.nickname}%`);
       }
       if (query.id) {
-        where.id = query.id;
+        where.studentId = query.id;
       }
 
       const students = await this.studentRepository.find({
@@ -236,6 +271,22 @@ export class StudentService {
         order: {
           createdAt: 'DESC',
         },
+        select: [
+          'id',
+          'studentId',
+          'name',
+          'nickname',
+          'nationalId',
+          'dob',
+          'phone',
+          'school',
+          'gender',
+          'allergic',
+          'doNotEat',
+          'adConcent',
+          'profilePicture',
+          'createdAt',
+        ],
       });
 
       return students;
@@ -251,7 +302,25 @@ export class StudentService {
   ): Promise<StudentEntity & { parent: string }> {
     try {
       const studentId = Number(id);
-      const student = await this.studentRepository.findOneBy({ id: studentId });
+      const student = await this.studentRepository.findOne({
+        where: { id: studentId },
+        select: [
+          'id',
+          'studentId',
+          'name',
+          'nickname',
+          'nationalId',
+          'gender',
+          'dob',
+          'phone',
+          'school',
+          'allergic',
+          'doNotEat',
+          'adConcent',
+          'profilePicture',
+          'createdAt',
+        ],
+      });
       if (!student) {
         throw new NotFoundException(`Student with ID ${id} not found`);
       }

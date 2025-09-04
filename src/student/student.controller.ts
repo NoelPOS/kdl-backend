@@ -113,6 +113,7 @@ export class StudentController {
     @Query('query') query?: string,
     @Query('active') active?: string,
     @Query('course') course?: string,
+    @Query('courseType') courseType?: 'fixed' | 'check' | 'camp' | 'all' | '',
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) {
@@ -120,6 +121,7 @@ export class StudentController {
       query,
       active,
       course,
+      courseType,
       page,
       limit,
     );

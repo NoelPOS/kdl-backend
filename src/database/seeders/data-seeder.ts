@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { UserEntity } from '../../user/entities/user.entity';
 import { StudentEntity } from '../../student/entities/student.entity';
+import { StudentService } from '../../student/student.service';
 import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { ParentEntity } from '../../parent/entities/parent.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
@@ -18,7 +19,33 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { DiscountEntity } from '../../discount/entities/discount.entity';
 
 export class DataSeeder {
-  constructor(private dataSource: DataSource) {}
+  private studentService: StudentService;
+
+  constructor(private dataSource: DataSource) {
+    // Minimal ConfigService mock
+    class ConfigServiceMock {
+      get(key: string) {
+        return true;
+      }
+    }
+    this.studentService = new StudentService(
+      this.dataSource.getRepository(StudentEntity),
+      this.dataSource.getRepository(
+        require('../../session/entities/session.entity').Session,
+      ),
+      this.dataSource.getRepository(
+        require('../../parent/entities/parent.entity').ParentEntity,
+      ),
+      this.dataSource.getRepository(
+        require('../../parent/entities/parent-student.entity')
+          .ParentStudentEntity,
+      ),
+      {} as any, // Pass empty object as configService
+      this.dataSource.getRepository(
+        require('../../student/entities/student-counter.entity').StudentCounter,
+      ),
+    );
+  }
 
   async seed() {
     console.log('🌱 Starting data seeding...');
@@ -27,7 +54,7 @@ export class DataSeeder {
     // await this.clearData();
 
     // Create test data
-    const users = await this.createUsers();
+    // const users = await this.createUsers();
     const students = await this.createStudents();
     const teachers = await this.createTeachers();
     const parents = await this.createParents();
@@ -61,7 +88,6 @@ export class DataSeeder {
 
     console.log('✅ Data seeding completed!');
     console.log(`Created:
-    - ${users.length} users
     - ${students.length} students
     - ${teachers.length} teachers
     - ${parents.length} parents
@@ -138,45 +164,46 @@ export class DataSeeder {
 
   private async createStudents() {
     console.log('🎓 Creating students...');
-    const studentRepo = this.dataSource.getRepository(StudentEntity);
     const students = [];
 
     for (let i = 0; i < 50; i++) {
-      const student = new StudentEntity();
-      student.name = faker.person.fullName();
-      student.nickname = faker.person.firstName();
-      student.nationalId = faker.string.numeric(13); // Thai National ID format
-      student.dob = faker.date
-        .birthdate({ min: 5, max: 18, mode: 'age' })
-        .toISOString()
-        .split('T')[0];
-      student.gender = faker.helpers.arrayElement(['Male', 'Female']);
-      student.school = faker.helpers.arrayElement([
-        'Bangkok International School',
-        'Chulalongkorn University',
-        'Kasetsart University',
-        'Mahidol University',
-        'Thammasat University',
-        'King Mongkut University',
-        'Assumption College',
-        'St. Andrews School',
-      ]);
-      student.allergic = faker.helpers.arrayElements(
-        ['peanuts', 'dairy', 'eggs', 'shellfish', 'none'],
-        { min: 0, max: 2 },
-      );
-      student.doNotEat = faker.helpers.arrayElements(
-        ['pork', 'beef', 'seafood', 'spicy food', 'none'],
-        { min: 0, max: 2 },
-      );
-      student.adConcent = faker.datatype.boolean();
-      student.phone = faker.phone.number();
-      student.profilePicture = faker.image.avatar();
-      student.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
+      const dto = {
+        name: faker.person.fullName(),
+        nickname: faker.person.firstName(),
+        nationalId: faker.string.numeric(13),
+        dob: faker.date
+          .birthdate({ min: 5, max: 18, mode: 'age' })
+          .toISOString()
+          .split('T')[0],
+        gender: faker.helpers.arrayElement(['Male', 'Female']),
+        school: faker.helpers.arrayElement([
+          'Bangkok International School',
+          'Chulalongkorn University',
+          'Kasetsart University',
+          'Mahidol University',
+          'Thammasat University',
+          'King Mongkut University',
+          'Assumption College',
+          'St. Andrews School',
+        ]),
+        allergic: faker.helpers.arrayElements(
+          ['peanuts', 'dairy', 'eggs', 'shellfish', 'none'],
+          { min: 0, max: 2 },
+        ),
+        doNotEat: faker.helpers.arrayElements(
+          ['pork', 'beef', 'seafood', 'spicy food', 'none'],
+          { min: 0, max: 2 },
+        ),
+        adConcent: faker.datatype.boolean(),
+        phone: faker.phone.number(),
+        profilePicture: faker.image.avatar(),
+        profileKey: faker.string.alphanumeric(32),
+      };
+      // Use StudentService to generate studentId
+      const student = await this.studentService.createStudent(dto);
       students.push(student);
     }
-
-    return await studentRepo.save(students);
+    return students;
   }
 
   private async createTeachers() {

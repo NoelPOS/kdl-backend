@@ -9,8 +9,15 @@ import {
 @Entity('students')
 export class StudentEntity {
   @PrimaryGeneratedColumn()
-  @ApiProperty({ description: 'Unique identifier' })
+  @ApiProperty({ description: 'Auto-increment primary key (internal use)' })
   id: number;
+
+  @Column({
+    unique: true,
+    nullable: true,
+  })
+  @ApiProperty({ description: 'Student ID in YYYYMMXXXX format' })
+  studentId: string;
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Creation timestamp' })

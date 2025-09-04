@@ -1,9 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
+import { CreatePackageDto } from './dto/create-package.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
-import { Repository, ILike } from 'typeorm';
+import { Repository, ILike, Not } from 'typeorm';
 import { Schedule } from '../schedule/entities/schedule.entity';
 import { DataSource } from 'typeorm';
 import { StudentSessionFilterDto } from './dto/student-session-filter.dto';
@@ -13,6 +14,7 @@ import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
 // Import separated entities
 import { ClassOption } from '../class-option/entities/class-option.entity';
+import { CourseEntity } from '../course/entities/course.entity';
 import { Invoice } from '../invoice/entities/invoice.entity';
 import { InvoiceItem } from '../invoice/entities/invoice-item.entity';
 import { DocumentCounter } from '../invoice/entities/document-counter.entity';
@@ -38,6 +40,9 @@ export class SessionService {
 
     @InjectRepository(ClassOption)
     private readonly classOptionRepo: Repository<ClassOption>,
+
+    @InjectRepository(CourseEntity)
+    private readonly courseRepo: Repository<CourseEntity>,
 
     @InjectRepository(Invoice)
     private readonly invoiceRepo: Repository<Invoice>,
@@ -114,9 +119,95 @@ export class SessionService {
 
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
-    session.invoiceDone = dto.isFromPackage ? true : false;
+    session.invoiceDone = false;
 
     return await this.sessionRepository.save(session);
+  }
+
+  async createPackage(dto: CreatePackageDto): Promise<{ success: boolean }> {
+    return this.dataSource.transaction(async (manager) => {
+      // 1. Find course by name
+      const course = await this.courseRepo.findOne({
+        where: { title: ILike(`%${dto.courseName}%`) }
+      });
+      
+      if (!course) {
+        throw new BadRequestException(`Course with name "${dto.courseName}" not found`);
+      }
+
+      // 2. Find class option by class mode
+      const classOption = await this.classOptionRepo.findOne({
+        where: { classMode: ILike(`%${dto.classOption}%`) }
+      });
+      
+      if (!classOption) {
+        throw new BadRequestException(`Class option "${dto.classOption}" not found`);
+      }
+
+      // 3. Create the main package session
+      const packageSession = manager.getRepository(Session).create({
+        studentId: dto.studentId,
+        courseId: course.id,
+        classOptionId: classOption.id,
+        classCancel: 0,
+        payment: 'unpaid',
+        status: 'wip',
+        teacherId: null,
+        invoiceDone: false,
+        createdAt: new Date(),
+        packageGroupId: null // Will be set after saving
+      });
+
+      const savedPackageSession = await manager.getRepository(Session).save(packageSession);
+
+      // 4. Set the packageGroupId to its own ID for the package session
+      await manager.getRepository(Session).update(savedPackageSession.id, {
+        packageGroupId: savedPackageSession.id
+      });
+
+      // 5. Determine package size and create TBC sessions
+      let packageSize = 0;
+      if (dto.courseName.toLowerCase().includes('2 courses')) {
+        packageSize = 2;
+      } else if (dto.courseName.toLowerCase().includes('4 courses')) {
+        packageSize = 4;
+      } else if (dto.courseName.toLowerCase().includes('10 courses')) {
+        packageSize = 10;
+      }
+
+      if (packageSize > 0) {
+        // 6. Find TBC course
+        const tbcCourse = await this.courseRepo.findOne({
+          where: { title: ILike('%TBC%') }
+        });
+        
+        if (!tbcCourse) {
+          throw new BadRequestException('TBC course not found');
+        }
+
+        // 7. Create TBC sessions linked to the package
+        const tbcSessions = [];
+        for (let i = 0; i < packageSize; i++) {
+          const tbcSession = manager.getRepository(Session).create({
+            studentId: dto.studentId,
+            courseId: tbcCourse.id,
+            classOptionId: classOption.id, // Same class option as package
+            classCancel: 0,
+            payment: 'unpaid',
+            status: 'wip',
+            teacherId: null,
+            invoiceDone: false,
+            createdAt: new Date(),
+            packageGroupId: savedPackageSession.id // Link to package session
+          });
+          tbcSessions.push(tbcSession);
+        }
+
+        await manager.getRepository(Session).save(tbcSessions);
+      }
+
+      return { success: true };
+    });
   }
 
   async findAll() {
@@ -134,11 +225,34 @@ export class SessionService {
   }
 
   async update(id: number, dto: UpdateSessionDto) {
-    const result = await this.sessionRepository.update(id, dto);
-    if (result.affected === 0) {
-      throw new BadRequestException(`Session with ID ${id} not found`);
-    }
-    return this.findOne(id);
+    return this.dataSource.transaction(async (manager) => {
+      // Check if the session being updated is a package session
+      const session = await manager.getRepository(Session).findOne({
+        where: { id }
+      });
+
+      if (!session) {
+        throw new BadRequestException(`Session with ID ${id} not found`);
+      }
+
+      // Update the main session
+      const result = await manager.getRepository(Session).update(id, dto);
+      if (result.affected === 0) {
+        throw new BadRequestException(`Session with ID ${id} not found`);
+      }
+
+      // If this is a package session (packageGroupId equals its own ID), 
+      // update related TBC sessions as well
+      if (session.packageGroupId === session.id) {
+        // Update all TBC sessions linked to this package
+        await manager.getRepository(Session).update(
+          { packageGroupId: session.id, id: Not(session.id) }, // Not the package session itself
+          dto
+        );
+      }
+
+      return this.findOne(id);
+    });
   }
 
   async cancelSession(id: number) {
@@ -250,31 +364,40 @@ export class SessionService {
   }
 
   async getStudentSessions(studentId: number) {
-    return this.sessionRepository.find({
-      where: { studentId },
-      relations: ['course', 'teacher', 'classOption'],
-      order: { createdAt: 'DESC' },
-    });
+    return this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.course', 'course')
+      .leftJoinAndSelect('session.teacher', 'teacher')
+      .leftJoinAndSelect('session.classOption', 'classOption')
+      .where('session.studentId = :studentId', { studentId })
+      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
+      .orderBy('session.createdAt', 'DESC')
+      .getMany();
   }
 
   async getStudentSessionByCourse(studentId: number, courseId: number) {
-    return this.sessionRepository.findOne({
-      where: { studentId, courseId },
-      relations: ['course', 'teacher', 'classOption'],
-    });
+    return this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.course', 'course')
+      .leftJoinAndSelect('session.teacher', 'teacher')
+      .leftJoinAndSelect('session.classOption', 'classOption')
+      .where('session.studentId = :studentId', { studentId })
+      .andWhere('session.courseId = :courseId', { courseId })
+      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
+      .getOne();
   }
 
   async checkStudentHasWipSession(
     studentId: number,
     courseId: number,
   ): Promise<boolean> {
-    const session = await this.sessionRepository.findOne({
-      where: {
-        studentId,
-        courseId,
-        status: 'wip',
-      },
-    });
+    const session = await this.sessionRepository
+      .createQueryBuilder('session')
+      .where('session.studentId = :studentId', { studentId })
+      .andWhere('session.courseId = :courseId', { courseId })
+      .andWhere('session.status = :status', { status: 'wip' })
+      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
+      .getOne();
 
     return !!session;
   }
@@ -295,6 +418,7 @@ export class SessionService {
           });
       }, 'completedCount')
       .where('session.studentId = :studentId', { studentId })
+      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
       .getRawAndEntities();
 
     // Transform the result to match the expected format
@@ -325,7 +449,8 @@ export class SessionService {
       .createQueryBuilder('session')
       .leftJoinAndSelect('session.course', 'course')
       .leftJoinAndSelect('session.classOption', 'classOption')
-      .where('session.studentId = :studentId', { studentId });
+      .where('session.studentId = :studentId', { studentId })
+      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)'); // Exclude package sessions
 
     // Apply filters
     if (courseName) {
@@ -637,7 +762,8 @@ export class SessionService {
         .leftJoin('session.student', 'student')
         .leftJoin('session.course', 'course')
         .leftJoin('session.teacher', 'teacher')
-        .where('session.invoiceDone = :invoiceDone', { invoiceDone: false });
+        .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
+        .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId = session.id)'); // Exclude TBC sessions
 
       applySessionFilters(sessionCountQuery);
 
@@ -662,6 +788,7 @@ export class SessionService {
           'classOption.tuitionFee as classOption_tuitionFee',
         ])
         .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
+        .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId = session.id)') // Exclude TBC sessions
         .orderBy('session.createdAt', 'DESC');
 
       applySessionFilters(sessionDataQuery);

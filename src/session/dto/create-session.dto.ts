@@ -42,13 +42,4 @@ export class CreateSessionDto {
   @IsString()
   status: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsBoolean()
-  isFromPackage?: boolean;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsNumber()
-  packageId?: number;
 }

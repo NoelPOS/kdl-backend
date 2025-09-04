@@ -16,6 +16,7 @@ import {
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
+import { CreatePackageDto } from './dto/create-package.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -56,6 +57,28 @@ export class SessionController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   create(@Body() createSessionDto: CreateSessionDto) {
     return this.sessionService.create(createSessionDto);
+  }
+
+  @ApiTags('Sessions')
+  @Post('package')
+  @ApiOperation({ summary: 'Create a new package session with TBC sessions' })
+  @ApiBody({ type: CreatePackageDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The package session has been successfully created.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: {
+          type: 'boolean',
+          example: true,
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  createPackage(@Body() createPackageDto: CreatePackageDto) {
+    return this.sessionService.createPackage(createPackageDto);
   }
 
   @ApiTags('Sessions')
