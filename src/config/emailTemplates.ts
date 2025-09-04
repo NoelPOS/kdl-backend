@@ -36,7 +36,7 @@ export const VERIFICATION_EMAIL_TEMPLATE = `
       display: inline-block;
       padding: 12px 24px;
       margin: 20px;
-      background: #4CAF50;
+      background: yellow;
       color: #fff;
       text-decoration: none;
       border-radius: 6px;
@@ -65,7 +65,7 @@ export const VERIFICATION_EMAIL_TEMPLATE = `
     <p>Thank you for signing up! Please confirm your email by copy and paste the verification code:
     </p>
     <div style="text-align: center; margin: 30px 0;">
-      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4CAF50;">{{verificationCode}}</span>
+      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: yellow;">{{verificationCode}}</span>
     </div>
     <p>Verification code will expire in 15 minutes for security reasons.</p>
     <div class="footer">
@@ -87,14 +87,14 @@ export const PASSWORD_RESET_SUCCESS_TEMPLATE = `
   <title>Password Reset Successful</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(to right, #4CAF50, #45a049); padding: 20px; text-align: center;">
+  <div style="background: linear-gradient(to right, yellow, #45a049); padding: 20px; text-align: center;">
     <h1 style="color: white; margin: 0;">Password Reset Successful</h1>
   </div>
   <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
     <p>Hello {{name}},</p>
     <p>We're writing to confirm that your password has been successfully reset.</p>
     <div style="text-align: center; margin: 30px 0;">
-      <div style="background-color: #4CAF50; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; display: inline-block; font-size: 30px;">
+      <div style="background-color: yellow; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; display: inline-block; font-size: 30px;">
         ✓
       </div>
     </div>
@@ -105,7 +105,7 @@ export const PASSWORD_RESET_SUCCESS_TEMPLATE = `
       <li>Avoid using the same password across multiple sites</li>
     </ul>
     <p>Thank you for helping us keep your account secure.</p>
-    <p>Best regards,<br>MERN Advanced Auth Starter Kit</p>
+    <p>Best regards,<br>Kiddee Lab Thailand</p>
     <div class="footer">
         If you didn't request this, you can ignore this email.
       <br />
@@ -146,7 +146,7 @@ export const PASSWORD_RESET_REQUEST_TEMPLATE = `
     <p>We received a request to reset your password. Copy and past verification code to reset your password.</p>
   
     <div style="text-align: center; margin: 30px 0;">
-      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4CAF50;">{{verificationCode}}</span>
+      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: yellow;">{{verificationCode}}</span>
     </div>
     <p>Verification code will expire in 15 minutes for security reasons.</p>
     <div class="footer">
@@ -185,7 +185,7 @@ export const WELCOME_TEMPLATE = `<!-- email-welcome.html -->
 </head>
 <body>
   <div class="container">
-  <div style="background: linear-gradient(to right, #4CAF50, #45a049); padding: 20px; text-align: center;">
+  <div style="background: linear-gradient(to right, yellow, #45a049); padding: 20px; text-align: center;">
     <h1 style="color: white; margin: 0;">Welcome, {{name}}! 🎉</h1>
   </div>
     <p>We're excited to have you on board. Your account has been verified successfully.</p>
