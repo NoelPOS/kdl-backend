@@ -8,7 +8,7 @@ import { CourseEntity } from '../course/entities/course.entity';
 import { Session } from '../session/entities/session.entity';
 import { Invoice } from '../invoice/entities/invoice.entity';
 import { Receipt } from '../receipt/entities/receipt.entity';
-import { TeacherEntity } from 'src/teacher/entities/teacher.entity';
+import { TeacherEntity } from '../teacher/entities/teacher.entity';
 
 @Module({
   imports: [
