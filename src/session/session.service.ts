@@ -120,6 +120,7 @@ export class SessionService {
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
     session.invoiceDone = false;
+    session.packageGroupId = dto.classOptionId === 11 ? Math.random() * 1000000 : null; 
 
     return await this.sessionRepository.save(session);
   }
@@ -763,7 +764,7 @@ export class SessionService {
         .leftJoin('session.course', 'course')
         .leftJoin('session.teacher', 'teacher')
         .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
-        .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId = session.id)'); // Exclude TBC sessions
+        .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId = session.id)') // Exclude TBC sessions
 
       applySessionFilters(sessionCountQuery);
 
@@ -1377,3 +1378,7 @@ export class SessionService {
     return this.invoiceService.getNextDocumentId();
   }
 }
+function andWhere(arg0: string, arg1: { freeTrial: string; }) {
+  throw new Error('Function not implemented.');
+}
+

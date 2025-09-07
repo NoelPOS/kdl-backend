@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not, Like } from 'typeorm';
 import { ClassOption } from './entities/class-option.entity';
 import { CreateClassOptionDto } from './dto/create-class-option.dto';
 import { UpdateClassOptionDto } from './dto/update-class-option.dto';
@@ -27,6 +27,9 @@ export class ClassOptionService {
 
   async findAll(): Promise<ClassOption[]> {
     return await this.classOptionRepository.find({
+      where: {
+        classMode: Not(Like('%package%')),
+      },
       order: { effectiveStartDate: 'DESC' },
     });
   }

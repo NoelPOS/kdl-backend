@@ -63,6 +63,11 @@ export class UpdateScheduleDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsInt()
+  courseId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   teacherName?: string;
 

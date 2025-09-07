@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { VerifyFeedbackDto } from './dto/verify-feedback.dto';
 import { FeedbackFilterDto } from './dto/feedback-filter.dto';
 import { Repository } from 'typeorm';
@@ -36,16 +37,11 @@ export class ScheduleService {
 
   async updateSchedule(
     id: number,
-    dto: Partial<
-      CreateScheduleDto & {
-        warning?: string;
-        feedback?: string;
-        feedbackDate?: string;
-        verifyFb?: boolean;
-      }
-    >,
+    dto: UpdateScheduleDto,
     user?: any,
   ) {
+
+    console.log("This is the update schedule dto: ", dto);
     // First, get the current schedule to check permissions
     const existingSchedule = await this.scheduleRepo.findOne({ where: { id } });
     if (!existingSchedule) {
@@ -63,6 +59,7 @@ export class ScheduleService {
     if (dto.remark !== undefined) updateFields.remark = dto.remark;
     if (dto.attendance !== undefined) updateFields.attendance = dto.attendance;
     if (dto.teacherId !== undefined) updateFields.teacherId = dto.teacherId;
+    if (dto.courseId !== undefined) updateFields.courseId = dto.courseId;
     if (dto.warning !== undefined) updateFields.warning = dto.warning;
 
     // Handle feedback updates with role-based permissions
@@ -110,14 +107,50 @@ export class ScheduleService {
       updateFields.verifyFb = dto.verifyFb;
     }
 
+    // Check if attendance is being changed to 'cancelled'
+    const isBeingCancelled = dto.attendance === 'cancelled' && prevAttendance !== 'cancelled';
+
     const result = await this.scheduleRepo.update(id, updateFields);
     if (result.affected === 0) {
       return null; // Schedule not found
     }
 
+    // If schedule is being cancelled, create a replacement schedule with default values
+    if (isBeingCancelled) {
+      await this.createReplacementSchedule(existingSchedule);
+    }
+
     await this.revalidateWarningsAfterCancellation(existingSchedule);
 
     return this.scheduleRepo.findOne({ where: { id } });
+  }
+
+  private async createReplacementSchedule(cancelledSchedule: any) {
+    try {
+      // Create a new schedule with default values for the same session
+      const replacementSchedule = this.scheduleRepo.create({
+        sessionId: cancelledSchedule.sessionId,
+        courseId: cancelledSchedule.courseId,
+        studentId: cancelledSchedule.studentId,
+        teacherId: null, // Default to null
+        date: null, // Default to null
+        startTime: 'TBD', // Default value
+        endTime: 'TBD', // Default value
+        room: 'TBD', // Default value
+        attendance: 'pending', // Default value
+        remark: 'TBD', // Default value
+        feedback: 'TBD', // Default value
+        verifyFb: false, // Default value
+        classNumber: cancelledSchedule.classNumber, // Keep the same class number
+        warning: "", // Default to empty string
+      });
+
+      await this.scheduleRepo.save(replacementSchedule);
+      console.log(`Created replacement schedule for cancelled schedule ID: ${cancelledSchedule.id}`);
+    } catch (error) {
+      console.error('Error creating replacement schedule:', error);
+      // Don't throw error to prevent blocking the main update operation
+    }
   }
 
   private generateConflictWarning = (conflict: any) => {
