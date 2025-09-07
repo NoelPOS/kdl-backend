@@ -32,4 +32,7 @@ export default () => ({
   // Resend settings
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
+
+  // CORS settings
+  CORS_ORIGINS: process.env.CORS_ORIGINS || 'https://kdl-frontend.vercel.app,http://localhost:3000,http://localhost:3001',
 });
