@@ -7,9 +7,9 @@ import { Session } from '../session/entities/session.entity';
 import { Invoice } from '../invoice/entities/invoice.entity';
 import { Receipt } from '../receipt/entities/receipt.entity';
 import { StudentEntity } from '../student/entities/student.entity';
+import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { UserRole } from '../common/enums/user-role.enum';
 import { DashboardOverviewDto, TotalCountsDto, RevenueMetricsDto, TopCourseDto } from './dto/dashboard-overview.dto';
-import { TeacherEntity } from 'src/teacher/entities/teacher.entity';
 
 @Injectable()
 export class AnalyticsService {
