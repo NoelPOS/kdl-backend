@@ -42,10 +42,6 @@ USER nestjs
 # Expose port (configurable via PORT env var, defaults to 3001)
 EXPOSE ${PORT:-3001}
 
-# Health check using your existing /users/health endpoint
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/users/health || exit 1
-
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 

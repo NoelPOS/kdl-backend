@@ -66,7 +66,7 @@ async function bootstrap() {
   );
 
   // API Prefix
-  // app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api');
 
   // Swagger Documentation
   if (swaggerEnabled) {
@@ -78,6 +78,8 @@ async function bootstrap() {
     origin: '*', // Adjust as needed
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
   });
 
   await app.listen(port);
