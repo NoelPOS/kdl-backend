@@ -36,7 +36,7 @@ export const setupSwagger = (app: INestApplication): void => {
       `http://localhost:${configService.get('PORT')}`,
       'Local Development',
     )
-    .addServer(`https://kdl-backend.onrender.com`, 'Production Server')
+    .addServer(`https://registrar.kiddeelab.co.th`, 'Production Server')
     .addTag('Authentication', 'User authentication and authorization endpoints')
     .addTag('Users', 'User management endpoints')
     .addBearerAuth(
@@ -55,7 +55,7 @@ export const setupSwagger = (app: INestApplication): void => {
   const document = SwaggerModule.createDocument(app, options);
 
   // Setup Swagger UI
-  SwaggerModule.setup('docs', app, document, {
+  SwaggerModule.setup('/api/docs', app, document, {
     explorer: true,
     swaggerOptions: {
       persistAuthorization: true,
