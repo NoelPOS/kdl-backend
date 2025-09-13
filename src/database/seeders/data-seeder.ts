@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@faker-js/faker';
+// import { faker } from '@faker-js/faker';
 import { UserEntity } from '../../user/entities/user.entity';
 import { StudentEntity } from '../../student/entities/student.entity';
 import { StudentService } from '../../student/student.service';
@@ -58,7 +58,7 @@ export class DataSeeder {
     // const students = await this.createStudents();
     // const teachers = await this.createTeachers();
     // const parents = await this.createParents();
-    // const courses = await this.createCourses();
+    const courses = await this.createCourses();
     const rooms = await this.createRooms();
     const classOptions = await this.createClassOptions();
 
@@ -148,94 +148,94 @@ export class DataSeeder {
     return await userRepo.save(users);
   }
 
-  private async createStudents() {
-    console.log('🎓 Creating students...');
-    const students = [];
+  // private async createStudents() {
+  //   console.log('🎓 Creating students...');
+  //   const students = [];
 
-    for (let i = 0; i < 50; i++) {
-      const dto = {
-        name: faker.person.fullName(),
-        nickname: faker.person.firstName(),
-        nationalId: faker.string.numeric(13),
-        dob: faker.date
-          .birthdate({ min: 5, max: 18, mode: 'age' })
-          .toISOString()
-          .split('T')[0],
-        gender: faker.helpers.arrayElement(['Male', 'Female']),
-        school: faker.helpers.arrayElement([
-          'Bangkok International School',
-          'Chulalongkorn University',
-          'Kasetsart University',
-          'Mahidol University',
-          'Thammasat University',
-          'King Mongkut University',
-          'Assumption College',
-          'St. Andrews School',
-        ]),
-        allergic: faker.helpers.arrayElements(
-          ['peanuts', 'dairy', 'eggs', 'shellfish', 'none'],
-          { min: 0, max: 2 },
-        ),
-        doNotEat: faker.helpers.arrayElements(
-          ['pork', 'beef', 'seafood', 'spicy food', 'none'],
-          { min: 0, max: 2 },
-        ),
-        adConcent: faker.datatype.boolean(),
-        phone: faker.phone.number(),
-        profilePicture: faker.image.avatar(),
-        profileKey: faker.string.alphanumeric(32),
-      };
-      // Use StudentService to generate studentId
-      const student = await this.studentService.createStudent(dto);
-      students.push(student);
-    }
-    return students;
-  }
+  //   for (let i = 0; i < 50; i++) {
+  //     const dto = {
+  //       name: faker.person.fullName(),
+  //       nickname: faker.person.firstName(),
+  //       nationalId: faker.string.numeric(13),
+  //       dob: faker.date
+  //         .birthdate({ min: 5, max: 18, mode: 'age' })
+  //         .toISOString()
+  //         .split('T')[0],
+  //       gender: faker.helpers.arrayElement(['Male', 'Female']),
+  //       school: faker.helpers.arrayElement([
+  //         'Bangkok International School',
+  //         'Chulalongkorn University',
+  //         'Kasetsart University',
+  //         'Mahidol University',
+  //         'Thammasat University',
+  //         'King Mongkut University',
+  //         'Assumption College',
+  //         'St. Andrews School',
+  //       ]),
+  //       allergic: faker.helpers.arrayElements(
+  //         ['peanuts', 'dairy', 'eggs', 'shellfish', 'none'],
+  //         { min: 0, max: 2 },
+  //       ),
+  //       doNotEat: faker.helpers.arrayElements(
+  //         ['pork', 'beef', 'seafood', 'spicy food', 'none'],
+  //         { min: 0, max: 2 },
+  //       ),
+  //       adConcent: faker.datatype.boolean(),
+  //       phone: faker.phone.number(),
+  //       profilePicture: faker.image.avatar(),
+  //       profileKey: faker.string.alphanumeric(32),
+  //     };
+  //     // Use StudentService to generate studentId
+  //     const student = await this.studentService.createStudent(dto);
+  //     students.push(student);
+  //   }
+  //   return students;
+  // }
 
-  private async createTeachers() {
-    console.log('👩‍🏫 Creating teachers...');
-    const teacherRepo = this.dataSource.getRepository(TeacherEntity);
-    const teachers = [];
+  // private async createTeachers() {
+  //   console.log('👩‍🏫 Creating teachers...');
+  //   const teacherRepo = this.dataSource.getRepository(TeacherEntity);
+  //   const teachers = [];
 
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash('password123', salt);
+  //   const salt = await bcrypt.genSalt();
+  //   const hashedPassword = await bcrypt.hash('password123', salt);
 
-    for (let i = 0; i < 15; i++) {
-      const teacher = new TeacherEntity();
-      teacher.name = faker.person.fullName();
-      teacher.email = faker.internet.email();
-      teacher.password = hashedPassword;
-      teacher.role = UserRole.TEACHER;
-      teacher.contactNo = faker.phone.number();
-      teacher.lineId = faker.internet.userName();
-      teacher.address = faker.location.streetAddress();
-      teacher.profilePicture = faker.image.avatar();
-      teacher.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
-      teachers.push(teacher);
-    }
+  //   for (let i = 0; i < 15; i++) {
+  //     const teacher = new TeacherEntity();
+  //     teacher.name = faker.person.fullName();
+  //     teacher.email = faker.internet.email();
+  //     teacher.password = hashedPassword;
+  //     teacher.role = UserRole.TEACHER;
+  //     teacher.contactNo = faker.phone.number();
+  //     teacher.lineId = faker.internet.userName();
+  //     teacher.address = faker.location.streetAddress();
+  //     teacher.profilePicture = faker.image.avatar();
+  //     teacher.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
+  //     teachers.push(teacher);
+  //   }
 
-    return await teacherRepo.save(teachers);
-  }
+  //   return await teacherRepo.save(teachers);
+  // }
 
-  private async createParents() {
-    console.log('👨‍👩‍👧‍👦 Creating parents...');
-    const parentRepo = this.dataSource.getRepository(ParentEntity);
-    const parents = [];
+  // private async createParents() {
+  //   console.log('👨‍👩‍👧‍👦 Creating parents...');
+  //   const parentRepo = this.dataSource.getRepository(ParentEntity);
+  //   const parents = [];
 
-    for (let i = 0; i < 30; i++) {
-      const parent = new ParentEntity();
-      parent.name = faker.person.fullName();
-      parent.email = faker.internet.email();
-      parent.contactNo = faker.phone.number();
-      parent.lineId = faker.internet.userName();
-      parent.address = faker.location.streetAddress();
-      parent.profilePicture = faker.image.avatar();
-      parent.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
-      parents.push(parent);
-    }
+  //   for (let i = 0; i < 30; i++) {
+  //     const parent = new ParentEntity();
+  //     parent.name = faker.person.fullName();
+  //     parent.email = faker.internet.email();
+  //     parent.contactNo = faker.phone.number();
+  //     parent.lineId = faker.internet.userName();
+  //     parent.address = faker.location.streetAddress();
+  //     parent.profilePicture = faker.image.avatar();
+  //     parent.profileKey = faker.string.alphanumeric(32); // AWS S3 key format
+  //     parents.push(parent);
+  //   }
 
-    return await parentRepo.save(parents);
-  }
+  //   return await parentRepo.save(parents);
+  // }
 
   private async createCourses() {
     console.log('📚 Creating courses...');
@@ -365,390 +365,390 @@ export class DataSeeder {
       option.classMode = data.classMode;
       option.classLimit = data.classLimit;
       option.tuitionFee = data.tuitionFee;
-      option.effectiveStartDate = faker.date.past({ years: 1 });
-      option.effectiveEndDate = faker.date.future({ years: 10 });
+      option.effectiveStartDate = new Date();
+      option.effectiveEndDate = new Date(new Date().setFullYear(new Date().getFullYear() + 10));
       classOptions.push(option);
     }
 
     return await classOptionRepo.save(classOptions);
   }
 
-  private async createSessions(
-    students: StudentEntity[],
-    courses: CourseEntity[],
-    classOptions: ClassOption[],
-    teachers: TeacherEntity[],
-  ) {
-    console.log('📝 Creating sessions...');
-    const sessionRepo = this.dataSource.getRepository(Session);
-    const sessions = [];
+  // private async createSessions(
+  //   students: StudentEntity[],
+  //   courses: CourseEntity[],
+  //   classOptions: ClassOption[],
+  //   teachers: TeacherEntity[],
+  // ) {
+  //   console.log('📝 Creating sessions...');
+  //   const sessionRepo = this.dataSource.getRepository(Session);
+  //   const sessions = [];
 
-    // Create a mapping of courseId to available teachers for efficiency
-    const courseTeacherMap = new Map<number, { id: number }[]>();
-    for (const course of courses) {
-      const availableTeachers = await this.getTeachersForCourse(course.id);
-      courseTeacherMap.set(course.id, availableTeachers);
-    }
+  //   // Create a mapping of courseId to available teachers for efficiency
+  //   const courseTeacherMap = new Map<number, { id: number }[]>();
+  //   for (const course of courses) {
+  //     const availableTeachers = await this.getTeachersForCourse(course.id);
+  //     courseTeacherMap.set(course.id, availableTeachers);
+  //   }
 
-    for (let i = 0; i < 20; i++) {
-      const session = new Session();
-      session.studentId = faker.helpers.arrayElement(students).id;
-      const selectedCourse = faker.helpers.arrayElement(courses);
-      session.courseId = selectedCourse.id;
-      session.classOptionId = faker.helpers.arrayElement(classOptions).id;
+  //   for (let i = 0; i < 20; i++) {
+  //     const session = new Session();
+  //     session.studentId = faker.helpers.arrayElement(students).id;
+  //     const selectedCourse = faker.helpers.arrayElement(courses);
+  //     session.courseId = selectedCourse.id;
+  //     session.classOptionId = faker.helpers.arrayElement(classOptions).id;
 
-      // Get teachers who can teach this specific course
-      const availableTeachers = courseTeacherMap.get(selectedCourse.id) || [];
+  //     // Get teachers who can teach this specific course
+  //     const availableTeachers = courseTeacherMap.get(selectedCourse.id) || [];
 
-      if (availableTeachers.length === 0) {
-        console.warn(
-          `No teachers available for course ${selectedCourse.title}. Skipping session creation.`,
-        );
-        continue;
-      }
+  //     if (availableTeachers.length === 0) {
+  //       console.warn(
+  //         `No teachers available for course ${selectedCourse.title}. Skipping session creation.`,
+  //       );
+  //       continue;
+  //     }
 
-      session.teacherId = faker.helpers.arrayElement(availableTeachers).id;
-      session.classCancel = faker.number.int({ min: 0, max: 3 });
-      session.payment = faker.helpers.arrayElement(['Paid', 'Unpaid']);
-      session.status = faker.helpers.arrayElement(['wip', 'completed']);
-      session.invoiceDone = faker.datatype.boolean();
-      sessions.push(session);
-    }
+  //     session.teacherId = faker.helpers.arrayElement(availableTeachers).id;
+  //     session.classCancel = faker.number.int({ min: 0, max: 3 });
+  //     session.payment = faker.helpers.arrayElement(['Paid', 'Unpaid']);
+  //     session.status = faker.helpers.arrayElement(['wip', 'completed']);
+  //     session.invoiceDone = faker.datatype.boolean();
+  //     sessions.push(session);
+  //   }
 
-    return await sessionRepo.save(sessions);
-  }
+  //   return await sessionRepo.save(sessions);
+  // }
 
-  private async createSchedules(
-    sessions: Session[],
-    courses: CourseEntity[],
-    students: StudentEntity[],
-    teachers: TeacherEntity[],
-    classOptions: ClassOption[],
-  ) {
-    console.log('📅 Creating schedules...');
-    const scheduleRepo = this.dataSource.getRepository(Schedule);
-    const schedules = [];
+  // private async createSchedules(
+  //   sessions: Session[],
+  //   courses: CourseEntity[],
+  //   students: StudentEntity[],
+  //   teachers: TeacherEntity[],
+  //   classOptions: ClassOption[],
+  // ) {
+  //   console.log('📅 Creating schedules...');
+  //   const scheduleRepo = this.dataSource.getRepository(Schedule);
+  //   const schedules = [];
 
-    for (const session of sessions) {
-      // Find the corresponding class option
-      const classOption = classOptions.find(
-        (option) => option.id === session.classOptionId,
-      );
-      if (!classOption) {
-        console.warn(`Class option not found for session ${session.id}`);
-        continue;
-      }
+  //   for (const session of sessions) {
+  //     // Find the corresponding class option
+  //     const classOption = classOptions.find(
+  //       (option) => option.id === session.classOptionId,
+  //     );
+  //     if (!classOption) {
+  //       console.warn(`Class option not found for session ${session.id}`);
+  //       continue;
+  //     }
 
-      for (let i = 0; i < classOption.classLimit; i++) {
-        const schedule = new Schedule();
-        schedule.sessionId = session.id;
-        schedule.courseId = session.courseId;
-        schedule.studentId = session.studentId;
-        schedule.teacherId = session.teacherId;
-        schedule.date = faker.date.between({
-          from: new Date(),
-          to: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-        });
+  //     for (let i = 0; i < classOption.classLimit; i++) {
+  //       const schedule = new Schedule();
+  //       schedule.sessionId = session.id;
+  //       schedule.courseId = session.courseId;
+  //       schedule.studentId = session.studentId;
+  //       schedule.teacherId = session.teacherId;
+  //       schedule.date = faker.date.between({
+  //         from: new Date(),
+  //         to: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  //       });
 
-        schedule.startTime = faker.helpers.arrayElement([
-          '09:00',
-          '10:00',
-          '11:00',
-          '13:00',
-          '14:00',
-          '15:00',
-          '16:00',
-        ]);
-        schedule.endTime = faker.helpers.arrayElement([
-          '10:00',
-          '11:00',
-          '12:00',
-          '14:00',
-          '15:00',
-          '16:00',
-          '17:00',
-        ]);
-        schedule.room = faker.helpers.arrayElement([
-          'Front',
-          'Middle',
-          'Tinkamo',
-          '3D',
-          'Small',
-          'Zoom Acc1',
-          'Zoom Acc2',
-        ]);
-        schedule.attendance = faker.helpers.arrayElement([
-          'pending',
-          'confirmed',
-          'completed',
-          'cancelled',
-          'absent',
-        ]);
-        schedule.remark = faker.lorem.sentence();
-        schedule.warning = faker.datatype.boolean()
-          ? faker.lorem.sentence()
-          : '';
-        schedule.feedback = faker.lorem.paragraph();
-        schedule.feedbackDate = faker.date.recent({ days: 30 }); // Feedback date within last 30 days
-        schedule.verifyFb = faker.datatype.boolean();
-        schedule.classNumber = i + 1; // Class number starts from 1
-        schedule.coursePlusId = faker.datatype.boolean({ probability: 0.1 })
-          ? faker.number.int({ min: 1, max: 5 })
-          : null; // 10% chance of having coursePlusId
-        schedules.push(schedule);
-      }
-    }
-    return await scheduleRepo.save(schedules);
-  }
+  //       schedule.startTime = faker.helpers.arrayElement([
+  //         '09:00',
+  //         '10:00',
+  //         '11:00',
+  //         '13:00',
+  //         '14:00',
+  //         '15:00',
+  //         '16:00',
+  //       ]);
+  //       schedule.endTime = faker.helpers.arrayElement([
+  //         '10:00',
+  //         '11:00',
+  //         '12:00',
+  //         '14:00',
+  //         '15:00',
+  //         '16:00',
+  //         '17:00',
+  //       ]);
+  //       schedule.room = faker.helpers.arrayElement([
+  //         'Front',
+  //         'Middle',
+  //         'Tinkamo',
+  //         '3D',
+  //         'Small',
+  //         'Zoom Acc1',
+  //         'Zoom Acc2',
+  //       ]);
+  //       schedule.attendance = faker.helpers.arrayElement([
+  //         'pending',
+  //         'confirmed',
+  //         'completed',
+  //         'cancelled',
+  //         'absent',
+  //       ]);
+  //       schedule.remark = faker.lorem.sentence();
+  //       schedule.warning = faker.datatype.boolean()
+  //         ? faker.lorem.sentence()
+  //         : '';
+  //       schedule.feedback = faker.lorem.paragraph();
+  //       schedule.feedbackDate = faker.date.recent({ days: 30 }); // Feedback date within last 30 days
+  //       schedule.verifyFb = faker.datatype.boolean();
+  //       schedule.classNumber = i + 1; // Class number starts from 1
+  //       schedule.coursePlusId = faker.datatype.boolean({ probability: 0.1 })
+  //         ? faker.number.int({ min: 1, max: 5 })
+  //         : null; // 10% chance of having coursePlusId
+  //       schedules.push(schedule);
+  //     }
+  //   }
+  //   return await scheduleRepo.save(schedules);
+  // }
 
-  private async createInvoices(
-    sessions: Session[],
-    classOptions: ClassOption[],
-  ) {
-    console.log('🧾 Creating invoices...');
-    const invoiceRepo = this.dataSource.getRepository(Invoice);
-    const studentRepo = this.dataSource.getRepository(StudentEntity);
-    const courseRepo = this.dataSource.getRepository(CourseEntity);
-    const invoices = [];
+  // private async createInvoices(
+  //   sessions: Session[],
+  //   classOptions: ClassOption[],
+  // ) {
+  //   console.log('🧾 Creating invoices...');
+  //   const invoiceRepo = this.dataSource.getRepository(Invoice);
+  //   const studentRepo = this.dataSource.getRepository(StudentEntity);
+  //   const courseRepo = this.dataSource.getRepository(CourseEntity);
+  //   const invoices = [];
 
-    // Create a shuffled copy of sessions to avoid duplicates
-    const sessionIds = sessions.map((s) => s.id);
-    const shuffledSessionIds = faker.helpers.shuffle(sessionIds);
+  //   // Create a shuffled copy of sessions to avoid duplicates
+  //   const sessionIds = sessions.map((s) => s.id);
+  //   const shuffledSessionIds = faker.helpers.shuffle(sessionIds);
 
-    // Create invoices for first 10 sessions (or all sessions if less than 10)
-    const invoiceCount = Math.min(10, shuffledSessionIds.length);
+  //   // Create invoices for first 10 sessions (or all sessions if less than 10)
+  //   const invoiceCount = Math.min(10, shuffledSessionIds.length);
 
-    for (let i = 0; i < invoiceCount; i++) {
-      const session = sessions.find((s) => s.id === shuffledSessionIds[i]);
-      if (!session) continue; // Skip if session not found
+  //   for (let i = 0; i < invoiceCount; i++) {
+  //     const session = sessions.find((s) => s.id === shuffledSessionIds[i]);
+  //     if (!session) continue; // Skip if session not found
 
-      // Find the corresponding class option
-      const classOption = classOptions.find(
-        (option) => option.id === session.classOptionId,
-      );
-      if (!classOption) {
-        console.warn(`Class option not found for session ${session.id}`);
-        continue;
-      }
+  //     // Find the corresponding class option
+  //     const classOption = classOptions.find(
+  //       (option) => option.id === session.classOptionId,
+  //     );
+  //     if (!classOption) {
+  //       console.warn(`Class option not found for session ${session.id}`);
+  //       continue;
+  //     }
 
-      // Get student and course details
-      const student = await studentRepo.findOne({
-        where: { id: session.studentId },
-      });
-      const course = await courseRepo.findOne({
-        where: { id: session.courseId },
-      });
+  //     // Get student and course details
+  //     const student = await studentRepo.findOne({
+  //       where: { id: session.studentId },
+  //     });
+  //     const course = await courseRepo.findOne({
+  //       where: { id: session.courseId },
+  //     });
 
-      const invoice = new Invoice();
-      invoice.documentId = `INV-${faker.string.alphanumeric(6).toUpperCase()}`;
-      invoice.date = faker.date.recent();
-      invoice.paymentMethod = faker.helpers.arrayElement([
-        'Cash',
-        'QR Code',
-        'Credit Card',
-        'Bank Transfer',
-      ]);
-      invoice.totalAmount = classOption.tuitionFee;
-      invoice.receiptDone = faker.datatype.boolean();
-      invoice.studentId = session.studentId;
-      invoice.studentName = student ? student.name : 'Unknown Student';
-      invoice.courseName = course ? course.title : 'Unknown Course';
+  //     const invoice = new Invoice();
+  //     invoice.documentId = `INV-${faker.string.alphanumeric(6).toUpperCase()}`;
+  //     invoice.date = faker.date.recent();
+  //     invoice.paymentMethod = faker.helpers.arrayElement([
+  //       'Cash',
+  //       'QR Code',
+  //       'Credit Card',
+  //       'Bank Transfer',
+  //     ]);
+  //     invoice.totalAmount = classOption.tuitionFee;
+  //     invoice.receiptDone = faker.datatype.boolean();
+  //     invoice.studentId = session.studentId;
+  //     invoice.studentName = student ? student.name : 'Unknown Student';
+  //     invoice.courseName = course ? course.title : 'Unknown Course';
 
-      // Create session groups for the invoice
-      invoice.sessionGroups = [
-        {
-          sessionId: session.id.toString(),
-          transactionType: 'course' as const,
-          actualId: session.id.toString(),
-        },
-      ];
+  //     // Create session groups for the invoice
+  //     invoice.sessionGroups = [
+  //       {
+  //         sessionId: session.id.toString(),
+  //         transactionType: 'course' as const,
+  //         actualId: session.id.toString(),
+  //       },
+  //     ];
 
-      invoices.push(invoice);
-    }
+  //     invoices.push(invoice);
+  //   }
 
-    return await invoiceRepo.save(invoices);
-  }
+  //   return await invoiceRepo.save(invoices);
+  // }
 
-  private async createDiscounts() {
-    console.log('💸 Creating discounts...');
-    const discountRepo = this.dataSource.getRepository(DiscountEntity);
-    const discounts = [];
+  // private async createDiscounts() {
+  //   console.log('💸 Creating discounts...');
+  //   const discountRepo = this.dataSource.getRepository(DiscountEntity);
+  //   const discounts = [];
 
-    const discountData = [
-      {
-        title: 'Admission Fee',
-        usage: 'One-time fee for new students',
-        amount: -2000,
-        effective_start_date: faker.date.past({ years: 1 }),
-        effective_end_date: null, // No end date
-      },
-      {
-        title: 'Promotional Discount',
-        usage: 'Seasonal promotion for all courses',
-        amount: -700,
-        effective_start_date: faker.date.past({ years: 1 }),
-        effective_end_date: faker.date.future({ years: 1 }), // Valid for 1 year
-      },
-    ];
+  //   const discountData = [
+  //     {
+  //       title: 'Admission Fee',
+  //       usage: 'One-time fee for new students',
+  //       amount: -2000,
+  //       effective_start_date: faker.date.past({ years: 1 }),
+  //       effective_end_date: null, // No end date
+  //     },
+  //     {
+  //       title: 'Promotional Discount',
+  //       usage: 'Seasonal promotion for all courses',
+  //       amount: -700,
+  //       effective_start_date: faker.date.past({ years: 1 }),
+  //       effective_end_date: faker.date.future({ years: 1 }), // Valid for 1 year
+  //     },
+  //   ];
 
-    for (const data of discountData) {
-      const discount = new DiscountEntity();
-      discount.title = data.title;
-      discount.usage = data.usage;
-      discount.amount = data.amount;
-      discount.effective_start_date = data.effective_start_date;
-      discount.effective_end_date = data.effective_end_date;
-      discounts.push(discount);
-    }
+  //   for (const data of discountData) {
+  //     const discount = new DiscountEntity();
+  //     discount.title = data.title;
+  //     discount.usage = data.usage;
+  //     discount.amount = data.amount;
+  //     discount.effective_start_date = data.effective_start_date;
+  //     discount.effective_end_date = data.effective_end_date;
+  //     discounts.push(discount);
+  //   }
 
-    return await discountRepo.save(discounts);
-  }
+  //   return await discountRepo.save(discounts);
+  // }
 
-  private async createInvoiceItems(
-    invoices: Invoice[],
-    discounts: DiscountEntity[],
-  ) {
-    console.log('📄 Creating invoice items...');
-    const invoiceItemRepo = this.dataSource.getRepository(InvoiceItem);
-    const invoiceItems = [];
+  // private async createInvoiceItems(
+  //   invoices: Invoice[],
+  //   discounts: DiscountEntity[],
+  // ) {
+  //   console.log('📄 Creating invoice items...');
+  //   const invoiceItemRepo = this.dataSource.getRepository(InvoiceItem);
+  //   const invoiceItems = [];
 
-    // Create invoice items for some of the existing invoices
-    const invoicesWithItems = faker.helpers.arrayElements(invoices, {
-      min: Math.min(5, invoices.length),
-      max: Math.min(invoices.length, 10),
-    });
+  //   // Create invoice items for some of the existing invoices
+  //   const invoicesWithItems = faker.helpers.arrayElements(invoices, {
+  //     min: Math.min(5, invoices.length),
+  //     max: Math.min(invoices.length, 10),
+  //   });
 
-    for (const invoice of invoicesWithItems) {
-      // Create 1-3 items per invoice
-      const numItems = faker.number.int({ min: 1, max: 3 });
+  //   for (const invoice of invoicesWithItems) {
+  //     // Create 1-3 items per invoice
+  //     const numItems = faker.number.int({ min: 1, max: 3 });
 
-      for (let i = 0; i < numItems; i++) {
-        const invoiceItem = new InvoiceItem();
-        invoiceItem.invoiceId = invoice.id;
-        invoiceItem.description = faker.helpers.arrayElement([
-          'Tuition Fee',
-          'Registration Fee',
-          'Material Fee',
-          'Lab Fee',
-          'Activity Fee',
-        ]);
-        invoiceItem.amount = faker.number.int({
-          min: 500,
-          max: 3000,
-        });
-        invoiceItems.push(invoiceItem);
-      }
-    }
+  //     for (let i = 0; i < numItems; i++) {
+  //       const invoiceItem = new InvoiceItem();
+  //       invoiceItem.invoiceId = invoice.id;
+  //       invoiceItem.description = faker.helpers.arrayElement([
+  //         'Tuition Fee',
+  //         'Registration Fee',
+  //         'Material Fee',
+  //         'Lab Fee',
+  //         'Activity Fee',
+  //       ]);
+  //       invoiceItem.amount = faker.number.int({
+  //         min: 500,
+  //         max: 3000,
+  //       });
+  //       invoiceItems.push(invoiceItem);
+  //     }
+  //   }
 
-    return await invoiceItemRepo.save(invoiceItems);
-  }
+  //   return await invoiceItemRepo.save(invoiceItems);
+  // }
 
-  private async createReceipts(invoices: Invoice[]) {
-    console.log('🧾 Creating receipts...');
-    const receiptRepo = this.dataSource.getRepository(Receipt);
-    const receipts = [];
+  // private async createReceipts(invoices: Invoice[]) {
+  //   console.log('🧾 Creating receipts...');
+  //   const receiptRepo = this.dataSource.getRepository(Receipt);
+  //   const receipts = [];
 
-    // Create receipts for some invoices (not more than available)
-    const invoicesWithReceipts = faker.helpers.arrayElements(invoices, {
-      min: Math.min(3, invoices.length),
-      max: Math.min(invoices.length, 8),
-    });
+  //   // Create receipts for some invoices (not more than available)
+  //   const invoicesWithReceipts = faker.helpers.arrayElements(invoices, {
+  //     min: Math.min(3, invoices.length),
+  //     max: Math.min(invoices.length, 8),
+  //   });
 
-    for (const invoice of invoicesWithReceipts) {
-      const receipt = new Receipt();
-      receipt.invoiceId = invoice.id;
-      receipt.date = faker.date.between({ from: invoice.date, to: new Date() });
-      receipts.push(receipt);
-    }
+  //   for (const invoice of invoicesWithReceipts) {
+  //     const receipt = new Receipt();
+  //     receipt.invoiceId = invoice.id;
+  //     receipt.date = faker.date.between({ from: invoice.date, to: new Date() });
+  //     receipts.push(receipt);
+  //   }
 
-    return await receiptRepo.save(receipts);
-  }
+  //   return await receiptRepo.save(receipts);
+  // }
 
-  private async createTeacherCourseRelations(
-    teachers: TeacherEntity[],
-    courses: CourseEntity[],
-  ) {
-    console.log('🔗 Creating teacher-course relationships...');
+  // private async createTeacherCourseRelations(
+  //   teachers: TeacherEntity[],
+  //   courses: CourseEntity[],
+  // ) {
+  //   console.log('🔗 Creating teacher-course relationships...');
 
-    // Create random relationships between teachers and courses
-    for (const teacher of teachers) {
-      // Each teacher can teach 1-3 random courses
-      const numCourses = faker.number.int({ min: 1, max: 3 });
-      const teacherCourses = faker.helpers.arrayElements(courses, numCourses);
+  //   // Create random relationships between teachers and courses
+  //   for (const teacher of teachers) {
+  //     // Each teacher can teach 1-3 random courses
+  //     const numCourses = faker.number.int({ min: 1, max: 3 });
+  //     const teacherCourses = faker.helpers.arrayElements(courses, numCourses);
 
-      for (const course of teacherCourses) {
-        // Insert directly into the junction table
-        await this.dataSource.query(
-          'INSERT INTO teacher_course ("teacherId", "courseId") VALUES ($1, $2) ON CONFLICT DO NOTHING',
-          [teacher.id, course.id],
-        );
-      }
-    }
+  //     for (const course of teacherCourses) {
+  //       // Insert directly into the junction table
+  //       await this.dataSource.query(
+  //         'INSERT INTO teacher_course ("teacherId", "courseId") VALUES ($1, $2) ON CONFLICT DO NOTHING',
+  //         [teacher.id, course.id],
+  //       );
+  //     }
+  //   }
 
-    console.log('✅ Teacher-course relationships created');
-  }
+  //   console.log('✅ Teacher-course relationships created');
+  // }
 
-  private async createParentStudentRelations(
-    parents: ParentEntity[],
-    students: StudentEntity[],
-  ) {
-    console.log('🔗 Creating parent-student relationships...');
+  // private async createParentStudentRelations(
+  //   parents: ParentEntity[],
+  //   students: StudentEntity[],
+  // ) {
+  //   console.log('🔗 Creating parent-student relationships...');
 
-    // Create random relationships between parents and students
-    for (const parent of parents) {
-      // Each parent can have 1-3 children
-      const numChildren = faker.number.int({ min: 1, max: 3 });
-      const parentChildren = faker.helpers.arrayElements(students, numChildren);
+  //   // Create random relationships between parents and students
+  //   for (const parent of parents) {
+  //     // Each parent can have 1-3 children
+  //     const numChildren = faker.number.int({ min: 1, max: 3 });
+  //     const parentChildren = faker.helpers.arrayElements(students, numChildren);
 
-      for (const child of parentChildren) {
-        // Insert directly into the junction table
-        await this.dataSource.query(
-          'INSERT INTO parent_student ("parentId", "studentId") VALUES ($1, $2) ON CONFLICT DO NOTHING',
-          [parent.id, child.id],
-        );
-      }
-    }
+  //     for (const child of parentChildren) {
+  //       // Insert directly into the junction table
+  //       await this.dataSource.query(
+  //         'INSERT INTO parent_student ("parentId", "studentId") VALUES ($1, $2) ON CONFLICT DO NOTHING',
+  //         [parent.id, child.id],
+  //       );
+  //     }
+  //   }
 
-    console.log('✅ Parent-student relationships created');
-  }
+  //   console.log('✅ Parent-student relationships created');
+  // }
 
-  private async getTeachersForCourse(
-    courseId: number,
-  ): Promise<{ id: number }[]> {
-    const result = await this.dataSource.query(
-      `
-      SELECT t.* FROM teachers t
-      INNER JOIN teacher_course tc ON t.id = tc."teacherId"
-      WHERE tc."courseId" = $1
-    `,
-      [courseId],
-    );
+  // private async getTeachersForCourse(
+  //   courseId: number,
+  // ): Promise<{ id: number }[]> {
+  //   const result = await this.dataSource.query(
+  //     `
+  //     SELECT t.* FROM teachers t
+  //     INNER JOIN teacher_course tc ON t.id = tc."teacherId"
+  //     WHERE tc."courseId" = $1
+  //   `,
+  //     [courseId],
+  //   );
 
-    return result;
-  }
+  //   return result;
+  // }
 
-  private async createCoursePlus(sessions: Session[]) {
-    console.log('📚+ Creating course plus...');
-    const coursePlusRepo = this.dataSource.getRepository(CoursePlus);
-    const coursePlus = [];
+  // private async createCoursePlus(sessions: Session[]) {
+  //   console.log('📚+ Creating course plus...');
+  //   const coursePlusRepo = this.dataSource.getRepository(CoursePlus);
+  //   const coursePlus = [];
 
-    // Create course plus for some sessions
-    const sessionsWithPlus = faker.helpers.arrayElements(sessions, {
-      min: 5,
-      max: 15,
-    });
+  //   // Create course plus for some sessions
+  //   const sessionsWithPlus = faker.helpers.arrayElements(sessions, {
+  //     min: 5,
+  //     max: 15,
+  //   });
 
-    for (const session of sessionsWithPlus) {
-      const plus = new CoursePlus();
-      plus.sessionId = session.id;
-      plus.classNo = faker.number.int({ min: 1, max: 5 });
-      plus.amount = faker.number.int({ min: 200, max: 1000 });
-      plus.description = faker.lorem.sentence();
-      plus.status = faker.helpers.arrayElement(['paid', 'unpaid']);
-      plus.invoiceGenerated = faker.datatype.boolean({ probability: 0.3 }); // 30% chance
-      coursePlus.push(plus);
-    }
+  //   for (const session of sessionsWithPlus) {
+  //     const plus = new CoursePlus();
+  //     plus.sessionId = session.id;
+  //     plus.classNo = faker.number.int({ min: 1, max: 5 });
+  //     plus.amount = faker.number.int({ min: 200, max: 1000 });
+  //     plus.description = faker.lorem.sentence();
+  //     plus.status = faker.helpers.arrayElement(['paid', 'unpaid']);
+  //     plus.invoiceGenerated = faker.datatype.boolean({ probability: 0.3 }); // 30% chance
+  //     coursePlus.push(plus);
+  //   }
 
-    return await coursePlusRepo.save(coursePlus);
-  }
+  //   return await coursePlusRepo.save(coursePlus);
+  // }
 }
