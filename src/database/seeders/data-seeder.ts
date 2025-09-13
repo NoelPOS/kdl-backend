@@ -55,52 +55,38 @@ export class DataSeeder {
 
     // Create test data
     // const users = await this.createUsers();
-    const students = await this.createStudents();
-    const teachers = await this.createTeachers();
-    const parents = await this.createParents();
-    const courses = await this.createCourses();
+    // const students = await this.createStudents();
+    // const teachers = await this.createTeachers();
+    // const parents = await this.createParents();
+    // const courses = await this.createCourses();
     const rooms = await this.createRooms();
     const classOptions = await this.createClassOptions();
 
     // Create teacher-course relationships
-    await this.createTeacherCourseRelations(teachers, courses);
+    // await this.createTeacherCourseRelations(teachers, courses);
     // Create parent-student relationships
-    await this.createParentStudentRelations(parents, students);
+    // await this.createParentStudentRelations(parents, students);
 
-    const sessions = await this.createSessions(
-      students,
-      courses,
-      classOptions,
-      teachers,
-    );
-    const schedules = await this.createSchedules(
-      sessions,
-      courses,
-      students,
-      teachers,
-      classOptions,
-    );
-    const discounts = await this.createDiscounts();
-    const invoices = await this.createInvoices(sessions, classOptions);
-    const invoiceItems = await this.createInvoiceItems(invoices, discounts);
-    const receipts = await this.createReceipts(invoices);
-    const coursePlus = await this.createCoursePlus(sessions);
+    // const sessions = await this.createSessions(
+    //   students,
+    //   courses,
+    //   classOptions,
+    //   teachers,
+    // );
+    // const schedules = await this.createSchedules(
+    //   sessions,
+    //   courses,
+    //   students,
+    //   teachers,
+    //   classOptions,
+    // );
+    // const discounts = await this.createDiscounts();
+    // const invoices = await this.createInvoices(sessions, classOptions);
+    // const invoiceItems = await this.createInvoiceItems(invoices, discounts);
+    // const receipts = await this.createReceipts(invoices);
+    // const coursePlus = await this.createCoursePlus(sessions);
 
     console.log('✅ Data seeding completed!');
-    console.log(`Created:
-    - ${students.length} students
-    - ${teachers.length} teachers
-    - ${parents.length} parents
-    - ${courses.length} courses
-    - ${rooms.length} rooms
-    - ${classOptions.length} class options
-    - ${sessions.length} sessions
-    - ${schedules.length} schedules
-    - ${invoices.length} invoices
-    - ${invoiceItems.length} invoice items
-    - ${receipts.length} receipts
-    - ${coursePlus.length} course plus records
-    `);
   }
 
   private async clearData() {
@@ -258,52 +244,34 @@ export class DataSeeder {
 
     const courseData = [
       {
-        title: 'Mathematics Basic',
-        description: 'Basic mathematics for elementary students',
-        ageRange: '5-6 yrs',
-        medium: 'Tablet',
+        title: 'Free Trial',
+        description: 'Free trial session for new students',
+        ageRange: '',
+        medium: '',
       },
       {
-        title: 'English Conversation',
-        description: 'Conversational English for all levels',
-        ageRange: '7-8 yrs',
-        medium: 'Computer',
+        title: 'TBC',
+        description: 'To be confirmed course sessions',
+        ageRange: '',
+        medium: '',
       },
       {
-        title: 'Science Exploration',
-        description: 'Basic science concepts and experiments',
-        ageRange: '7-8 yrs',
-        medium: 'Tablet',
+        title: '2 courses package',
+        description: 'Package deal for 2 courses',
+        ageRange: '',
+        medium: '',
       },
       {
-        title: 'Art & Creativity',
-        description: 'Creative arts and crafts for children',
-        ageRange: '5-6 yrs',
-        medium: 'Tablet',
+        title: '4 courses package',
+        description: 'Package deal for 4 courses',
+        ageRange: '',
+        medium: '',
       },
       {
-        title: 'Computer Programming',
-        description: 'Introduction to programming concepts',
-        ageRange: '9-12 yrs',
-        medium: 'Computer',
-      },
-      {
-        title: 'Music Theory',
-        description: 'Basic music theory and practice',
-        ageRange: '9-12 yrs',
-        medium: 'Tablet',
-      },
-      {
-        title: 'Chinese Language',
-        description: 'Mandarin Chinese for beginners',
-        ageRange: '13-18 yrs',
-        medium: 'Tablet',
-      },
-      {
-        title: 'Physics Advanced',
-        description: 'Advanced physics concepts',
-        ageRange: '13-18 yrs',
-        medium: 'Computer',
+        title: '10 courses package',
+        description: 'Package deal for 10 courses',
+        ageRange: '',
+        medium: '',
       },
     ];
 
@@ -324,7 +292,16 @@ export class DataSeeder {
     const roomRepo = this.dataSource.getRepository(RoomEntity);
     const rooms = [];
 
-    const roomNames = ['Room 1', 'Room 2', 'Room 3', 'Room 4', 'Room 5'];
+    const roomNames = [
+      'Front',
+      'Middle', 
+      'Tinkamo',
+      '3D', 
+      'Small',
+      'Zoom Acc1',
+      'Zoom Acc2',
+      '-'
+    ];
 
     for (const name of roomNames) {
       const room = new RoomEntity();
@@ -341,10 +318,46 @@ export class DataSeeder {
     const classOptions = [];
 
     const optionData = [
-      { classMode: '12 times fixed', classLimit: 12, tuitionFee: 14700 },
-      { classMode: '12 times check', classLimit: 12, tuitionFee: 14700 },
-      { classMode: '5 days camp', classLimit: 5, tuitionFee: 1500 },
-      { classMode: '2 days camp', classLimit: 2, tuitionFee: 6000 },
+      { 
+        classMode: '12 times fixed', 
+        classLimit: 12, 
+        tuitionFee: 14700, 
+      },
+      { 
+        classMode: '12 times check', 
+        classLimit: 12, 
+        tuitionFee: 14700, 
+      },
+      { 
+        classMode: '5 days camp', 
+        classLimit: 5, 
+        tuitionFee: 15000, 
+      },
+      { 
+        classMode: '2 days camp', 
+        classLimit: 2, 
+        tuitionFee: 6000, 
+      },
+      { 
+        classMode: '10 courses package', 
+        classLimit: 0, 
+        tuitionFee: 100000, 
+      },
+      { 
+        classMode: '4 courses package', 
+        classLimit: 0, 
+        tuitionFee: 50000, 
+      },
+      { 
+        classMode: '2 courses package', 
+        classLimit: 0, 
+        tuitionFee: 27000, 
+      },
+      { 
+        classMode: '1 times check', 
+        classLimit: 1, 
+        tuitionFee: 0, 
+      }
     ];
 
     for (const data of optionData) {
@@ -352,8 +365,8 @@ export class DataSeeder {
       option.classMode = data.classMode;
       option.classLimit = data.classLimit;
       option.tuitionFee = data.tuitionFee;
-      option.effectiveStartDate = faker.date.past();
-      option.effectiveEndDate = faker.date.future();
+      option.effectiveStartDate = faker.date.past({ years: 1 });
+      option.effectiveEndDate = faker.date.future({ years: 10 });
       classOptions.push(option);
     }
 
@@ -456,11 +469,13 @@ export class DataSeeder {
           '17:00',
         ]);
         schedule.room = faker.helpers.arrayElement([
-          'Room 1',
-          'Room 2',
-          'Room 3',
-          'Room 4',
-          'Room 5',
+          'Front',
+          'Middle',
+          'Tinkamo',
+          '3D',
+          'Small',
+          'Zoom Acc1',
+          'Zoom Acc2',
         ]);
         schedule.attendance = faker.helpers.arrayElement([
           'pending',
