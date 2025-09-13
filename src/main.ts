@@ -66,7 +66,7 @@ async function bootstrap() {
   );
 
   // API Prefix
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api/v1');
 
   // Swagger Documentation
   if (swaggerEnabled) {
