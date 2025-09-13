@@ -814,6 +814,12 @@ export class ScheduleService {
       case 'date_desc':
         qb.orderBy('schedule.date', 'DESC');
         break;
+      case 'time_asc':
+        qb.orderBy('schedule.startTime', 'ASC');
+        break;
+      case 'time_desc':
+        qb.orderBy('schedule.startTime', 'DESC');
+        break;
       case 'student_asc':
         qb.orderBy('student.name', 'ASC');
         break;

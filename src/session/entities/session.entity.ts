@@ -56,6 +56,10 @@ export class Session {
   @ApiProperty({ description: 'Package group id for linking package and TBC sessions', required: false })
   packageGroupId?: number;
 
+  @Column({ nullable: true, type: 'text' })
+  @ApiProperty({ description: 'Session comment', required: false })
+  comment?: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Session creation date' })
   createdAt: Date;

@@ -432,6 +432,7 @@ export class SessionService {
       completedCount: parseInt(result.raw[index].completedCount || '0'),
       classCancel: session.classCancel,
       medium: session.course.medium,
+      comment: session.comment,
     }));
   }
 
@@ -553,6 +554,7 @@ export class SessionService {
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
         status: session.status,
+        comment: session.comment,
       };
     });
 
@@ -672,6 +674,7 @@ export class SessionService {
         progress: `${progressPercentage}%`,
         medium: session.course.medium,
         status: session.status,
+        comment: session.comment,
       };
     });
 

@@ -54,6 +54,19 @@ export class SessionOverview {
     example: 'English',
   })
   medium: string;
+
+  @ApiProperty({
+    description: 'Session comment',
+    example: 'Student needs additional support with algebra',
+    required: false,
+  })
+  comment?: string;
+
+  @ApiProperty({
+    description: 'Session status',
+    example: 'wip',
+  })
+  status: string;
 }
 
 export class PaginationMetadata {

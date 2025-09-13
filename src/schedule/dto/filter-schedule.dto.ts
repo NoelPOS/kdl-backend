@@ -50,7 +50,8 @@ export class FilterScheduleDto {
 
   @ApiProperty({
     required: false,
-    description: 'Sort order (e.g., date_asc, date_desc, student_asc, etc.)',
+    description: 'Sort order (e.g., date_asc, date_desc, time_asc, time_desc, student_asc, student_desc, teacher_asc, teacher_desc, room_asc, room_desc)',
+    enum: ['date_asc', 'date_desc', 'time_asc', 'time_desc', 'student_asc', 'student_desc', 'teacher_asc', 'teacher_desc', 'room_asc', 'room_desc'],
   })
   @IsOptional()
   @IsString()
