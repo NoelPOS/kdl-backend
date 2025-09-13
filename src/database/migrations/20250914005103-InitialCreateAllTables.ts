@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitialCreateAllTables0000000000000 implements MigrationInterface {
-    name = 'InitialCreateAllTables0000000000000'
+export class InitialCreateAllTables20250914005103 implements MigrationInterface {
+    name = 'InitialCreateAllTables20250914005103'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Create enum types
@@ -219,38 +219,14 @@ export class InitialCreateAllTables0000000000000 implements MigrationInterface {
             )
         `);
 
-        // Create receipts table (if exists)
+        // Create receipts table
         await queryRunner.query(`
             CREATE TABLE "receipts" (
                 "id" SERIAL NOT NULL,
-                "documentId" character varying NOT NULL,
                 "invoiceId" integer NOT NULL,
                 "date" TIMESTAMP NOT NULL,
-                "paymentMethod" character varying NOT NULL,
-                "totalAmount" numeric NOT NULL,
-                "studentId" integer NOT NULL,
-                "studentName" character varying NOT NULL,
-                "courseName" character varying NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
                 CONSTRAINT "PK_9b2cc9651fa0f6a88b63fb86b4c" PRIMARY KEY ("id")
-            )
-        `);
-
-        // Create registrars table (if exists)
-        await queryRunner.query(`
-            CREATE TABLE "registrars" (
-                "id" SERIAL NOT NULL,
-                "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
-                "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
-                "name" character varying NOT NULL,
-                "email" character varying NOT NULL,
-                "password" character varying NOT NULL,
-                "contactNo" character varying NOT NULL,
-                "lineId" character varying NOT NULL,
-                "address" character varying NOT NULL,
-                "profilePicture" character varying NOT NULL,
-                "profileKey" character varying,
-                CONSTRAINT "PK_5e6b6f4c0b9a7c0b1e5b3f8b4a5" PRIMARY KEY ("id")
             )
         `);
 
@@ -417,7 +393,6 @@ export class InitialCreateAllTables0000000000000 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "student_counters"`);
         await queryRunner.query(`DROP TABLE "teacher_courses"`);
         await queryRunner.query(`DROP TABLE "parent_students"`);
-        await queryRunner.query(`DROP TABLE "registrars"`);
         await queryRunner.query(`DROP TABLE "receipts"`);
         await queryRunner.query(`DROP TABLE "course_plus"`);
         await queryRunner.query(`DROP TABLE "invoice_items"`);
