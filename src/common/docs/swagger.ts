@@ -55,7 +55,7 @@ export const setupSwagger = (app: INestApplication): void => {
   const document = SwaggerModule.createDocument(app, options);
 
   // Setup Swagger UI
-  SwaggerModule.setup('/api/docs', app, document, {
+  SwaggerModule.setup('/api/v1/docs', app, document, {
     explorer: true,
     swaggerOptions: {
       persistAuthorization: true,
