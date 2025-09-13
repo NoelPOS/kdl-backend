@@ -74,7 +74,7 @@ async function bootstrap() {
   }
 
   // CORS
-  const corsOrigins = configService.get<string>('CORS_ORIGINS', 'https://kdl-frontend.vercel.app,http://localhost:3000,http://54.221.191.226');
+  const corsOrigins = configService.get<string>('CORS_ORIGINS', 'https://kdl-frontend.vercel.app ,http://localhost:3000,http://54.221.191.226');
   const allowedOrigins = corsOrigins.split(',').map(origin => origin.trim());
   
   app.enableCors({
