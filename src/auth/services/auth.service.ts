@@ -62,6 +62,7 @@ export class AuthService {
       const user = new UserEntity();
       user.userName = userDto.userName;
       user.email = userDto.email;
+      user.role = userDto.role || UserRole.REGISTRAR; // Use provided role or default to REGISTRAR
       const salt = await bcrypt.genSalt();
       user.password = await bcrypt.hash(userDto.password, salt);
       const savedUser = await this.userRepository.save(user);

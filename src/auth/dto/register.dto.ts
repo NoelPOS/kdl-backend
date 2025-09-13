@@ -8,7 +8,10 @@ import {
   MinLength,
   IsAlphanumeric,
   IsDefined,
+  IsOptional,
+  IsEnum,
 } from 'class-validator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 export class RegisterDto {
   @ApiProperty({
@@ -49,4 +52,15 @@ export class RegisterDto {
   @MaxLength(50, { message: 'Password should not exceed 50 characters' })
   @IsDefined({ message: 'Password is required' })
   password: string;
+
+  @ApiProperty({
+    description: 'User role',
+    example: UserRole.REGISTRAR,
+    required: false,
+    enum: UserRole,
+    default: UserRole.REGISTRAR,
+  })
+  @IsOptional()
+  @IsEnum(UserRole, { message: 'Role must be a valid UserRole' })
+  role?: UserRole;
 }
