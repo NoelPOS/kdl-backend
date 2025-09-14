@@ -49,7 +49,6 @@ export class RoomController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Get all rooms' })
   @ApiResponse({
     status: 200,
