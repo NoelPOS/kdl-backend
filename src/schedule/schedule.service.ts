@@ -139,7 +139,7 @@ export class ScheduleService {
         room: 'TBD', // Default value
         attendance: 'pending', // Default value
         remark: 'TBD', // Default value
-        feedback: 'TBD', // Default value
+        feedback: '', // Default to empty string
         verifyFb: false, // Default value
         classNumber: cancelledSchedule.classNumber, // Keep the same class number
         warning: "", // Default to empty string
