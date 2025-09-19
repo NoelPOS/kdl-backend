@@ -5,6 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { CourseEntity } from '../../course/entities/course.entity';
@@ -12,6 +13,12 @@ import { StudentEntity } from '../../student/entities/student.entity';
 import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { ClassOption } from '../../class-option/entities/class-option.entity';
 
+// Add indexes for frequently queried columns
+@Index('idx_sessions_student_course', ['studentId', 'courseId'])
+@Index('idx_sessions_teacher', ['teacherId'])
+@Index('idx_sessions_status', ['status'])
+@Index('idx_sessions_payment', ['payment'])
+@Index('idx_sessions_package_group', ['packageGroupId'])
 @Entity('sessions')
 export class Session {
   @PrimaryGeneratedColumn()

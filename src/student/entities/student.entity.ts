@@ -4,8 +4,13 @@ import {
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 
+// Add indexes for frequently searched fields
+@Index('idx_students_name', ['name'])
+@Index('idx_students_school', ['school'])
+@Index('idx_students_phone', ['phone'])
 @Entity('students')
 export class StudentEntity {
   @PrimaryGeneratedColumn()
