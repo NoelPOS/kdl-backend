@@ -130,7 +130,7 @@ export class StudentController {
   @ApiTags('Students')
   @Get('search')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Search students by name, nickname, or id' })
   @ApiQuery({

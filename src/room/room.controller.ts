@@ -29,7 +29,7 @@ import { UserRole } from '../common/enums/user-role.enum';
 @ApiTags('Rooms')
 @Controller('rooms')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+@Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
 @ApiBearerAuth('JWT-auth')
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}

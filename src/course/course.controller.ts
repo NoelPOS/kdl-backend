@@ -35,12 +35,12 @@ import { UserRole } from '../common/enums/user-role.enum';
 @ApiTags('Courses')
 @Controller('courses')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
 @ApiBearerAuth('JWT-auth')
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Create a new course' })
   @ApiBody({ type: CreateCourseDto })
   @ApiResponse({
@@ -54,6 +54,7 @@ export class CourseController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Get all courses' })
   @ApiResponse({
     status: 200,
@@ -65,6 +66,7 @@ export class CourseController {
   }
 
   @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
   @ApiOperation({ summary: 'Search for courses by name' })
   @ApiQuery({
     name: 'name',
@@ -80,6 +82,7 @@ export class CourseController {
   }
 
   @Get('filter')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({
     summary:
       'Filter courses by age range, medium, and course name with pagination',
@@ -128,6 +131,7 @@ export class CourseController {
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Get a course by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the course' })
   @ApiResponse({
@@ -145,6 +149,7 @@ export class CourseController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Update a course' })
   @ApiParam({ name: 'id', description: 'The ID of the course' })
   @ApiBody({ type: UpdateCourseDto })
@@ -162,6 +167,7 @@ export class CourseController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Delete a course' })
   @ApiParam({ name: 'id', description: 'The ID of the course' })
   @ApiResponse({

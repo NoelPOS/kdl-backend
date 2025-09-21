@@ -138,7 +138,7 @@ export class ScheduleService {
         endTime: 'TBD', // Default value
         room: 'TBD', // Default value
         attendance: 'pending', // Default value
-        remark: 'TBD', // Default value
+        remark: '', // Default value
         feedback: '', // Default to empty string
         verifyFb: false, // Default value
         classNumber: cancelledSchedule.classNumber, // Keep the same class number
@@ -716,22 +716,6 @@ export class ScheduleService {
     // Use 10 as fallback if pageSize is still undefined
     const actualPageSize = pageSize || 10;
 
-    // console.log('Actual pagination values:', {
-    //   page,
-    //   pageSize,
-    //   actualPageSize,
-    // });
-
-    // console.log('Filter values:', {
-    //   startDate,
-    //   endDate,
-    //   studentName,
-    //   teacherName,
-    //   courseName,
-    //   attendanceStatus,
-    //   classStatus,
-    //   room,
-    // });
 
     const qb = this.scheduleRepo
       .createQueryBuilder('schedule')
@@ -852,9 +836,6 @@ export class ScheduleService {
     const offset = (page - 1) * actualPageSize;
     qb.skip(offset).take(actualPageSize);
 
-    // console.log(`Applying pagination: OFFSET ${offset}, LIMIT ${actualPageSize}`);
-    // console.log('Final SQL with pagination:', qb.getQuery());
-    // console.log('Final query parameters:', qb.getParameters());
 
     // Try using getMany() instead of getRawMany() to see if pagination works
     const schedulesEntities = await qb.getMany();
@@ -874,6 +855,9 @@ export class ScheduleService {
       schedule_remark: schedule.remark,
       schedule_classNumber: schedule.classNumber,
       schedule_warning: schedule.warning,
+      schedule_feedback: schedule.feedback,
+      schedule_feedbackDate: schedule.feedbackDate,
+      schedule_verifyFb: schedule.verifyFb,
       schedule_courseId: schedule.courseId,
       course_title: schedule.course?.title || null,
       teacher_name: schedule.teacher?.name || 'TBD',
