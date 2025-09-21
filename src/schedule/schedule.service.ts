@@ -896,6 +896,7 @@ export class ScheduleService {
       .leftJoin('schedule.course', 'course')
       .addSelect([
         'student.name',
+        'student.nickname',
         'student.profilePicture',
         'teacher.name',
         'course.title',
@@ -915,6 +916,7 @@ export class ScheduleService {
       .leftJoin('schedule.course', 'course')
       .addSelect([
         'student.name',
+        'student.nickname',
         'student.profilePicture',
         'teacher.name',
         'course.title',

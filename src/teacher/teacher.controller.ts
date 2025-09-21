@@ -34,13 +34,13 @@ import { UserRole } from '../common/enums/user-role.enum';
 
 @Controller('teachers')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.REGISTRAR)
 @ApiBearerAuth('JWT-auth')
 export class TeacherController {
   constructor(private readonly teacherService: TeacherService) {}
 
   @ApiTags('Teachers')
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Create a new teacher' })
   @ApiBody({ type: CreateTeacherDto })
   @ApiResponse({
@@ -55,6 +55,7 @@ export class TeacherController {
 
   @ApiTags('Teachers')
   @Get('name/:name')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Get teacher by name' })
   @ApiParam({ name: 'name', required: true, description: 'Teacher name' })
   @ApiResponse({
@@ -73,6 +74,7 @@ export class TeacherController {
 
   @ApiTags('Teacher-Course Relationships')
   @Get(':teacherId/courses')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({
     summary: 'Get teacher courses with filtering and pagination',
   })
@@ -116,6 +118,7 @@ export class TeacherController {
 
   @ApiTags('Teachers')
   @Post(':teacherId/courses')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Assign courses to a teacher' })
   @ApiParam({
     name: 'teacherId',
@@ -137,6 +140,7 @@ export class TeacherController {
 
   @ApiTags('Teachers')
   @Get('course/:courseId')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Get all teachers assigned to a course' })
   @ApiParam({
     name: 'courseId',
@@ -154,6 +158,7 @@ export class TeacherController {
 
   @ApiTags('Teachers')
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Get all teachers with pagination and filtering' })
   @ApiQuery({
     name: 'query',
@@ -208,6 +213,7 @@ export class TeacherController {
 
   @ApiTags('Teachers')
   @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR, UserRole.TEACHER)
   @ApiOperation({ summary: 'Search teachers by name' })
   @ApiQuery({
     name: 'name',
@@ -225,6 +231,7 @@ export class TeacherController {
 
   @ApiTags('Teachers')
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Get a teacher by ID' })
   @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
   @ApiResponse({
@@ -243,6 +250,7 @@ export class TeacherController {
 
   @ApiTags('Teachers')
   @Put(':id')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Update a teacher by ID' })
   @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
   @ApiBody({ type: UpdateTeacherDto })
