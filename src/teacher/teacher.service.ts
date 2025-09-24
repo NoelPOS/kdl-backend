@@ -316,7 +316,9 @@ export class TeacherService {
       }
 
       // Build where clause
-      const where: any = {};
+      const where: any = {
+        "role" : "teacher"
+      };
 
       if (query) {
         where.name = ILike(`%${query}%`);

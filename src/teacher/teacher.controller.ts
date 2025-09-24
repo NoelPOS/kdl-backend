@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Put,
+  Patch,
   ParseIntPipe,
   NotFoundException,
   Query,
@@ -14,6 +15,7 @@ import {
 import { TeacherService } from './teacher.service';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 import { AssignCoursesToTeacherDto } from './dto/assign-course-teacher.dto';
 import {
   ApiTags,
@@ -269,6 +271,30 @@ export class TeacherController {
       id,
       updateTeacherDto,
     );
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
+    }
+    return teacher;
+  }
+
+  @ApiTags('Teachers')
+  @Patch(':id/role')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Update teacher role by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiBody({ type: UpdateRoleDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher role has been successfully updated',
+    type: TeacherEntity,
+  })
+  @ApiResponse({ status: 404, description: 'Teacher not found' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  async updateTeacherRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateRoleDto: UpdateRoleDto,
+  ) {
+    const teacher = await this.teacherService.updateTeacher(id, { role: updateRoleDto.role });
     if (!teacher) {
       throw new NotFoundException(`Teacher with ID ${id} not found`);
     }

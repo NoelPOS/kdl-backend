@@ -150,7 +150,7 @@ export class RegistrarService {
   async findRegistrarById(id: number): Promise<RegistrarResponseDto> {
     try {
       const user = await this.userRepository.findOne({
-        where: { id, role: UserRole.REGISTRAR },
+        where: { id },
         select: ['id', 'userName', 'email', 'role', 'createdAt', 'updatedAt', 'profilePicture', 'profileKey'],
       });
 

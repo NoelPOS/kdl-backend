@@ -1,6 +1,7 @@
 import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
 import { CreateRegistrarDto } from './create-registrar.dto';
-import { IsOptional, IsString, IsEmail } from 'class-validator';
+import { IsOptional, IsString, IsEmail, IsEnum } from 'class-validator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 export class UpdateRegistrarDto {
   @ApiProperty({
@@ -39,4 +40,13 @@ export class UpdateRegistrarDto {
   @IsOptional()
   @IsString()
   profileKey?: string;
+
+  @ApiProperty({
+    description: 'Registrar role',
+    enum: UserRole,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(UserRole, { message: 'Role must be a valid UserRole' })
+  role?: UserRole;
 }

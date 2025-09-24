@@ -39,12 +39,12 @@ export class TeacherEntity {
   @ApiProperty({
     description: 'Teacher role',
     enum: UserRole,
-    default: UserRole.TEACHER,
+    default: UserRole.NONE,
   })
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.TEACHER,
+    default: UserRole.NONE,
   })
   role: UserRole;
 

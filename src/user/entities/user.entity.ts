@@ -48,12 +48,12 @@ export class UserEntity {
   @ApiProperty({
     description: 'User role for authorization',
     enum: UserRole,
-    default: UserRole.REGISTRAR,
+    default: UserRole.NONE,
   })
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.REGISTRAR,
+    default: UserRole.NONE,
   })
   role: UserRole;
 

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength, IsEnum } from 'class-validator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 export class UpdateTeacherDto {
   @ApiProperty({
@@ -76,4 +77,13 @@ export class UpdateTeacherDto {
   @IsString()
   @IsOptional()
   profileKey?: string;
+
+  @ApiProperty({
+    description: 'Teacher role',
+    enum: UserRole,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(UserRole, { message: 'Role must be a valid UserRole' })
+  role?: UserRole;
 }

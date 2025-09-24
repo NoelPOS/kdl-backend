@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Put,
+  Patch,
   Delete,
   ParseIntPipe,
   NotFoundException,
@@ -15,6 +16,7 @@ import {
 import { RegistrarService } from './registrar.service';
 import { CreateRegistrarDto } from './dto/create-registrar.dto';
 import { UpdateRegistrarDto } from './dto/update-registrar.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -162,6 +164,26 @@ export class RegistrarController {
     if (!registrar) {
       throw new NotFoundException(`Registrar with ID ${id} not found`);
     }
+    return registrar;
+  }
+
+  @ApiTags('Registrars')
+  @Patch(':id/role')
+  @ApiOperation({ summary: 'Update registrar role by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'Registrar ID' })
+  @ApiBody({ type: UpdateRoleDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Registrar role has been successfully updated',
+    type: RegistrarResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Registrar not found' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  async updateRegistrarRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateRoleDto: UpdateRoleDto,
+  ) {
+    const registrar = await this.registrarService.updateRegistrar(id, { role: updateRoleDto.role });
     return registrar;
   }
 
