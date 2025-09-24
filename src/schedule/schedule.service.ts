@@ -64,7 +64,7 @@ export class ScheduleService {
 
     // Handle feedback updates with role-based permissions
     if (dto.feedback !== undefined) {
-      if (user && user.role === 'TEACHER') {
+      if (user && user.role === 'teacher') {
         // Teachers can only update feedback for their own schedules
         if (existingSchedule.teacherId !== user.id) {
           throw new BadRequestException(
@@ -77,9 +77,13 @@ export class ScheduleService {
         updateFields.feedbackDate = dto.feedbackDate
           ? new Date(dto.feedbackDate)
           : new Date();
-      } else if (user && (user.role === 'ADMIN' || user.role === 'REGISTRAR')) {
+        // Don't set modified fields for original teacher
+      } else if (user && (user.role === 'admin' || user.role === 'registrar')) {
         // Admin/Registrar can update any feedback
         updateFields.feedback = dto.feedback;
+        updateFields.feedbackModifiedByName = user.name || user.userName;
+        updateFields.feedbackModifiedAt = new Date();
+        
         if (dto.feedbackDate) {
           updateFields.feedbackDate = new Date(dto.feedbackDate);
         }
@@ -99,7 +103,7 @@ export class ScheduleService {
 
     // Handle verifyFb separately if provided without feedback
     if (dto.verifyFb !== undefined && dto.feedback === undefined) {
-      if (user && user.role === 'TEACHER') {
+      if (user && user.role === 'teacher') {
         throw new BadRequestException(
           'Teachers cannot verify their own feedback',
         );
@@ -231,6 +235,8 @@ export class ScheduleService {
       feedback: dto.feedback,
       verifyFb: true,
       feedbackDate: new Date(),
+      feedbackModifiedByName: user.name || user.userName,
+      feedbackModifiedAt: new Date(),
     };
 
     const result = await this.scheduleRepo.update(id, updateFields);
@@ -331,9 +337,6 @@ export class ScheduleService {
       .andWhere('schedule.verifyFb = :verifyFb', { verifyFb: false }) // Always fetch unverified feedbacks
       .orderBy('schedule.feedbackDate', 'DESC');
 
-    // Handle status parameter (currently only 'all' is supported, which is default behavior)
-    if (status && status !== 'all') {
-    }
 
     // Apply filters
     if (studentName) {
@@ -397,6 +400,9 @@ export class ScheduleService {
         schedule.startTime && schedule.endTime
           ? `${schedule.startTime} - ${schedule.endTime}`
           : '',
+      // Add modification tracking fields
+      feedbackModifiedByName: schedule.feedbackModifiedByName || '',
+      feedbackModifiedAt: schedule.feedbackModifiedAt ? schedule.feedbackModifiedAt.toISOString() : '',
     }));
 
     // Calculate pagination metadata

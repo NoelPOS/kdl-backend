@@ -98,6 +98,14 @@ export class Schedule {
   @ApiProperty({ description: 'Verify feedback' })
   verifyFb: boolean;
 
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'Name of user who last modified feedback' })
+  feedbackModifiedByName?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  @ApiProperty({ description: 'When feedback was last modified' })
+  feedbackModifiedAt?: Date;
+
   // class number
   @Column({ nullable: true })
   @ApiProperty({ description: 'Class number', required: false })
