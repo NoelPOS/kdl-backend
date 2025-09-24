@@ -8,7 +8,7 @@ export class StudentCounter {
   id: number;
 
   @Column({ unique: true })
-  @ApiProperty({ description: 'Year and month in YYYY-MM format' })
+  @ApiProperty({ description: 'Year and month in YYYYMM format' })
   yearMonth: string;
 
   @Column({ default: 0 })
