@@ -124,7 +124,10 @@ export class ScheduleService {
       await this.createReplacementSchedule(existingSchedule);
     }
 
-    await this.revalidateWarningsAfterCancellation(existingSchedule);
+    // Only revalidate warnings if the schedule has a valid date
+    if (existingSchedule.date) {
+      await this.revalidateWarningsAfterCancellation(existingSchedule);
+    }
 
     return this.scheduleRepo.findOne({ where: { id } });
   }
@@ -184,12 +187,22 @@ export class ScheduleService {
   private async revalidateWarningsAfterCancellation(
     cancelledSchedule: Schedule,
   ) {
+    // Skip if cancelled schedule doesn't have a date
+    if (!cancelledSchedule.date) {
+      return;
+    }
+
     // Find schedules on the same date that might have conflicted
     const potentiallyConflicted = await this.scheduleRepo.find({
       where: { date: cancelledSchedule.date },
     });
 
     for (const schedule of potentiallyConflicted) {
+      // Skip schedules with null date, startTime, endTime, or room
+      if (!schedule.date || !schedule.startTime || !schedule.endTime || !schedule.room) {
+        continue;
+      }
+
       const conflict = await this.checkConflict({
         date: schedule.date.toString(),
         startTime: schedule.startTime,
@@ -388,6 +401,7 @@ export class ScheduleService {
       studentId: schedule.student?.id?.toString() || '',
       studentName: schedule.student?.name || '',
       studentNickname: schedule.student?.nickname || '',
+      studentPhone: schedule.student?.phone || '',
       studentProfilePicture: schedule.student?.profilePicture || '',
       courseTitle: schedule.course?.title || '',
       teacherName: schedule.teacher?.name || '',
@@ -626,6 +640,7 @@ export class ScheduleService {
         'schedule.warning',
         'schedule.classNumber',
         'student.name',
+        'student.phone',
         'teacher.name',
         'course.title',
       ])
@@ -691,6 +706,7 @@ export class ScheduleService {
         'student.id',
         'student.name',
         'student.nickname',
+        'student.phone',
         'schedule.classNumber',
         'student.profilePicture',
         'teacher.name',
@@ -870,6 +886,7 @@ export class ScheduleService {
       student_id: schedule.student?.id || null,
       student_name: schedule.student?.name || null,
       student_nickname: schedule.student?.nickname || null,
+      student_phone: schedule.student?.phone || null,
       student_profilePicture: schedule.student?.profilePicture || null,
       class_option: schedule.session?.classOption?.classMode || null,
     }));
@@ -903,6 +920,7 @@ export class ScheduleService {
       .addSelect([
         'student.name',
         'student.nickname',
+        'student.phone',
         'student.profilePicture',
         'teacher.name',
         'course.title',
@@ -923,6 +941,7 @@ export class ScheduleService {
       .addSelect([
         'student.name',
         'student.nickname',
+        'student.phone',
         'student.profilePicture',
         'teacher.name',
         'course.title',

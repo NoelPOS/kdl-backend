@@ -300,6 +300,7 @@ export class ScheduleController {
               studentId: { type: 'string' },
               studentName: { type: 'string' },
               studentNickname: { type: 'string' },
+              studentPhone: { type: 'string' },
               studentProfilePicture: { type: 'string' },
               courseTitle: { type: 'string' },
               teacherName: { type: 'string' },
