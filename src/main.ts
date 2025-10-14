@@ -18,6 +18,11 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
+  // Enable cookie parser for HttpOnly cookies
+  // Use require for CommonJS compatibility in production builds
+  const cookieParser = require('cookie-parser');
+  app.use(cookieParser());
+
   // Express v5 compatibility - support complex query strings
   app.set('query parser', 'extended');
 

@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { UserEntity } from '../../user/entities/user.entity';
 import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { UserRole } from '../../common/enums/user-role.enum';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,7 +19,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private teacherRepository: Repository<TeacherEntity>,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        // Priority 1: Extract from HttpOnly cookie
+        (request: Request) => {
+          return request?.cookies?.accessToken;
+        },
+        // Priority 2: Fallback to Authorization header (for mobile apps, API clients)
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET'),
     });

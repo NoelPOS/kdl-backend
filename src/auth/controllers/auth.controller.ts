@@ -5,7 +5,9 @@ import {
   HttpStatus,
   UseGuards,
   Get,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
 import {
@@ -66,8 +68,26 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid credentials.',
   })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.login(loginDto);
+
+    // Set HttpOnly cookie for security
+    response.cookie('accessToken', result.accessToken, {
+      httpOnly: true, // Cannot be accessed by JavaScript
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      sameSite: 'lax', // CSRF protection (lax for better compatibility)
+      maxAge: 8 * 60 * 60 * 1000, // 8 hours (match JWT expiration)
+      path: '/',
+    });
+
+    // Return user data (token is in cookie now)
+    return {
+      user: result.user,
+      accessToken: result.accessToken, // Keep for backward compatibility during migration
+    };
   }
 
   @Post('forgot-password')
@@ -139,7 +159,15 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized.',
   })
-  async logout() {
+  async logout(@Res({ passthrough: true }) response: Response) {
+    // Clear the HttpOnly cookie
+    response.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
     await this.authService.logout();
     return { message: 'Logout successful' };
   }
