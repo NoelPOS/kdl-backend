@@ -10,6 +10,7 @@ import { FeedbackFilterDto } from './dto/feedback-filter.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Schedule } from './entities/schedule.entity';
+import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
 import { time } from 'console';
@@ -19,6 +20,8 @@ export class ScheduleService {
   constructor(
     @InjectRepository(Schedule)
     private readonly scheduleRepo: Repository<Schedule>,
+    @InjectRepository(TeacherEntity)
+    private readonly teacherRepo: Repository<TeacherEntity>,
   ) {}
 
   async create(dto: CreateScheduleDto) {
@@ -49,6 +52,16 @@ export class ScheduleService {
     }
 
     const prevAttendance = existingSchedule.attendance;
+
+    // Validate teacherId if provided
+    if (dto.teacherId !== undefined && dto.teacherId !== null) {
+      const teacherExists = await this.teacherRepo.findOne({
+        where: { id: dto.teacherId }
+      });
+      if (!teacherExists) {
+        throw new BadRequestException(`Teacher with ID ${dto.teacherId} not found. For free trials without a teacher, use null.`);
+      }
+    }
 
     // Only pick fields that exist in the Schedule entity
     const updateFields: any = {};
