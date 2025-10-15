@@ -120,7 +120,7 @@ export class SessionService {
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
     session.invoiceDone = false;
-    session.packageGroupId = dto.classOptionId === 11 ? Math.random() * 1000000 : null; 
+    session.packageGroupId = dto.classOptionId === 11 ? Math.floor(Math.random() * 1000000) : null; 
 
     return await this.sessionRepository.save(session);
   }
