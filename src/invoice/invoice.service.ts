@@ -293,6 +293,8 @@ export class InvoiceService {
       page = 1,
       limit = 10,
       documentId,
+      student,
+      course,
       courseName,
       receiptDone,
     } = filterDto;
@@ -309,9 +311,18 @@ export class InvoiceService {
       });
     }
 
-    if (courseName) {
+    // Support both 'student' and 'studentName' for filtering by student name
+    if (student) {
+      queryBuilder.andWhere('invoice.studentName ILIKE :student', {
+        student: `%${student}%`,
+      });
+    }
+
+    // Support both 'course' and 'courseName' for filtering by course name
+    const courseFilter = course || courseName;
+    if (courseFilter) {
       queryBuilder.andWhere('invoice.courseName ILIKE :courseName', {
-        courseName: `%${courseName}%`,
+        courseName: `%${courseFilter}%`,
       });
     }
 

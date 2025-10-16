@@ -75,7 +75,8 @@ export class InvoiceController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'documentId', required: false, type: String })
-  @ApiQuery({ name: 'courseName', required: false, type: String })
+  @ApiQuery({ name: 'student', required: false, type: String, description: 'Filter by student name' })
+  @ApiQuery({ name: 'course', required: false, type: String, description: 'Filter by course name' })
   @ApiQuery({
     name: 'receiptDone',
     required: false,
@@ -92,14 +93,16 @@ export class InvoiceController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('documentId') documentId?: string,
-    @Query('courseName') courseName?: string,
+    @Query('student') student?: string,
+    @Query('course') course?: string,
     @Query('receiptDone') receiptDone?: string,
   ) {
     const filterDto: InvoiceFilterDto = {
       page,
       limit,
       documentId,
-      courseName,
+      student,
+      course,
       receiptDone,
     };
     return this.invoiceService.findAll(filterDto);

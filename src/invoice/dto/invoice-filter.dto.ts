@@ -23,10 +23,20 @@ export class InvoiceFilterDto extends PaginationDto {
   @IsInt()
   studentId?: number;
 
+  @ApiPropertyOptional({ description: 'Student name to filter by' })
+  @IsOptional()
+  @IsString()
+  student?: string;
+
   @ApiPropertyOptional({ description: 'Course name to filter by' })
   @IsOptional()
   @IsString()
   courseName?: string;
+
+  @ApiPropertyOptional({ description: 'Course name to filter by (alias)' })
+  @IsOptional()
+  @IsString()
+  course?: string;
 
   @ApiPropertyOptional({ description: 'Document ID to filter by' })
   @IsOptional()
