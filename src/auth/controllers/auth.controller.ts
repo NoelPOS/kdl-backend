@@ -77,8 +77,8 @@ export class AuthController {
     // Set HttpOnly cookie for security
     response.cookie('accessToken', result.accessToken, {
       httpOnly: true, // Cannot be accessed by JavaScript
-      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-      sameSite: 'lax', // CSRF protection (lax for better compatibility)
+      secure: true, // MUST be true for cross-domain cookies
+      sameSite: 'none', // Allow cross-domain cookies (frontend and backend on different domains)
       maxAge: 8 * 60 * 60 * 1000, // 8 hours (match JWT expiration)
       path: '/',
     });
@@ -163,8 +163,8 @@ export class AuthController {
     // Clear the HttpOnly cookie
     response.clearCookie('accessToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Must match the settings used when setting the cookie
+      sameSite: 'none', // Must match the settings used when setting the cookie
       path: '/',
     });
 
