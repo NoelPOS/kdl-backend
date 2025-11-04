@@ -35,4 +35,12 @@ export default () => ({
 
   // CORS settings
   CORS_ORIGINS: process.env.CORS_ORIGINS || 'https://kdl-frontend.vercel.app,http://localhost:3000,http://localhost:3001',
+
+  // LINE Bot settings
+  LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
+  LINE_CHANNEL_SECRET: process.env.LINE_CHANNEL_SECRET || '',
+  LINE_LIFF_ID: process.env.LINE_LIFF_ID || '',
+
+  // Frontend URL for LIFF
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3001',
 });

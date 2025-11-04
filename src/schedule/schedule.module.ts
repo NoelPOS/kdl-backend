@@ -9,5 +9,6 @@ import { TeacherEntity } from '../teacher/entities/teacher.entity';
   imports: [TypeOrmModule.forFeature([Schedule, TeacherEntity])],
   controllers: [ScheduleController],
   providers: [ScheduleService],
+  exports: [ScheduleService], // Export so other modules can use it
 })
 export class ScheduleModule {}
