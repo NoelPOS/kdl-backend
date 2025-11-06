@@ -113,17 +113,31 @@ export class ParentVerificationService {
     await this.parentRepository.save(parent);
 
     this.logger.log(
-      `Successfully linked LINE user ${dto.lineUserId} to parent ${parent.id} (${parent.name})`,
+      `✅ Successfully linked LINE user ${dto.lineUserId} to parent ${parent.id} (${parent.name})`,
     );
 
     // Upgrade rich menu to verified state
-    await this.richMenuService.assignVerifiedMenu(dto.lineUserId);
+    this.logger.log(`🔄 Starting rich menu upgrade for ${dto.lineUserId}...`);
+    try {
+      await this.richMenuService.assignVerifiedMenu(dto.lineUserId);
+      this.logger.log(`✅ Rich menu upgraded successfully`);
+    } catch (error) {
+      this.logger.error(`❌ Failed to upgrade rich menu:`, error);
+      // Don't throw - verification is successful, menu upgrade is secondary
+    }
 
     // Send success message
-    await this.lineMessagingService.sendTextMessage(
-      dto.lineUserId,
-      `✅ Verification Successful!\n\nWelcome, ${parent.name}!\n\nYour LINE account is now linked. You can now:\n• Receive schedule notifications\n• Confirm or reschedule classes\n• View your children's schedules\n\nTap "KDL Portal" below to get started! 👇`,
-    );
+    this.logger.log(`📨 Sending success message to ${dto.lineUserId}...`);
+    try {
+      await this.lineMessagingService.sendTextMessage(
+        dto.lineUserId,
+        `✅ Verification Successful!\n\nWelcome, ${parent.name}!\n\nYour LINE account is now linked. You can now:\n• Receive schedule notifications\n• Confirm or reschedule classes\n• View your children's schedules\n\nTap "KDL Portal" below to get started! 👇`,
+      );
+      this.logger.log(`✅ Success message sent`);
+    } catch (error) {
+      this.logger.error(`❌ Failed to send success message:`, error);
+      // Don't throw - verification is successful, message is secondary
+    }
 
     return {
       success: true,

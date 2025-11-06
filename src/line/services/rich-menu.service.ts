@@ -159,15 +159,22 @@ export class RichMenuService {
    */
   async assignVerifiedMenu(userId: string): Promise<void> {
     if (!this.verifiedMenuId) {
-      this.logger.warn('Verified menu not initialized');
-      return;
+      this.logger.error('❌ Verified menu not initialized - cannot upgrade rich menu');
+      throw new Error('Verified menu not available');
     }
 
     try {
+      this.logger.log(`🔄 Upgrading rich menu for user ${userId} to verified state...`);
+      this.logger.log(`Using verified menu ID: ${this.verifiedMenuId}`);
+      
       await this.client.linkRichMenuToUser(userId, this.verifiedMenuId);
-      this.logger.log(`Assigned verified menu to user ${userId}`);
+      
+      this.logger.log(`✅ Successfully assigned verified menu to user ${userId}`);
     } catch (error) {
-      this.logger.error(`Failed to assign verified menu: ${error.message}`);
+      this.logger.error(`❌ Failed to assign verified menu to user ${userId}:`, error);
+      this.logger.error(`Error details: ${error.message}`);
+      this.logger.error(`Stack: ${error.stack}`);
+      throw error; // Re-throw so the verification service knows it failed
     }
   }
 
