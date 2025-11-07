@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as line from '@line/bot-sdk';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as https from 'https';
 
 /**
  * Rich Menu Service
@@ -86,11 +89,17 @@ export class RichMenuService {
     };
 
     const menuId = await this.client.createRichMenu(richMenu);
+    this.logger.log(`Created unverified menu: ${menuId}`);
 
-    // Upload image for unverified menu
-    // Note: You'll need to create a simple image with "🔐 Login" text
-    // For now, we'll skip the image upload - you can add it later via LINE Console
-    this.logger.log('Unverified menu image should be uploaded via LINE Console');
+    // Upload placeholder image
+    try {
+      const imageBuffer = await this.createPlaceholderImage('🔐 Login to KDL', '#10B981');
+      await this.client.setRichMenuImage(menuId, imageBuffer, 'image/png');
+      this.logger.log(`✅ Uploaded image for unverified menu`);
+    } catch (error) {
+      this.logger.error(`Failed to upload unverified menu image: ${error.message}`);
+      this.logger.warn(`You can manually upload an image via LINE Developers Console`);
+    }
 
     return menuId;
   }
@@ -127,12 +136,43 @@ export class RichMenuService {
     };
 
     const menuId = await this.client.createRichMenu(richMenu);
+    this.logger.log(`Created verified menu: ${menuId}`);
 
-    // Upload image for verified menu
-    // Note: You'll need to create an image with "📱 My Portal" text
-    this.logger.log('Verified menu image should be uploaded via LINE Console');
+    // Upload placeholder image
+    try {
+      const imageBuffer = await this.createPlaceholderImage('📱 My KDL Portal', '#059669');
+      await this.client.setRichMenuImage(menuId, imageBuffer, 'image/png');
+      this.logger.log(`✅ Uploaded image for verified menu`);
+    } catch (error) {
+      this.logger.error(`Failed to upload verified menu image: ${error.message}`);
+      this.logger.warn(`You can manually upload an image via LINE Developers Console`);
+    }
 
     return menuId;
+  }
+
+  /**
+   * Create a simple placeholder image for rich menu
+   * Uses a solid color background with text
+   * Size: 2500x843px (required by LINE)
+   */
+  private async createPlaceholderImage(text: string, color: string): Promise<Buffer> {
+    // For now, return a simple solid color PNG
+    // In production, you should use a proper image library like 'canvas' or upload real images
+    // This is a minimal 2500x843 PNG with solid color
+    
+    // Download from a placeholder service or create locally
+    // For simplicity, we'll use a public placeholder API
+    const url = `https://via.placeholder.com/2500x843/${color.replace('#', '')}/${color.replace('#', '')}?text=${encodeURIComponent(text)}`;
+    
+    return new Promise((resolve, reject) => {
+      https.get(url, (response) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      }).on('error', reject);
+    });
   }
 
   /**
@@ -186,5 +226,39 @@ export class RichMenuService {
       unverified: this.unverifiedMenuId,
       verified: this.verifiedMenuId,
     };
+  }
+
+  /**
+   * Upload image to an existing rich menu
+   * Useful for updating existing menus or fixing missing images
+   */
+  async uploadImageToMenu(menuId: string, text: string, color: string = '#10B981'): Promise<void> {
+    try {
+      this.logger.log(`📤 Uploading image to rich menu ${menuId}...`);
+      const imageBuffer = await this.createPlaceholderImage(text, color);
+      await this.client.setRichMenuImage(menuId, imageBuffer, 'image/png');
+      this.logger.log(`✅ Successfully uploaded image to menu ${menuId}`);
+    } catch (error) {
+      this.logger.error(`❌ Failed to upload image to menu ${menuId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fix existing menus by uploading images
+   * Call this if menus were created without images
+   */
+  async fixExistingMenus(): Promise<void> {
+    try {
+      if (this.unverifiedMenuId) {
+        await this.uploadImageToMenu(this.unverifiedMenuId, '🔐 Login to KDL', '#10B981');
+      }
+      if (this.verifiedMenuId) {
+        await this.uploadImageToMenu(this.verifiedMenuId, '📱 My KDL Portal', '#059669');
+      }
+      this.logger.log(`✅ All menu images uploaded successfully`);
+    } catch (error) {
+      this.logger.error(`Failed to fix existing menus:`, error);
+    }
   }
 }

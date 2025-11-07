@@ -6,6 +6,7 @@ import {
   HttpCode,
   Logger,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { LineMessagingService } from './services/line-messaging.service';
@@ -282,6 +283,34 @@ export class LineController {
           text: '❌ Failed to submit reschedule request. Please contact KDL office directly.',
         },
       ]);
+    }
+  }
+
+  /**
+   * Fix existing rich menus by uploading placeholder images
+   * GET /api/v1/line/fix-rich-menu-images
+   * Call this endpoint once to upload images to existing menus
+   */
+  @Get('fix-rich-menu-images')
+  @ApiOperation({ summary: 'Upload images to existing rich menus (one-time fix)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Rich menu images uploaded successfully',
+  })
+  async fixRichMenuImages(): Promise<{ success: boolean; message: string }> {
+    try {
+      this.logger.log('🔧 Starting rich menu image upload...');
+      await this.richMenuService.fixExistingMenus();
+      return {
+        success: true,
+        message: 'Rich menu images uploaded successfully! Try verifying a parent now.',
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fix rich menu images:`, error);
+      return {
+        success: false,
+        message: `Failed: ${error.message}`,
+      };
     }
   }
 }
