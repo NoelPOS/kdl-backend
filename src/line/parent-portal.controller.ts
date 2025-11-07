@@ -184,4 +184,65 @@ export class ParentPortalController {
   ) {
     return this.scheduleService.findOne(scheduleId);
   }
+
+  /**
+   * Confirm attendance for a schedule
+   */
+  @Post('schedules/:scheduleId/confirm')
+  @ApiOperation({ summary: 'Confirm attendance for a schedule' })
+  @ApiParam({
+    name: 'scheduleId',
+    type: Number,
+    description: 'Schedule ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Attendance confirmed',
+  })
+  async confirmSchedule(
+    @Param('scheduleId', ParseIntPipe) scheduleId: number,
+  ) {
+    // Update attendance to confirmed
+    const result = await this.scheduleService.updateSchedule(scheduleId, {
+      attendance: 'confirmed',
+    });
+    
+    return {
+      success: true,
+      message: 'Attendance confirmed successfully',
+      schedule: result,
+    };
+  }
+
+  /**
+   * Request reschedule for a schedule
+   * This will cancel the schedule and create a replacement schedule
+   */
+  @Post('schedules/:scheduleId/reschedule')
+  @ApiOperation({ summary: 'Request reschedule for a schedule' })
+  @ApiParam({
+    name: 'scheduleId',
+    type: Number,
+    description: 'Schedule ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Reschedule requested - schedule cancelled and replacement created',
+  })
+  async rescheduleSchedule(
+    @Param('scheduleId', ParseIntPipe) scheduleId: number,
+  ) {
+    // Update attendance to cancelled - this will trigger:
+    // 1. Removal of conflicts
+    // 2. Creation of replacement schedule
+    const result = await this.scheduleService.updateSchedule(scheduleId, {
+      attendance: 'cancelled',
+    });
+    
+    return {
+      success: true,
+      message: 'Schedule cancelled and replacement schedule created. Our team will contact you to arrange a new time.',
+      schedule: result,
+    };
+  }
 }

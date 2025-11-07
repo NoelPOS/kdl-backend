@@ -945,22 +945,38 @@ export class ScheduleService {
   }
 
   async getSchedulesBySession(sessionId: number) {
-    // Get schedules by session only - no need for studentId since each session belongs to one student
-    return this.scheduleRepo
+    // Get schedules by session - return entities with relations
+    const schedules = await this.scheduleRepo
       .createQueryBuilder('schedule')
-      .leftJoin('schedule.student', 'student')
-      .leftJoin('schedule.teacher', 'teacher')
-      .leftJoin('schedule.course', 'course')
-      .addSelect([
-        'student.name',
-        'student.nickname',
-        'student.phone',
-        'student.profilePicture',
-        'teacher.name',
-        'course.title',
-      ])
+      .leftJoinAndSelect('schedule.student', 'student')
+      .leftJoinAndSelect('schedule.teacher', 'teacher')
+      .leftJoinAndSelect('schedule.course', 'course')
+      .leftJoinAndSelect('schedule.session', 'session')
+      .leftJoinAndSelect('session.classOption', 'classOption')
       .where('schedule.sessionId = :sessionId', { sessionId })
-      .orderBy('schedule.createdAt', 'ASC')
-      .getRawMany();
+      .orderBy('schedule.date', 'ASC')
+      .addOrderBy('schedule.startTime', 'ASC')
+      .getMany();
+
+    return schedules;
+  }
+
+  async updateAttendance(scheduleId: number, attendance: string) {
+    const schedule = await this.scheduleRepo.findOne({
+      where: { id: scheduleId },
+    });
+
+    if (!schedule) {
+      throw new Error('Schedule not found');
+    }
+
+    schedule.attendance = attendance;
+    await this.scheduleRepo.save(schedule);
+
+    return {
+      success: true,
+      message: `Attendance updated to ${attendance}`,
+      schedule,
+    };
   }
 }

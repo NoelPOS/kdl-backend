@@ -365,15 +365,54 @@ export class SessionService {
   }
 
   async getStudentSessions(studentId: number) {
-    return this.sessionRepository
+    const queryBuilder = this.sessionRepository
       .createQueryBuilder('session')
       .leftJoinAndSelect('session.course', 'course')
       .leftJoinAndSelect('session.teacher', 'teacher')
       .leftJoinAndSelect('session.classOption', 'classOption')
+      .leftJoinAndSelect('session.student', 'student')
       .where('session.studentId = :studentId', { studentId })
-      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
-      .orderBy('session.createdAt', 'DESC')
-      .getMany();
+      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)'); // Exclude package sessions
+
+    // Add subqueries to count completed schedules and total schedules
+    queryBuilder
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id')
+          .andWhere('schedule.attendance = :attendance', {
+            attendance: 'completed',
+          });
+      }, 'completedCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id');
+      }, 'totalScheduledCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('schedules', 'schedule')
+          .where('schedule.sessionId = session.id')
+          .andWhere('schedule.attendance = :canceledAttendance', {
+            canceledAttendance: 'cancelled',
+          });
+      }, 'canceledCount');
+
+    queryBuilder.orderBy('session.createdAt', 'DESC');
+
+    // Get raw and entities to access both the relations and the computed counts
+    const result = await queryBuilder.getRawAndEntities();
+
+    // Map the results to include the counts
+    return result.entities.map((session, index) => ({
+      ...session,
+      completedCount: parseInt(result.raw[index].completedCount || '0'),
+      totalScheduledCount: parseInt(result.raw[index].totalScheduledCount || '0'),
+      canceledCount: parseInt(result.raw[index].canceledCount || '0'),
+    }));
   }
 
   async getStudentSessionByCourse(studentId: number, courseId: number) {
