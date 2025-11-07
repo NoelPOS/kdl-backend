@@ -41,17 +41,38 @@ export class RichMenuService {
 
   /**
    * Initialize rich menus on application startup
-   * Creates both unverified and verified menus if they don't exist
+   * Uses existing menu IDs from .env or creates new ones if they don't exist
    */
   async initializeRichMenus(): Promise<void> {
     try {
-      // Create unverified menu
-      this.unverifiedMenuId = await this.createUnverifiedMenu();
-      this.logger.log(`Unverified menu created: ${this.unverifiedMenuId}`);
+      // Check if menu IDs exist in environment variables
+      const envUnverifiedMenuId = this.configService.get<string>('UNVERIFIED_MENU_ID');
+      const envVerifiedMenuId = this.configService.get<string>('VERIFIED_MENU_ID');
 
-      // Create verified menu
-      this.verifiedMenuId = await this.createVerifiedMenu();
-      this.logger.log(`Verified menu created: ${this.verifiedMenuId}`);
+      if (envUnverifiedMenuId && envVerifiedMenuId) {
+        // Use existing menu IDs from .env
+        this.unverifiedMenuId = envUnverifiedMenuId;
+        this.verifiedMenuId = envVerifiedMenuId;
+        this.logger.log(`✅ Using existing rich menus from .env:`);
+        this.logger.log(`   Unverified: ${this.unverifiedMenuId}`);
+        this.logger.log(`   Verified: ${this.verifiedMenuId}`);
+        this.logger.log(`⚠️  Make sure images are uploaded using: npm run upload-rich-menu-images`);
+      } else {
+        // Create new menus if they don't exist in .env
+        this.logger.warn(`⚠️  UNVERIFIED_MENU_ID or VERIFIED_MENU_ID not found in .env`);
+        this.logger.log(`🔄 Creating new rich menus...`);
+        
+        this.unverifiedMenuId = await this.createUnverifiedMenu();
+        this.logger.log(`✅ Unverified menu created: ${this.unverifiedMenuId}`);
+
+        this.verifiedMenuId = await this.createVerifiedMenu();
+        this.logger.log(`✅ Verified menu created: ${this.verifiedMenuId}`);
+
+        this.logger.warn(`\n⚠️  IMPORTANT: Add these to your .env file:`);
+        this.logger.warn(`UNVERIFIED_MENU_ID=${this.unverifiedMenuId}`);
+        this.logger.warn(`VERIFIED_MENU_ID=${this.verifiedMenuId}`);
+        this.logger.warn(`\nThen run: npm run upload-rich-menu-images\n`);
+      }
     } catch (error) {
       this.logger.error(`Failed to initialize rich menus: ${error.message}`);
     }
