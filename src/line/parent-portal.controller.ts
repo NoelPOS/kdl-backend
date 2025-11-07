@@ -28,17 +28,16 @@ import { ScheduleService } from '../schedule/schedule.service';
  * API endpoints for LINE LIFF app
  * 
  * Endpoints:
- * - POST /parents/verify - Verify and link LINE account
- * - GET /parents/profile - Get parent profile by LINE user ID
- * - GET /parents/:id/children - Get parent's children
- * - GET /students/:id/sessions - Get student's sessions (courses)
- * - GET /sessions/:id/schedules - Get session's schedules
+ * - POST /parent-portal/verify - Verify and link LINE account
+ * - GET /parent-portal/profile - Get parent profile by LINE user ID
+ * - GET /parent-portal/:id/children - Get parent's children
+ * - GET /parent-portal/students/:id/sessions - Get student's sessions (courses)
+ * - GET /parent-portal/sessions/:id/schedules - Get session's schedules
  * 
- * Note: Authentication is handled by LIFF SDK on frontend
- * Backend validates LINE user ID exists in parent.lineId
+ * Note: No authentication required - validates LINE user ID instead
  */
 @ApiTags('Parent Portal (LIFF)')
-@Controller('parents')
+@Controller('parent-portal')
 export class ParentPortalController {
   constructor(
     private readonly parentVerificationService: ParentVerificationService,
