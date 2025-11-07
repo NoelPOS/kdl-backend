@@ -91,15 +91,9 @@ export class RichMenuService {
     const menuId = await this.client.createRichMenu(richMenu);
     this.logger.log(`Created unverified menu: ${menuId}`);
 
-    // Upload placeholder image
-    try {
-      const imageBuffer = await this.createPlaceholderImage('🔐 Login to KDL', '#10B981');
-      await this.client.setRichMenuImage(menuId, imageBuffer, 'image/png');
-      this.logger.log(`✅ Uploaded image for unverified menu`);
-    } catch (error) {
-      this.logger.error(`Failed to upload unverified menu image: ${error.message}`);
-      this.logger.warn(`You can manually upload an image via LINE Developers Console`);
-    }
+    // Note: Image upload disabled - use upload-rich-menu-images.ts script instead
+    // This prevents automatic placeholder uploads and lets you use custom images
+    this.logger.log(`⚠️  Remember to upload image for menu ${menuId} using the upload script`);
 
     return menuId;
   }
@@ -138,15 +132,9 @@ export class RichMenuService {
     const menuId = await this.client.createRichMenu(richMenu);
     this.logger.log(`Created verified menu: ${menuId}`);
 
-    // Upload placeholder image
-    try {
-      const imageBuffer = await this.createPlaceholderImage('📱 My KDL Portal', '#059669');
-      await this.client.setRichMenuImage(menuId, imageBuffer, 'image/png');
-      this.logger.log(`✅ Uploaded image for verified menu`);
-    } catch (error) {
-      this.logger.error(`Failed to upload verified menu image: ${error.message}`);
-      this.logger.warn(`You can manually upload an image via LINE Developers Console`);
-    }
+    // Note: Image upload disabled - use upload-rich-menu-images.ts script instead
+    // This prevents automatic placeholder uploads and lets you use custom images
+    this.logger.log(`⚠️  Remember to upload image for menu ${menuId} using the upload script`);
 
     return menuId;
   }

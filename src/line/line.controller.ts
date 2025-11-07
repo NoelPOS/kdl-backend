@@ -313,4 +313,27 @@ export class LineController {
       };
     }
   }
+
+  /**
+   * Get rich menu IDs
+   * GET /api/v1/line/rich-menu-ids
+   * Use these IDs to upload custom images via the upload script
+   */
+  @Get('rich-menu-ids')
+  @ApiOperation({ summary: 'Get rich menu IDs for image upload' })
+  @ApiResponse({
+    status: 200,
+    description: 'Rich menu IDs',
+  })
+  async getRichMenuIds(): Promise<{
+    unverified: string;
+    verified: string;
+    instructions: string;
+  }> {
+    const menuIds = this.richMenuService.getMenuIds();
+    return {
+      ...menuIds,
+      instructions: 'Use these IDs in the upload-rich-menu-images.ts script or set them as environment variables: UNVERIFIED_MENU_ID and VERIFIED_MENU_ID',
+    };
+  }
 }
