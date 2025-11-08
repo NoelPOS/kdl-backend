@@ -81,6 +81,10 @@ jobs:
           SWAGGER_ENABLED=true
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}
+          LINE_CHANNEL_ACCESS_TOKEN="GEsfP7GWCUpks/dni69SmF59jCff1nWxmqxK6o2E7bu+mcOLIi0WQAx5hYaAI/JJzcsOfFS8GiALOXacCBhc/+CkBGnCtUMIK3Shhaxu2089PhiKppj7WpV0Mg2U1vWleP2tEpPqs87mDMYzDzs3kwdB04t89/1O/w1cDnyilFU="
+          LINE_CHANNEL_SECRET="43c1c7d1a115adc92e4f61c1f7cf1ec3"
+          LINE_LIFF_ID="2008403698-g6d9DA22"
+          FRONTEND_URL="http://54.221.191.226:3000"
           EOF
           
           # Stop backend container
