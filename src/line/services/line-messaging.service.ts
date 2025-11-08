@@ -138,7 +138,9 @@ export class LineMessagingService {
   }
 
   /**
-   * Send schedule notification flex message
+   * Send schedule notification as two separate messages:
+   * 1. Student info card with View Detail button
+   * 2. Reminder text with Confirm/Reschedule buttons
    */
   async sendScheduleNotification(
     userId: string,
@@ -151,186 +153,184 @@ export class LineMessagingService {
       endTime: string;
       room: string;
       teacherName: string;
+      studentImage?: string;
+      attendedClasses?: number;
+      totalClasses?: number;
+      cancelledClasses?: number;
     },
   ): Promise<void> {
     const liffId = this.configService.get<string>('LINE_LIFF_ID');
 
-    const bubble: FlexBubble = {
+    // Message 1: Student Info Card
+    const studentCardBubble: FlexBubble = {
       type: 'bubble',
-      header: {
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          // Student Image (circular)
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                  {
+                    type: 'image',
+                    url: scheduleData.studentImage || 'https://via.placeholder.com/300x300.png?text=Student',
+                    size: 'full',
+                    aspectMode: 'cover',
+                    aspectRatio: '1:1',
+                  },
+                ],
+                cornerRadius: '100px',
+                width: '150px',
+                height: '150px',
+              },
+            ],
+            justifyContent: 'center',
+            margin: 'md',
+          },
+          // Student Info
+          {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'text',
+                text: scheduleData.studentName,
+                weight: 'bold',
+                size: 'xl',
+                color: '#1a1a1a',
+                align: 'center',
+              },
+              {
+                type: 'text',
+                text: scheduleData.courseName,
+                size: 'md',
+                color: '#4a4a4a',
+                margin: 'sm',
+                wrap: true,
+                align: 'center',
+              },
+              {
+                type: 'text',
+                text: `Attended ${scheduleData.attendedClasses || 0} out of ${scheduleData.totalClasses || 0} classes`,
+                size: 'xs',
+                color: '#8a8a8a',
+                margin: 'md',
+                align: 'center',
+              },
+              {
+                type: 'text',
+                text: `Cancelled ${scheduleData.cancelledClasses || 0} class`,
+                size: 'xs',
+                color: '#8a8a8a',
+                margin: 'xs',
+                align: 'center',
+              },
+            ],
+            margin: 'md',
+          },
+        ],
+        paddingAll: 'xl',
+      },
+      footer: {
         type: 'box',
         layout: 'vertical',
         contents: [
           {
-            type: 'text',
-            text: '📅 Upcoming Class',
-            color: '#ffffff',
-            weight: 'bold',
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: 'View Detail',
+              uri: `https://liff.line.me/${liffId}/schedule/${scheduleData.scheduleId}`,
+            },
+            style: 'primary',
+            color: '#17c950',
           },
         ],
-        backgroundColor: '#1DB446',
         paddingAll: 'md',
       },
+      styles: {
+        body: {
+          backgroundColor: '#ffffff',
+        },
+      },
+    };
+
+    const studentCardMessage: FlexMessage = {
+      type: 'flex',
+      altText: `${scheduleData.studentName} - ${scheduleData.courseName}`,
+      contents: studentCardBubble,
+    };
+
+    // Message 2: Reminder with Action Buttons
+    const reminderBubble: FlexBubble = {
+      type: 'bubble',
       body: {
         type: 'box',
         layout: 'vertical',
         contents: [
           {
             type: 'text',
-            text: scheduleData.studentName,
-            weight: 'bold',
-            size: 'lg',
-            color: '#1DB446',
-          },
-          {
-            type: 'text',
-            text: scheduleData.courseName,
-            size: 'md',
-            weight: 'bold',
-            margin: 'md',
-          },
-          {
-            type: 'separator',
-            margin: 'lg',
-          },
-          {
-            type: 'box',
-            layout: 'vertical',
-            margin: 'lg',
-            spacing: 'sm',
-            contents: [
-              {
-                type: 'box',
-                layout: 'baseline',
-                spacing: 'sm',
-                contents: [
-                  {
-                    type: 'text',
-                    text: '📅',
-                    size: 'sm',
-                    flex: 0,
-                  },
-                  {
-                    type: 'text',
-                    text: scheduleData.date,
-                    size: 'sm',
-                    color: '#666666',
-                    flex: 5,
-                  },
-                ],
-              },
-              {
-                type: 'box',
-                layout: 'baseline',
-                spacing: 'sm',
-                contents: [
-                  {
-                    type: 'text',
-                    text: '🕐',
-                    size: 'sm',
-                    flex: 0,
-                  },
-                  {
-                    type: 'text',
-                    text: `${scheduleData.startTime} - ${scheduleData.endTime}`,
-                    size: 'sm',
-                    color: '#666666',
-                    flex: 5,
-                  },
-                ],
-              },
-              {
-                type: 'box',
-                layout: 'baseline',
-                spacing: 'sm',
-                contents: [
-                  {
-                    type: 'text',
-                    text: '📍',
-                    size: 'sm',
-                    flex: 0,
-                  },
-                  {
-                    type: 'text',
-                    text: scheduleData.room,
-                    size: 'sm',
-                    color: '#666666',
-                    flex: 5,
-                  },
-                ],
-              },
-              {
-                type: 'box',
-                layout: 'baseline',
-                spacing: 'sm',
-                contents: [
-                  {
-                    type: 'text',
-                    text: '👨‍🏫',
-                    size: 'sm',
-                    flex: 0,
-                  },
-                  {
-                    type: 'text',
-                    text: scheduleData.teacherName,
-                    size: 'sm',
-                    color: '#666666',
-                    flex: 5,
-                  },
-                ],
-              },
-            ],
+            text: `This is a reminder that ${scheduleData.studentName} is scheduled to attend the ${scheduleData.courseName} on ${scheduleData.date}, from ${scheduleData.startTime} to ${scheduleData.endTime}. Kindly confirm if he will be available to attend, or if you would prefer to cancel and reschedule.`,
+            wrap: true,
+            size: 'sm',
+            color: '#4a4a4a',
           },
         ],
+        paddingAll: 'xl',
       },
       footer: {
         type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
+        layout: 'horizontal',
         contents: [
           {
             type: 'button',
-            style: 'primary',
-            height: 'sm',
             action: {
               type: 'postback',
-              label: '✅ Confirm',
-              data: `action=confirm&scheduleId=${scheduleData.scheduleId}`,
-              displayText: 'Confirm attendance',
-            },
-          },
-          {
-            type: 'button',
-            style: 'secondary',
-            height: 'sm',
-            action: {
-              type: 'postback',
-              label: '🔄 Reschedule',
+              label: 'Reschedule',
               data: `action=reschedule&scheduleId=${scheduleData.scheduleId}`,
               displayText: 'Request reschedule',
             },
+            style: 'secondary',
+            color: '#aaaaaa',
+            flex: 1,
           },
           {
             type: 'button',
-            style: 'link',
-            height: 'sm',
             action: {
-              type: 'uri',
-              label: '📱 View Details',
-              uri: `https://liff.line.me/${liffId}/schedule/${scheduleData.scheduleId}`,
+              type: 'postback',
+              label: 'Confirm',
+              data: `action=confirm&scheduleId=${scheduleData.scheduleId}`,
+              displayText: 'Confirm attendance',
             },
+            style: 'primary',
+            color: '#17c950',
+            flex: 1,
           },
         ],
+        spacing: 'sm',
+        paddingAll: 'md',
+      },
+      styles: {
+        body: {
+          backgroundColor: '#ffffff',
+        },
       },
     };
 
-    const message: FlexMessage = {
+    const reminderMessage: FlexMessage = {
       type: 'flex',
-      altText: `Upcoming class: ${scheduleData.courseName} on ${scheduleData.date}`,
-      contents: bubble,
+      altText: `Reminder: ${scheduleData.courseName} on ${scheduleData.date}`,
+      contents: reminderBubble,
     };
 
-    await this.client.pushMessage(userId, message);
+    // Send both messages
+    await this.client.pushMessage(userId, [studentCardMessage, reminderMessage]);
     this.logger.log(
       `Sent schedule notification to ${userId} for schedule ${scheduleData.scheduleId}`,
     );

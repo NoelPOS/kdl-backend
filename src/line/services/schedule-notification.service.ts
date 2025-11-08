@@ -106,17 +106,27 @@ export class ScheduleNotificationService {
       // Send notification for each schedule
       for (const schedule of schedules) {
         try {
+          // Get attendance statistics for this student in this course
+          const attendanceStats = await this.getAttendanceStats(
+            schedule.studentId,
+            schedule.courseId,
+          );
+
           await this.lineMessagingService.sendScheduleNotification(
             parent.lineId,
             {
               scheduleId: schedule.id,
               studentName: schedule.student.name,
+              studentImage: schedule.student.profilePicture,
               courseName: schedule.course.title,
               date: this.formatDate(schedule.date.toString()),
               startTime: schedule.startTime,
               endTime: schedule.endTime,
               room: schedule.room,
               teacherName: schedule.teacher?.name || 'TBD',
+              attendedClasses: attendanceStats.attended,
+              totalClasses: attendanceStats.total,
+              cancelledClasses: attendanceStats.cancelled,
             },
           );
 
@@ -130,6 +140,28 @@ export class ScheduleNotificationService {
         }
       }
     }
+  }
+
+  /**
+   * Get attendance statistics for a student in a course
+   */
+  private async getAttendanceStats(
+    studentId: number,
+    courseId: number,
+  ): Promise<{ attended: number; total: number; cancelled: number }> {
+    const allSchedules = await this.scheduleRepository.find({
+      where: { studentId, courseId },
+    });
+
+    const attended = allSchedules.filter(
+      (s) => s.attendance === 'present' || s.attendance === 'confirmed',
+    ).length;
+    const cancelled = allSchedules.filter(
+      (s) => s.attendance === 'cancelled',
+    ).length;
+    const total = allSchedules.length;
+
+    return { attended, total, cancelled };
   }
 
   /**
@@ -280,15 +312,25 @@ export class ScheduleNotificationService {
       throw new NotFoundException('Schedule not found');
     }
 
+    // Get attendance statistics
+    const attendanceStats = await this.getAttendanceStats(
+      schedule.studentId,
+      schedule.courseId,
+    );
+
     await this.lineMessagingService.sendScheduleNotification(parent.lineId, {
       scheduleId: schedule.id,
       studentName: schedule.student.name,
+      studentImage: schedule.student.profilePicture,
       courseName: schedule.course.title,
       date: this.formatDate(schedule.date.toString()),
       startTime: schedule.startTime,
       endTime: schedule.endTime,
       room: schedule.room,
       teacherName: schedule.teacher?.name || 'TBD',
+      attendedClasses: attendanceStats.attended,
+      totalClasses: attendanceStats.total,
+      cancelledClasses: attendanceStats.cancelled,
     });
 
     this.logger.log(`Test notification sent to parent ${parentId}`);

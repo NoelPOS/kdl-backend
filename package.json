@@ -26,7 +26,8 @@
     "upload-rich-menu-images": "npm run build && node dist/scripts/upload-rich-menu-images.js",
     "list-rich-menus": "npm run build && node dist/scripts/list-rich-menus.js",
     "cleanup-rich-menus": "npm run build && node dist/scripts/cleanup-rich-menus.js",
-    "set-default-rich-menu": "npm run build && node dist/scripts/set-default-rich-menu.js"
+    "set-default-rich-menu": "npm run build && node dist/scripts/set-default-rich-menu.js",
+    "test-notification": "npm run build && node dist/scripts/test-notifications.js"
   },
   "dependencies": {
     "@line/bot-sdk": "^10.4.0",

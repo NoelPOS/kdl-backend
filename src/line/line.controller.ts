@@ -7,6 +7,7 @@ import {
   Logger,
   BadRequestException,
   Get,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { LineMessagingService } from './services/line-messaging.service';
@@ -336,4 +337,87 @@ export class LineController {
       instructions: 'Use these IDs in the upload-rich-menu-images.ts script or set them as environment variables: UNVERIFIED_MENU_ID and VERIFIED_MENU_ID',
     };
   }
+
+  /**
+   * Test notification endpoint - Send a test notification immediately
+   * GET /api/v1/line/test-notification/:parentId/:scheduleId
+   * 
+   * Use this to test if notifications are working without waiting for the cron job
+   */
+  @Get('test-notification/:parentId/:scheduleId')
+  @ApiOperation({ 
+    summary: 'Send test notification to a parent for a specific schedule',
+    description: 'Manually trigger a schedule notification to test the notification system'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Test notification sent successfully',
+  })
+  async sendTestNotification(
+    @Param('parentId') parentId: string,
+    @Param('scheduleId') scheduleId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      await this.scheduleNotificationService.sendTestNotification(
+        parseInt(parentId, 10),
+        parseInt(scheduleId, 10),
+      );
+      return {
+        success: true,
+        message: `Test notification sent to parent ${parentId} for schedule ${scheduleId}`,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to send test notification: ${error.message}`);
+      return {
+        success: false,
+        message: `Failed: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Manually trigger the daily notification cron job
+   * GET /api/v1/line/trigger-daily-notifications
+   * 
+   * Use this to test the cron job logic without waiting for 9 AM
+   */
+  @Get('trigger-daily-notifications')
+  @ApiOperation({ 
+    summary: 'Manually trigger the daily notification cron job',
+    description: 'Run the cron job that sends notifications for schedules 3 days in advance'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Daily notification job triggered',
+  })
+  async triggerDailyNotifications(): Promise<{ 
+    success: boolean; 
+    message: string;
+    targetDate: string;
+  }> {
+    try {
+      this.logger.log('Manually triggering daily notification job...');
+      
+      // Calculate the target date (3 days from now)
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + 3);
+      const dateString = targetDate.toISOString().split('T')[0];
+      
+      await this.scheduleNotificationService.sendDailyNotifications();
+      
+      return {
+        success: true,
+        message: 'Daily notification job completed. Check logs for details.',
+        targetDate: dateString,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to trigger daily notifications: ${error.message}`);
+      return {
+        success: false,
+        message: `Failed: ${error.message}`,
+        targetDate: null,
+      };
+    }
+  }
 }
+
