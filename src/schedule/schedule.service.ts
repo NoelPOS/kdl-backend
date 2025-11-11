@@ -35,7 +35,10 @@ export class ScheduleService {
   }
 
   async findOne(id: number) {
-    return this.scheduleRepo.findOne({ where: { id } });
+    return this.scheduleRepo.findOne({ 
+      where: { id },
+      relations: ['student', 'teacher', 'course', 'session', 'session.classOption']
+    });
   }
 
   async updateSchedule(
