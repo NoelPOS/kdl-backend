@@ -29,8 +29,8 @@ const IMAGE_DIR = path.join(__dirname, '../../public/rich-menu-images');
 
 // Image file names (must be 2500x843px, PNG or JPG)
 const IMAGE_PATHS = {
-  unverified: 'unverified-menu.png', // Image for unverified parents
-  verified: 'verified-menu.png',     // Image for verified parents
+  unverified: 'unverified-menu.jpg', // Image for unverified parents
+  verified: 'verified-menu.jpg',     // Image for verified parents
 };
 
 // Rich menu IDs (get these from LINE Developers Console or your logs)
