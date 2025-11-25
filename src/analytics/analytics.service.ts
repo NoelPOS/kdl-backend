@@ -8,8 +8,9 @@ import { Invoice } from '../invoice/entities/invoice.entity';
 import { Receipt } from '../receipt/entities/receipt.entity';
 import { StudentEntity } from '../student/entities/student.entity';
 import { TeacherEntity } from '../teacher/entities/teacher.entity';
-import { UserRole } from '../common/enums/user-role.enum';
-import { DashboardOverviewDto, TotalCountsDto, RevenueMetricsDto, TopCourseDto } from './dto/dashboard-overview.dto';
+import { DashboardOverviewDto, CourseTypeCountDto } from './dto/dashboard-overview.dto';
+import { AnalyticsFilterDto } from './dto/analytics-filter.dto';
+import { Schedule } from '../schedule/entities/schedule.entity';
 
 @Injectable()
 export class AnalyticsService {
@@ -28,114 +29,119 @@ export class AnalyticsService {
     private readonly invoiceRepository: Repository<Invoice>,
     @InjectRepository(Receipt)
     private readonly receiptRepository: Repository<Receipt>,
+    @InjectRepository(Schedule)
+    private readonly scheduleRepository: Repository<Schedule>,
   ) {}
 
-  async getDashboardOverview(): Promise<DashboardOverviewDto> {
+  async getDashboardOverview(filter?: AnalyticsFilterDto): Promise<DashboardOverviewDto> {
     // Execute all queries in parallel for better performance
-    const [totalCounts, revenue, topCourses] = await Promise.all([
-      this.getTotalCounts(),
-      this.getRevenueMetrics(),
-      this.getTopCourses(),
+    const [teacherClassCount, courseTypeCounts, activeStudentCount] = await Promise.all([
+      this.getTeacherClassCount(filter),
+      this.getCourseTypeCounts(filter),
+      this.getActiveStudentCount(filter),
     ]);
 
     return {
-      totalCounts,
-      revenue,
-      topCourses,
+      teacherClassCount,
+      courseTypeCounts,
+      activeStudentCount,
     };
   }
 
-  async getTotalCounts(): Promise<TotalCountsDto> {
-    // Use Promise.all to execute count queries in parallel
-    const [students, teachers, courses, activeSessions] = await Promise.all([
-      this.studentRepository.count(),
-      this.teacherRepository.count(),
-      this.courseRepository.count(),
-      this.sessionRepository.count({
-        where: { status: 'wip' }, // Count sessions that are "work in progress" (active)
-      }),
-    ]);
-
-    return {
-      students,
-      teachers,
-      courses,
-      activeSessions,
-    };
-  }
-
-  async getRevenueMetrics(): Promise<RevenueMetricsDto> {
-    // Get current and previous month dates
-    const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    // Execute revenue queries in parallel - using invoices instead of receipts
-    const [totalRevenueResult, currentMonthResult, previousMonthResult] = await Promise.all([
-      // Total revenue from invoices
-      this.invoiceRepository
-        .createQueryBuilder('invoice')
-        .select('SUM(invoice.totalAmount)', 'total')
-        .getRawOne(),
-
-      // Current month revenue
-      this.invoiceRepository
-        .createQueryBuilder('invoice')
-        .select('SUM(invoice.totalAmount)', 'total')
-        .where('invoice.createdAt >= :start', { start: currentMonthStart })
-        .getRawOne(),
-
-      // Previous month revenue
-      this.invoiceRepository
-        .createQueryBuilder('invoice')
-        .select('SUM(invoice.totalAmount)', 'total')
-        .where('invoice.createdAt >= :start AND invoice.createdAt <= :end', {
-          start: previousMonthStart,
-          end: previousMonthEnd,
-        })
-        .getRawOne(),
-    ]);
-
-    const totalRevenue = parseFloat(totalRevenueResult?.total || '0');
-    const currentMonthRevenue = parseFloat(currentMonthResult?.total || '0');
-    const previousMonthRevenue = parseFloat(previousMonthResult?.total || '0');
-
-    // Calculate growth percentage
-    let revenueGrowth = 0;
-    if (previousMonthRevenue > 0) {
-      revenueGrowth = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
-    } else if (currentMonthRevenue > 0) {
-      revenueGrowth = 100; // 100% growth if previous month was 0
+  async getTeacherClassCount(filter?: AnalyticsFilterDto): Promise<number> {
+    // If no teacher is specified, return 0 (teacher-specific metric)
+    if (!filter?.teacherId) {
+      return 0;
     }
 
-    return {
-      totalRevenue,
-      currentMonthRevenue,
-      revenueGrowth: Math.round(revenueGrowth * 100) / 100, // Round to 2 decimal places
-    };
+    const query = this.scheduleRepository
+      .createQueryBuilder('schedule')
+      .select('COUNT(DISTINCT CONCAT(schedule.date, schedule.startTime, schedule.endTime))', 'count')
+      .where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+
+    // Apply date filters if provided
+    if (filter.startDate) {
+      query.andWhere('schedule.date >= :startDate', { startDate: filter.startDate });
+    }
+    if (filter.endDate) {
+      query.andWhere('schedule.date <= :endDate', { endDate: filter.endDate });
+    }
+
+    const result = await query.getRawOne();
+    return parseInt(result?.count || '0');
   }
 
-  async getTopCourses(): Promise<TopCourseDto[]> {
-    // Get top courses by enrollment count, excluding TBC courses
-    const topCoursesByEnrollment = await this.sessionRepository
-      .createQueryBuilder('session')
-      .leftJoin('session.course', 'course')
-      .select([
-        'course.title as title',
-        'COUNT(DISTINCT session.id) as enrollmentCount'
-      ])
-      .where('course.title NOT ILIKE :tbcPattern', { tbcPattern: '%TBC%' })
-      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId = session.id)') // Exclude TBC sessions that are part of packages
-      .groupBy('course.id, course.title')
-      .orderBy('enrollmentCount', 'DESC')
-      .limit(3)
+  async getCourseTypeCounts(filter?: AnalyticsFilterDto): Promise<CourseTypeCountDto[]> {
+    const query = this.scheduleRepository
+      .createQueryBuilder('schedule')
+      .leftJoin('schedule.course', 'course')
+      .select('course.title', 'subject')
+      .addSelect('COUNT(DISTINCT CONCAT(schedule.date, schedule.startTime, schedule.endTime))', 'count');
+
+    // Apply date filters if provided
+    let hasWhereClause = false;
+    if (filter?.startDate) {
+      query.where('schedule.date >= :startDate', { startDate: filter.startDate });
+      hasWhereClause = true;
+    }
+    if (filter?.endDate) {
+      if (hasWhereClause) {
+        query.andWhere('schedule.date <= :endDate', { endDate: filter.endDate });
+      } else {
+        query.where('schedule.date <= :endDate', { endDate: filter.endDate });
+        hasWhereClause = true;
+      }
+    }
+
+    // Apply teacher filter if provided
+    if (filter?.teacherId) {
+      if (hasWhereClause) {
+        query.andWhere('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+      } else {
+        query.where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+      }
+    }
+
+    const results = await query
+      .groupBy('course.title')
       .getRawMany();
 
-    return topCoursesByEnrollment.map(course => ({
-      id: parseInt(course.id),
-      title: course.title || 'Unknown Course',
-      enrollmentCount: parseInt(course.enrollmentcount || '0'),
+    return results.map(r => ({
+      subject: r.subject || 'Unknown',
+      count: parseInt(r.count || '0'),
     }));
+  }
+
+  async getActiveStudentCount(filter?: AnalyticsFilterDto): Promise<number> {
+    const query = this.scheduleRepository
+      .createQueryBuilder('schedule')
+      .select('COUNT(DISTINCT schedule.studentId)', 'count');
+
+    // Apply date filters if provided
+    let hasWhereClause = false;
+    if (filter?.startDate) {
+      query.where('schedule.date >= :startDate', { startDate: filter.startDate });
+      hasWhereClause = true;
+    }
+    if (filter?.endDate) {
+      if (hasWhereClause) {
+        query.andWhere('schedule.date <= :endDate', { endDate: filter.endDate });
+      } else {
+        query.where('schedule.date <= :endDate', { endDate: filter.endDate });
+        hasWhereClause = true;
+      }
+    }
+
+    // Apply teacher filter if provided
+    if (filter?.teacherId) {
+      if (hasWhereClause) {
+        query.andWhere('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+      } else {
+        query.where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+      }
+    }
+
+    const result = await query.getRawOne();
+    return parseInt(result?.count || '0');
   }
 }

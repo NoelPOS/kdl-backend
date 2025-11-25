@@ -9,6 +9,7 @@ import { Session } from '../session/entities/session.entity';
 import { Invoice } from '../invoice/entities/invoice.entity';
 import { Receipt } from '../receipt/entities/receipt.entity';
 import { TeacherEntity } from '../teacher/entities/teacher.entity';
+import { Schedule } from '../schedule/entities/schedule.entity';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { TeacherEntity } from '../teacher/entities/teacher.entity';
       Session,
       Invoice,
       Receipt,
-      TeacherEntity
+      TeacherEntity,
+      Schedule
     ]),
   ],
   controllers: [AnalyticsController],

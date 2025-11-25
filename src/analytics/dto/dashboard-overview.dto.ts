@@ -1,48 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class TotalCountsDto {
-  @ApiProperty({ description: 'Total number of students' })
-  students: number;
+export class CourseTypeCountDto {
+  @ApiProperty({ description: 'Course subject/type' })
+  subject: string;
 
-  @ApiProperty({ description: 'Total number of teachers' })
-  teachers: number;
-
-  @ApiProperty({ description: 'Total number of courses' })
-  courses: number;
-
-  @ApiProperty({ description: 'Total number of active sessions' })
-  activeSessions: number;
-}
-
-export class RevenueMetricsDto {
-  @ApiProperty({ description: 'Total revenue all time' })
-  totalRevenue: number;
-
-  @ApiProperty({ description: 'Current month revenue' })
-  currentMonthRevenue: number;
-
-  @ApiProperty({ description: 'Revenue growth percentage (month-over-month)' })
-  revenueGrowth: number;
-}
-
-export class TopCourseDto {
-  @ApiProperty({ description: 'Course ID' })
-  id: number;
-
-  @ApiProperty({ description: 'Course title' })
-  title: string;
-
-  @ApiProperty({ description: 'Number of enrollments' })
-  enrollmentCount: number;
+  @ApiProperty({ description: 'Number of timeslots' })
+  count: number;
 }
 
 export class DashboardOverviewDto {
-  @ApiProperty({ description: 'Total counts overview', type: TotalCountsDto })
-  totalCounts: TotalCountsDto;
+  @ApiProperty({ description: 'Teacher class count (unique timeslots)', required: false })
+  teacherClassCount?: number;
 
-  @ApiProperty({ description: 'Revenue metrics', type: RevenueMetricsDto })
-  revenue: RevenueMetricsDto;
+  @ApiProperty({ description: 'Course type counts', type: [CourseTypeCountDto], required: false })
+  courseTypeCounts?: CourseTypeCountDto[];
 
-  @ApiProperty({ description: 'Top 5 best selling courses', type: [TopCourseDto] })
-  topCourses: TopCourseDto[];
+  @ApiProperty({ description: 'Active student count in timeframe', required: false })
+  activeStudentCount?: number;
 }
