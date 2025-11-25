@@ -1,6 +1,8 @@
 import {
   Controller,
   Post,
+  Delete,
+  Body,
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
@@ -91,5 +93,38 @@ export class UploadController {
     const urls = await Promise.all(uploadPromises);
 
     return { urls };
+  }
+
+  @Delete('feedback-media')
+  @ApiBody({
+    description: 'Delete a file from S3',
+    schema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The S3 URL of the file to delete',
+        },
+      },
+      required: ['url'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'File deleted successfully',
+  })
+  async deleteFeedbackMedia(
+    @Body('url') url: string,
+  ): Promise<{ success: boolean; message: string }> {
+    if (!url) {
+      throw new BadRequestException('URL is required');
+    }
+
+    await this.uploadService.deleteFile(url);
+
+    return {
+      success: true,
+      message: 'File deleted successfully',
+    };
   }
 }

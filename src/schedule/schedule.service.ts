@@ -96,9 +96,13 @@ export class ScheduleService {
         updateFields.feedbackDate = dto.feedbackDate
           ? new Date(dto.feedbackDate)
           : new Date();
-        // Add media fields for teachers
-        if (dto.feedbackImages !== undefined) updateFields.feedbackImages = dto.feedbackImages;
-        if (dto.feedbackVideos !== undefined) updateFields.feedbackVideos = dto.feedbackVideos;
+        // Add media fields for teachers (empty arrays clear the field)
+        if (dto.feedbackImages !== undefined) {
+          updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
+        }
+        if (dto.feedbackVideos !== undefined) {
+          updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
+        }
         // Don't set modified fields for original teacher
       } else if (user && (user.role === 'admin' || user.role === 'registrar')) {
         // Admin/Registrar can update any feedback
@@ -106,9 +110,13 @@ export class ScheduleService {
         updateFields.feedbackModifiedByName = user.name || user.userName;
         updateFields.feedbackModifiedAt = new Date();
         
-        // Add media fields for admin/registrar
-        if (dto.feedbackImages !== undefined) updateFields.feedbackImages = dto.feedbackImages;
-        if (dto.feedbackVideos !== undefined) updateFields.feedbackVideos = dto.feedbackVideos;
+        // Add media fields for admin/registrar (empty arrays clear the field)
+        if (dto.feedbackImages !== undefined) {
+          updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
+        }
+        if (dto.feedbackVideos !== undefined) {
+          updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
+        }
         
         if (dto.feedbackDate) {
           updateFields.feedbackDate = new Date(dto.feedbackDate);
@@ -118,9 +126,13 @@ export class ScheduleService {
         }
       } else {
         updateFields.feedback = dto.feedback;
-        // Add media fields for other users
-        if (dto.feedbackImages !== undefined) updateFields.feedbackImages = dto.feedbackImages;
-        if (dto.feedbackVideos !== undefined) updateFields.feedbackVideos = dto.feedbackVideos;
+        // Add media fields for other users (empty arrays clear the field)
+        if (dto.feedbackImages !== undefined) {
+          updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
+        }
+        if (dto.feedbackVideos !== undefined) {
+          updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
+        }
         
         if (dto.feedbackDate) {
           updateFields.feedbackDate = new Date(dto.feedbackDate);
@@ -282,12 +294,12 @@ export class ScheduleService {
       feedbackModifiedAt: new Date(),
     };
 
-    // Add media arrays if provided (TypeORM simple-array handles comma-separation)
-    if (dto.feedbackImages && dto.feedbackImages.length > 0) {
-      updateFields.feedbackImages = dto.feedbackImages;
+    // Add media arrays if provided (empty arrays clear the field)
+    if (dto.feedbackImages !== undefined) {
+      updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
     }
-    if (dto.feedbackVideos && dto.feedbackVideos.length > 0) {
-      updateFields.feedbackVideos = dto.feedbackVideos;
+    if (dto.feedbackVideos !== undefined) {
+      updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
     }
 
     const result = await this.scheduleRepo.update(id, updateFields);
