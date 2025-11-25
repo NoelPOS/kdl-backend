@@ -31,6 +31,7 @@ import { LineModule } from '../line/line.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { DatabaseModule } from '../database/database.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
@@ -115,6 +116,7 @@ import { DatabaseModule } from '../database/database.module';
     CoursePlusModule,
     AnalyticsModule,
     LineModule,
+    UploadModule,
   ],
   providers: [
     // Global Guards

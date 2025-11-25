@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsInt,
   IsDateString,
+  IsArray,
 } from 'class-validator';
 
 export class UpdateScheduleDto {
@@ -22,6 +23,26 @@ export class UpdateScheduleDto {
   @IsOptional()
   @IsString()
   feedback?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Array of image URLs for feedback',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  feedbackImages?: string[];
+
+  @ApiProperty({
+    required: false,
+    description: 'Array of video URLs for feedback',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  feedbackVideos?: string[];
 
   @ApiProperty({
     required: false,

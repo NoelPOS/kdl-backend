@@ -1322,7 +1322,7 @@ export class SessionService {
   }
 
   async submitFeedback(dto: SubmitFeedbackDto) {
-    const { sessionId, studentId, feedback, timestamp } = dto;
+    const { sessionId, studentId, feedback, timestamp, feedbackImages, feedbackVideos } = dto;
 
     // First, verify that the session exists and belongs to the student
     const session = await this.sessionRepository.findOne({
@@ -1339,15 +1339,26 @@ export class SessionService {
     // Prepare the feedback date
     const feedbackDate = timestamp ? new Date(timestamp) : new Date();
 
+    // Prepare update fields
+    const updateFields: any = {
+      feedback: feedback,
+      feedbackDate: feedbackDate,
+      verifyFb: false, // Mark feedback as not verified (teacher submitted)
+    };
+
+    // Add media arrays if provided (TypeORM simple-array handles comma-separation)
+    if (feedbackImages && feedbackImages.length > 0) {
+      updateFields.feedbackImages = feedbackImages;
+    }
+    if (feedbackVideos && feedbackVideos.length > 0) {
+      updateFields.feedbackVideos = feedbackVideos;
+    }
+
     // Update feedback for all schedules in this session
     const result = await this.scheduleRepo
       .createQueryBuilder()
       .update(Schedule)
-      .set({
-        feedback: feedback,
-        feedbackDate: feedbackDate,
-        verifyFb: false, // Mark feedback as not verified (teacher submitted)
-      })
+      .set(updateFields)
       .where('sessionId = :sessionId', { sessionId })
       .andWhere('studentId = :studentId', { studentId })
       .execute();
@@ -1368,6 +1379,10 @@ export class SessionService {
       studentId,
       courseName: session.course?.title,
       studentName: session.student?.name,
+      mediaAttached: {
+        images: feedbackImages?.length || 0,
+        videos: feedbackVideos?.length || 0,
+      },
     };
   }
 

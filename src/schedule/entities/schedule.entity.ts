@@ -106,6 +106,56 @@ export class Schedule {
   @ApiProperty({ description: 'When feedback was last modified' })
   feedbackModifiedAt?: Date;
 
+  @Column({ 
+    type: 'text', 
+    nullable: true,
+    transformer: {
+      to: (value: string[] | null | undefined): string | null => {
+        if (!value || value.length === 0) return null;
+        return value.join(',');
+      },
+      from: (value: string | null | undefined): string[] => {
+        if (!value) return [];
+        if (typeof value === 'string' && value.trim() === '') return [];
+        if (typeof value === 'string') {
+          return value.split(',').filter(url => url.trim().length > 0);
+        }
+        return [];
+      }
+    }
+  })
+  @ApiProperty({ 
+    description: 'URLs of feedback images stored in S3', 
+    required: false,
+    type: [String]
+  })
+  feedbackImages?: string[];
+
+  @Column({ 
+    type: 'text', 
+    nullable: true,
+    transformer: {
+      to: (value: string[] | null | undefined): string | null => {
+        if (!value || value.length === 0) return null;
+        return value.join(',');
+      },
+      from: (value: string | null | undefined): string[] => {
+        if (!value) return [];
+        if (typeof value === 'string' && value.trim() === '') return [];
+        if (typeof value === 'string') {
+          return value.split(',').filter(url => url.trim().length > 0);
+        }
+        return [];
+      }
+    }
+  })
+  @ApiProperty({ 
+    description: 'URLs of feedback videos stored in S3', 
+    required: false,
+    type: [String]
+  })
+  feedbackVideos?: string[];
+
   // class number
   @Column({ nullable: true })
   @ApiProperty({ description: 'Class number', required: false })

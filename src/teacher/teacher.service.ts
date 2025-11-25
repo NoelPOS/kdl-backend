@@ -426,6 +426,18 @@ export class TeacherService {
     }
   }
 
+  async getAllTeachers(): Promise<TeacherEntity[]> {
+    try {
+      return await this.teacherRepository.find({
+        order: { name: 'ASC' },
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to fetch all teachers: ' + error.message,
+      );
+    }
+  }
+
   async findTeacherById(id: number): Promise<TeacherEntity> {
     try {
       const teacher = await this.teacherRepository.findOneBy({ id });

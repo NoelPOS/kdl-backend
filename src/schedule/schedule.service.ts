@@ -48,6 +48,9 @@ export class ScheduleService {
   ) {
 
     console.log("This is the update schedule dto: ", dto);
+    console.log("DTO feedbackImages:", dto.feedbackImages);
+    console.log("DTO feedbackVideos:", dto.feedbackVideos);
+    
     // First, get the current schedule to check permissions
     const existingSchedule = await this.scheduleRepo.findOne({ where: { id } });
     if (!existingSchedule) {
@@ -93,12 +96,19 @@ export class ScheduleService {
         updateFields.feedbackDate = dto.feedbackDate
           ? new Date(dto.feedbackDate)
           : new Date();
+        // Add media fields for teachers
+        if (dto.feedbackImages !== undefined) updateFields.feedbackImages = dto.feedbackImages;
+        if (dto.feedbackVideos !== undefined) updateFields.feedbackVideos = dto.feedbackVideos;
         // Don't set modified fields for original teacher
       } else if (user && (user.role === 'admin' || user.role === 'registrar')) {
         // Admin/Registrar can update any feedback
         updateFields.feedback = dto.feedback;
         updateFields.feedbackModifiedByName = user.name || user.userName;
         updateFields.feedbackModifiedAt = new Date();
+        
+        // Add media fields for admin/registrar
+        if (dto.feedbackImages !== undefined) updateFields.feedbackImages = dto.feedbackImages;
+        if (dto.feedbackVideos !== undefined) updateFields.feedbackVideos = dto.feedbackVideos;
         
         if (dto.feedbackDate) {
           updateFields.feedbackDate = new Date(dto.feedbackDate);
@@ -108,6 +118,10 @@ export class ScheduleService {
         }
       } else {
         updateFields.feedback = dto.feedback;
+        // Add media fields for other users
+        if (dto.feedbackImages !== undefined) updateFields.feedbackImages = dto.feedbackImages;
+        if (dto.feedbackVideos !== undefined) updateFields.feedbackVideos = dto.feedbackVideos;
+        
         if (dto.feedbackDate) {
           updateFields.feedbackDate = new Date(dto.feedbackDate);
         }
@@ -259,14 +273,22 @@ export class ScheduleService {
       );
     }
 
-    // Update the feedback and set it as verified
-    const updateFields = {
+    // Prepare update fields
+    const updateFields: any = {
       feedback: dto.feedback,
       verifyFb: true,
       feedbackDate: new Date(),
       feedbackModifiedByName: user.name || user.userName,
       feedbackModifiedAt: new Date(),
     };
+
+    // Add media arrays if provided (TypeORM simple-array handles comma-separation)
+    if (dto.feedbackImages && dto.feedbackImages.length > 0) {
+      updateFields.feedbackImages = dto.feedbackImages;
+    }
+    if (dto.feedbackVideos && dto.feedbackVideos.length > 0) {
+      updateFields.feedbackVideos = dto.feedbackVideos;
+    }
 
     const result = await this.scheduleRepo.update(id, updateFields);
 
@@ -282,6 +304,10 @@ export class ScheduleService {
       verifiedBy: user.role,
       verifiedAt: new Date().toISOString(),
       verificationNote: dto.verificationNote || null,
+      mediaAttached: {
+        images: dto.feedbackImages?.length || 0,
+        videos: dto.feedbackVideos?.length || 0,
+      },
       scheduleDetails: {
         studentName: existingSchedule.student?.name,
         teacherName: existingSchedule.teacher?.name,
@@ -411,29 +437,41 @@ export class ScheduleService {
       .getMany();
 
     // Transform the data to match the frontend FeedbackItem interface
-    const feedbacks = schedules.map((schedule) => ({
-      id: schedule.id.toString(),
-      scheduleId: schedule.id.toString(),
-      studentId: schedule.student?.id?.toString() || '',
-      studentName: schedule.student?.name || '',
-      studentNickname: schedule.student?.nickname || '',
-      studentPhone: schedule.student?.phone || '',
-      studentProfilePicture: schedule.student?.profilePicture || '',
-      courseTitle: schedule.course?.title || '',
-      teacherName: schedule.teacher?.name || '',
-      feedback: schedule.feedback || '',
-      feedbackDate: schedule.feedbackDate
-        ? schedule.feedbackDate.toISOString()
-        : '',
-      sessionDate: schedule.date ? schedule.date.toString() : '',
-      sessionTime:
-        schedule.startTime && schedule.endTime
-          ? `${schedule.startTime} - ${schedule.endTime}`
+    const feedbacks = schedules.map((schedule) => {
+      console.log('Raw schedule data:', {
+        feedbackImages: schedule.feedbackImages,
+        feedbackVideos: schedule.feedbackVideos,
+        feedbackImagesType: typeof schedule.feedbackImages,
+        feedbackVideosType: typeof schedule.feedbackVideos,
+      });
+      
+      return {
+        id: schedule.id.toString(),
+        scheduleId: schedule.id.toString(),
+        studentId: schedule.student?.id?.toString() || '',
+        studentName: schedule.student?.name || '',
+        studentNickname: schedule.student?.nickname || '',
+        studentPhone: schedule.student?.phone || '',
+        studentProfilePicture: schedule.student?.profilePicture || '',
+        courseTitle: schedule.course?.title || '',
+        teacherName: schedule.teacher?.name || '',
+        feedback: schedule.feedback || '',
+        feedbackDate: schedule.feedbackDate
+          ? schedule.feedbackDate.toISOString()
           : '',
-      // Add modification tracking fields
-      feedbackModifiedByName: schedule.feedbackModifiedByName || '',
-      feedbackModifiedAt: schedule.feedbackModifiedAt ? schedule.feedbackModifiedAt.toISOString() : '',
-    }));
+        sessionDate: schedule.date ? schedule.date.toString() : '',
+        sessionTime:
+          schedule.startTime && schedule.endTime
+            ? `${schedule.startTime} - ${schedule.endTime}`
+            : '',
+        // Add modification tracking fields
+        feedbackModifiedByName: schedule.feedbackModifiedByName || '',
+        feedbackModifiedAt: schedule.feedbackModifiedAt ? schedule.feedbackModifiedAt.toISOString() : '',
+        // Add media fields - transformer already converts to arrays
+        feedbackImages: schedule.feedbackImages || [],
+        feedbackVideos: schedule.feedbackVideos || [],
+      };
+    });
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / validatedLimit);

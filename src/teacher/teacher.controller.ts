@@ -232,6 +232,19 @@ export class TeacherController {
   }
 
   @ApiTags('Teachers')
+  @Get('all')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Get all teachers without pagination' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all teachers',
+    type: [TeacherEntity],
+  })
+  getAllTeachers() {
+    return this.teacherService.getAllTeachers();
+  }
+
+  @ApiTags('Teachers')
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
   @ApiOperation({ summary: 'Get a teacher by ID' })
