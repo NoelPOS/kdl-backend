@@ -86,4 +86,22 @@ export class UpdateTeacherDto {
   @IsOptional()
   @IsEnum(UserRole, { message: 'Role must be a valid UserRole' })
   role?: UserRole;
+
+  @ApiProperty({
+    example: 'full-time',
+    description: 'Teacher type: full-time or part-time',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  teacherType?: string;
+
+  @ApiProperty({
+    example: ['Monday', 'Tuesday', 'Wednesday'],
+    description: 'Working days for full-time teachers',
+    required: false,
+    type: [String],
+  })
+  @IsOptional()
+  workingDays?: string[];
 }

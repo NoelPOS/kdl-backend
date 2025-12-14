@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Patch,
+  Delete,
   ParseIntPipe,
   NotFoundException,
   Query,
@@ -17,6 +18,8 @@ import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { AssignCoursesToTeacherDto } from './dto/assign-course-teacher.dto';
+import { CreateAbsenceDto } from './dto/create-absence.dto';
+import { UpdateAbsenceDto } from './dto/update-absence.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -27,6 +30,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { TeacherEntity } from './entities/teacher.entity';
+import { TeacherAbsence } from './entities/teacher-absence.entity';
 import { PaginatedTeacherResponseDto } from './dto/paginated-teacher-response.dto';
 import { PaginatedTeacherCoursesResponseDto } from './dto/paginated-teacher-courses-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -313,4 +317,106 @@ export class TeacherController {
     }
     return teacher;
   }
+
+  // ==================== TEACHER ABSENCE ENDPOINTS ====================
+
+  @ApiTags('Teacher Absences')
+  @Get(':id/absences')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Get all absences for a teacher' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns list of teacher absences',
+    type: [TeacherAbsence],
+  })
+  getTeacherAbsences(@Param('id', ParseIntPipe) id: number) {
+    return this.teacherService.getTeacherAbsences(id);
+  }
+
+  @ApiTags('Teacher Absences')
+  @Post(':id/absences')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Create a new absence for a teacher' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiBody({ type: CreateAbsenceDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Absence has been successfully created',
+    type: TeacherAbsence,
+  })
+  createTeacherAbsence(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateAbsenceDto,
+  ) {
+    return this.teacherService.createTeacherAbsence(id, dto);
+  }
+
+  @ApiTags('Teacher Absences')
+  @Patch(':id/absences/:absenceId')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Update an absence for a teacher' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiParam({ name: 'absenceId', required: true, description: 'Absence ID' })
+  @ApiBody({ type: UpdateAbsenceDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Absence has been successfully updated',
+    type: TeacherAbsence,
+  })
+  updateTeacherAbsence(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('absenceId', ParseIntPipe) absenceId: number,
+    @Body() dto: UpdateAbsenceDto,
+  ) {
+    return this.teacherService.updateTeacherAbsence(id, absenceId, dto);
+  }
+
+  @ApiTags('Teacher Absences')
+  @Delete(':id/absences/:absenceId')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Delete an absence for a teacher' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiParam({ name: 'absenceId', required: true, description: 'Absence ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Absence has been successfully deleted',
+  })
+  deleteTeacherAbsence(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('absenceId', ParseIntPipe) absenceId: number,
+  ) {
+    return this.teacherService.deleteTeacherAbsence(id, absenceId);
+  }
+
+  // ==================== TEACHER AVAILABILITY CHECK ====================
+
+  @ApiTags('Teacher Availability')
+  @Get(':id/availability')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Check if a teacher is available on a specific date/time' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiQuery({ name: 'date', required: true, description: 'Date to check (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'startTime', required: false, description: 'Start time (HH:MM)' })
+  @ApiQuery({ name: 'endTime', required: false, description: 'End time (HH:MM)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns availability status',
+    schema: {
+      type: 'object',
+      properties: {
+        available: { type: 'boolean' },
+        reason: { type: 'string' },
+      },
+    },
+  })
+  checkTeacherAvailability(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('date') date: string,
+    @Query('startTime') startTime?: string,
+    @Query('endTime') endTime?: string,
+  ) {
+    return this.teacherService.checkTeacherAvailability(id, date, startTime, endTime);
+  }
 }
+

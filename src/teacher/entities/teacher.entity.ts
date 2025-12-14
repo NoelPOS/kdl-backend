@@ -69,4 +69,42 @@ export class TeacherEntity {
   })
   @ApiProperty({ description: 'Teacher profile key' })
   profileKey: string;
+
+  @Column({
+    name: 'teacher_type',
+    type: 'varchar',
+    length: 20,
+    default: 'full-time',
+  })
+  @ApiProperty({ 
+    description: 'Teacher type: full-time or part-time',
+    default: 'full-time',
+  })
+  teacherType: string;
+
+  @Column({
+    name: 'working_days',
+    type: 'text',
+    nullable: true,
+    transformer: {
+      to: (value: string[] | null | undefined): string | null => {
+        if (!value || value.length === 0) return null;
+        return JSON.stringify(value);
+      },
+      from: (value: string | null | undefined): string[] => {
+        if (!value) return [];
+        try {
+          return JSON.parse(value);
+        } catch {
+          return [];
+        }
+      },
+    },
+  })
+  @ApiProperty({ 
+    description: 'Working days for full-time teachers (e.g., ["Monday", "Tuesday", "Wednesday"])',
+    required: false,
+    type: [String],
+  })
+  workingDays?: string[];
 }

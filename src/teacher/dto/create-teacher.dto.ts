@@ -76,4 +76,23 @@ export class CreateTeacherDto {
   @IsOptional()
   @IsString()
   profileKey?: string;
+
+  @ApiProperty({
+    example: 'full-time',
+    description: 'Teacher type: full-time or part-time',
+    required: false,
+    default: 'full-time',
+  })
+  @IsOptional()
+  @IsString()
+  teacherType?: string;
+
+  @ApiProperty({
+    example: ['Monday', 'Tuesday', 'Wednesday'],
+    description: 'Working days for full-time teachers',
+    required: false,
+    type: [String],
+  })
+  @IsOptional()
+  workingDays?: string[];
 }
