@@ -7,10 +7,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, In, Repository, Not } from 'typeorm';
 import { TeacherEntity } from './entities/teacher.entity';
 import { TeacherCourseEntity } from './entities/teacher-course.entity';
+import { TeacherAbsence } from './entities/teacher-absence.entity';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { CreateAbsenceDto } from './dto/create-absence.dto';
+import { UpdateAbsenceDto } from './dto/update-absence.dto';
 import { CourseEntity } from '../course/entities/course.entity';
 import { Session } from '../session/entities/session.entity';
+import { Schedule } from '../schedule/entities/schedule.entity';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -22,11 +26,17 @@ export class TeacherService {
     @InjectRepository(TeacherCourseEntity)
     private teacherCourseRepo: Repository<TeacherCourseEntity>,
 
+    @InjectRepository(TeacherAbsence)
+    private teacherAbsenceRepo: Repository<TeacherAbsence>,
+
     @InjectRepository(Session)
     private sessionRepo: Repository<Session>,
 
     @InjectRepository(CourseEntity)
     private courseRepository: Repository<CourseEntity>,
+
+    @InjectRepository(Schedule)
+    private scheduleRepo: Repository<Schedule>,
   ) {}
 
   async createTeacher(
@@ -479,4 +489,133 @@ export class TeacherService {
 
     return teacher;
   }
+
+  // ==================== TEACHER ABSENCE CRUD ====================
+
+  async getTeacherAbsences(teacherId: number): Promise<TeacherAbsence[]> {
+    await this.findTeacherById(teacherId); // Verify teacher exists
+    return this.teacherAbsenceRepo.find({
+      where: { teacherId },
+      order: { absenceDate: 'ASC' },
+    });
+  }
+
+  async createTeacherAbsence(
+    teacherId: number,
+    dto: CreateAbsenceDto,
+  ): Promise<TeacherAbsence> {
+    await this.findTeacherById(teacherId); // Verify teacher exists
+
+    const absence = new TeacherAbsence();
+    absence.teacherId = teacherId;
+    absence.absenceDate = new Date(dto.absenceDate);
+    absence.reason = dto.reason;
+
+    return this.teacherAbsenceRepo.save(absence);
+  }
+
+  async updateTeacherAbsence(
+    teacherId: number,
+    absenceId: number,
+    dto: UpdateAbsenceDto,
+  ): Promise<TeacherAbsence> {
+    const absence = await this.teacherAbsenceRepo.findOne({
+      where: { id: absenceId, teacherId },
+    });
+
+    if (!absence) {
+      throw new NotFoundException(
+        `Absence with ID ${absenceId} not found for teacher ${teacherId}`,
+      );
+    }
+
+    if (dto.absenceDate) {
+      absence.absenceDate = new Date(dto.absenceDate);
+    }
+    if (dto.reason !== undefined) {
+      absence.reason = dto.reason;
+    }
+
+    return this.teacherAbsenceRepo.save(absence);
+  }
+
+  async deleteTeacherAbsence(teacherId: number, absenceId: number): Promise<void> {
+    const absence = await this.teacherAbsenceRepo.findOne({
+      where: { id: absenceId, teacherId },
+    });
+
+    if (!absence) {
+      throw new NotFoundException(
+        `Absence with ID ${absenceId} not found for teacher ${teacherId}`,
+      );
+    }
+
+    await this.teacherAbsenceRepo.remove(absence);
+  }
+
+  // ==================== TEACHER AVAILABILITY CHECK ====================
+
+  private getDayOfWeek(date: Date): string {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[date.getDay()];
+  }
+
+  async checkTeacherAvailability(
+    teacherId: number,
+    date: string,
+    startTime?: string,
+    endTime?: string,
+  ): Promise<{ available: boolean; reason?: string }> {
+    const teacher = await this.findTeacherById(teacherId);
+    const checkDate = new Date(date);
+
+    // Only check availability for full-time teachers
+    if (teacher.teacherType === 'full-time') {
+      // Check 1: Is it a working day?
+      const dayOfWeek = this.getDayOfWeek(checkDate);
+      const workingDays = teacher.workingDays || [];
+
+      if (workingDays.length > 0 && !workingDays.includes(dayOfWeek)) {
+        return {
+          available: false,
+          reason: `${teacher.name} does not work on ${dayOfWeek}s`,
+        };
+      }
+
+      // Check 2: Is there an absence on this date?
+      const absence = await this.teacherAbsenceRepo.findOne({
+        where: { teacherId, absenceDate: checkDate },
+      });
+
+      if (absence) {
+        return {
+          available: false,
+          reason: `${teacher.name} is on leave: ${absence.reason || 'No reason specified'}`,
+        };
+      }
+    }
+
+    // Check 3: Does teacher already have a class at this time?
+    if (startTime && endTime) {
+      const existingSchedule = await this.scheduleRepo
+        .createQueryBuilder('schedule')
+        .where('schedule.teacherId = :teacherId', { teacherId })
+        .andWhere('schedule.date = :date', { date })
+        .andWhere(
+          '(schedule.startTime < :endTime AND schedule.endTime > :startTime)',
+          { startTime, endTime },
+        )
+        .getOne();
+
+      if (existingSchedule) {
+        return {
+          available: false,
+          reason: `${teacher.name} already has a class scheduled at this time (${existingSchedule.startTime} - ${existingSchedule.endTime})`,
+        };
+      }
+    }
+
+    return { available: true };
+  }
 }
+
