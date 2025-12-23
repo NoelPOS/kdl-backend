@@ -84,7 +84,14 @@ jobs:
           LINE_CHANNEL_ACCESS_TOKEN=GEsfP7GWCUpks/dni69SmF59jCff1nWxmqxK6o2E7bu+mcOLIi0WQAx5hYaAI/JJzcsOfFS8GiALOXacCBhc/+CkBGnCtUMIK3Shhaxu2089PhiKppj7WpV0Mg2U1vWleP2tEpPqs87mDMYzDzs3kwdB04t89/1O/w1cDnyilFU=
           LINE_CHANNEL_SECRET=43c1c7d1a115adc92e4f61c1f7cf1ec3
           LINE_LIFF_ID=2008403698-g6d9DA22
-          FRONTEND_URL=http://54.221.191.226:3000
+          FRONTEND_URL=https://registrar.kiddeelab.co.th
+          CORS_ORIGINS=https://registrar.kiddeelab.co.th,https://kdl-frontend.vercel.app,http://98.91.29.102:3000,http://98.91.29.102,http://localhost:3000
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=us-east-1
+          AWS_S3_BUCKET=kiddee-lab-lms
+          UNVERIFIED_MENU_ID=richmenu-7d03576ea166ce848e8a070d7cebf20f
+          VERIFIED_MENU_ID=richmenu-e5c3660093c845ffbac1a5c3f4afc12e
           EOF
           
           # Stop backend container
