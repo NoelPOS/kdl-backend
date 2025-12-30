@@ -169,6 +169,26 @@ export class ParentPortalController {
   }
 
   /**
+   * Get all schedules for a student (for LIFF calendar "All Schedules" view)
+   */
+  @Get('students/:studentId/schedules')
+  @ApiOperation({ summary: 'Get all schedules for a student for LIFF app' })
+  @ApiParam({
+    name: 'studentId',
+    type: Number,
+    description: 'Student ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all schedules for student',
+  })
+  async getStudentAllSchedules(
+    @Param('studentId', ParseIntPipe) studentId: number,
+  ) {
+    return this.scheduleService.getSchedulesByStudent(studentId);
+  }
+
+  /**
    * Get single schedule details for LIFF detail page
    */
   @Get('schedules/:scheduleId')

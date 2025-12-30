@@ -1032,4 +1032,18 @@ export class ScheduleService {
       schedule,
     };
   }
+
+  async getSchedulesByStudent(studentId: number) {
+    return this.scheduleRepo
+      .createQueryBuilder('schedule')
+      .leftJoinAndSelect('schedule.student', 'student')
+      .leftJoinAndSelect('schedule.teacher', 'teacher')
+      .leftJoinAndSelect('schedule.course', 'course')
+      .leftJoinAndSelect('schedule.session', 'session')
+      .leftJoinAndSelect('session.classOption', 'classOption')
+      .where('schedule.studentId = :studentId', { studentId })
+      .orderBy('schedule.date', 'DESC')
+      .addOrderBy('schedule.startTime', 'ASC')
+      .getMany();
+  }
 }
