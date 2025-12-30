@@ -22,6 +22,7 @@ import { VerifyParentDto } from './dto/verify-parent.dto';
 import { ParentService } from '../parent/parent.service';
 import { SessionService } from '../session/session.service';
 import { ScheduleService } from '../schedule/schedule.service';
+import { InvoiceService } from '../invoice/invoice.service';
 
 /**
  * Parent Portal Controller
@@ -33,6 +34,7 @@ import { ScheduleService } from '../schedule/schedule.service';
  * - GET /parent-portal/:id/children - Get parent's children
  * - GET /parent-portal/students/:id/sessions - Get student's sessions (courses)
  * - GET /parent-portal/sessions/:id/schedules - Get session's schedules
+ * - GET /parent-portal/:id/invoices - Get parent's invoices
  * 
  * Note: No authentication required - validates LINE user ID instead
  */
@@ -44,6 +46,7 @@ export class ParentPortalController {
     private readonly parentService: ParentService,
     private readonly sessionService: SessionService,
     private readonly scheduleService: ScheduleService,
+    private readonly invoiceService: InvoiceService,
   ) {}
 
   /**
@@ -244,5 +247,65 @@ export class ParentPortalController {
       message: 'Schedule cancelled and replacement schedule created. Our team will contact you to arrange a new time.',
       schedule: result,
     };
+  }
+  /**
+   * Unlink LINE account (Logout)
+   */
+  @Post('unlink')
+  @ApiOperation({ summary: 'Unlink LINE account from parent (Logout)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        lineUserId: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully unlinked',
+  })
+  async unlinkLineAccount(@Body('lineUserId') lineUserId: string) {
+    // Get parent by LINE ID to get their ID
+    const parent = await this.parentVerificationService.getParentByLineId(lineUserId);
+    
+    // Unlink logic is in service
+    await this.parentVerificationService.unlinkLineAccount(parent.id);
+    
+    return {
+      success: true,
+      message: 'Account unlinked successfully',
+    };
+  }
+
+  /**
+   * Get invoices for parent's students
+   */
+  @Get(':parentId/invoices')
+  @ApiOperation({ summary: 'Get invoices for parent students' })
+  @ApiParam({
+    name: 'parentId',
+    type: Number,
+    description: 'Parent ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of invoices',
+  })
+  async getParentInvoices(
+    @Param('parentId', ParseIntPipe) parentId: number,
+  ) {
+    // 1. Get all students linked to this parent
+    const childrenResponse = await this.parentService.getParentChildren(parentId);
+    const children = childrenResponse.children; // Access the children array from paginated response
+    
+    if (!children || children.length === 0) {
+      return [];
+    }
+
+    const studentIds = children.map(child => child.studentId);
+
+    // 2. Get invoices for these students
+    return this.invoiceService.findByStudentIds(studentIds);
   }
 }

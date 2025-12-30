@@ -489,4 +489,17 @@ export class InvoiceService {
       };
     });
   }
+  async findByStudentIds(
+    studentIds: number[],
+  ): Promise<Invoice[]> {
+    if (!studentIds || studentIds.length === 0) {
+      return [];
+    }
+
+    return this.invoiceRepository.createQueryBuilder('invoice')
+      .leftJoinAndSelect('invoice.items', 'items')
+      .where('invoice.studentId IN (:...studentIds)', { studentIds })
+      .orderBy('invoice.createdAt', 'DESC')
+      .getMany();
+  }
 }

@@ -11,11 +11,14 @@ import { DataSource } from 'typeorm';
 async function cleanupData() {
   console.log('🔄 Connecting to database...');
   
+  const isProd = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('amazonaws');
+  
   const dataSource = new DataSource({
     type: 'postgres',
     url: process.env.DATABASE_URL,
     synchronize: false,
     logging: true,
+    ssl: isProd ? { rejectUnauthorized: false } : undefined,
   });
 
   try {
@@ -27,7 +30,17 @@ async function cleanupData() {
     console.log('\n⚠️  Starting cleanup - this will delete all data from these tables!\n');
 
     // Use TRUNCATE with CASCADE to handle FK constraints automatically
-    const tables = ['receipts', 'invoice_items', 'invoices', 'schedules', 'sessions'];
+    // Order matters if fallback DELETE is used: delete dependents first
+    const tables = [
+      'receipts', 
+      'invoice_items', 
+      'invoices', 
+      'feedbacks',        // Added
+      'teacher_absences', // Added
+      'course_plus',      // Added
+      'schedules', 
+      'sessions'
+    ];
 
     for (const table of tables) {
       try {

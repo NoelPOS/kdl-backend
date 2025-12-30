@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual, LessThanOrEqual, Not, IsNull } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -222,6 +222,17 @@ export class ScheduleNotificationService {
       throw new NotFoundException('Schedule not found');
     }
 
+    // Check if already confirmed (Idempotency)
+    if (schedule.attendance === 'confirmed') {
+      this.logger.log(`Schedule ${scheduleId} is already confirmed. Skipping update.`);
+      return {
+        studentName: schedule.student.name,
+        date: this.formatDate(schedule.date.toString()),
+        startTime: schedule.startTime,
+        room: schedule.room,
+      };
+    }
+
     // Update attendance to confirmed
     await this.scheduleService.updateSchedule(scheduleId, {
       attendance: 'confirmed',
@@ -257,6 +268,20 @@ export class ScheduleNotificationService {
 
     if (!schedule) {
       throw new NotFoundException('Schedule not found');
+    }
+
+    // Check if already cancelled (Idempotency)
+    if (schedule.attendance === 'cancelled') {
+      this.logger.log(`Schedule ${scheduleId} is already cancelled. Skipping update.`);
+      return {
+        studentName: schedule.student.name,
+        date: this.formatDate(schedule.date.toString()),
+      };
+    }
+
+    // Check if already confirmed or present
+    if (schedule.attendance === 'confirmed' || schedule.attendance === 'present') {
+      throw new BadRequestException('Class is already confirmed. Please contact admin to reschedule.');
     }
 
     // Mark as cancelled with reschedule request

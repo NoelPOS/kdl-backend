@@ -22,6 +22,7 @@ import { Session } from '../session/entities/session.entity';
 import { ParentModule } from '../parent/parent.module';
 import { SessionModule } from '../session/session.module';
 import { ScheduleModule } from '../schedule/schedule.module';
+import { InvoiceModule } from '../invoice/invoice.module';
 
 /**
  * LINE Integration Module
@@ -60,6 +61,7 @@ import { ScheduleModule } from '../schedule/schedule.module';
     ParentModule,
     SessionModule,
     ScheduleModule,
+    InvoiceModule,
   ],
   controllers: [
     LineController,

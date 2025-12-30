@@ -278,10 +278,16 @@ export class LineController {
       ]);
     } catch (error) {
       this.logger.error(`Failed to request reschedule: ${error.message}`);
+      
+      // Send specific error message if available (e.g. "Class is already confirmed")
+      const errorMessage = error instanceof BadRequestException || error.status === 400
+        ? error.message
+        : 'Failed to submit reschedule request. Please contact KDL office directly.';
+
       await this.lineMessagingService.replyMessage(replyToken, [
         {
           type: 'text',
-          text: '❌ Failed to submit reschedule request. Please contact KDL office directly.',
+          text: `❌ ${errorMessage}`,
         },
       ]);
     }
