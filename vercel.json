@@ -10,7 +10,23 @@
   ],
   "routes": [
     {
+      "src": "/api/v1/(.*)",
+      "methods": ["OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "https://kdl-frontend.vercel.app",
+        "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, X-Requested-With",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400"
+      },
+      "dest": "dist/main.js"
+    },
+    {
       "src": "/(.*)",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://kdl-frontend.vercel.app",
+        "Access-Control-Allow-Credentials": "true"
+      },
       "dest": "dist/main.js"
     }
   ]
