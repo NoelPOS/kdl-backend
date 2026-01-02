@@ -5,7 +5,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UploadService {
@@ -42,7 +42,7 @@ export class UploadService {
 
     // Generate unique filename
     const fileExtension = filename.split('.').pop();
-    const uniqueFilename = `${folder}/${uuidv4()}.${fileExtension}`;
+    const uniqueFilename = `${folder}/${randomUUID()}.${fileExtension}`;
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
