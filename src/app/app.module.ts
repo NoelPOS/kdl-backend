@@ -19,6 +19,7 @@ import { ResendModule } from 'nestjs-resend';
 import { SharedModule } from '../shared/shared.module';
 import { CourseModule } from '../course/course.module';
 import { ScheduleModule } from '../schedule/schedule.module';
+import { NotificationModule } from '../notification/notification.module';
 import { RoomModule } from '../room/room.module';
 import { DiscountModule } from '../discount/discount.module';
 import { SessionModule } from '../session/session.module';
@@ -107,6 +108,7 @@ import { UploadModule } from '../upload/upload.module';
     SharedModule,
     CourseModule,
     ScheduleModule,
+    NotificationModule,
     RoomModule,
     DiscountModule,
     SessionModule,

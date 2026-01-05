@@ -7,6 +7,7 @@ import { ParentEntity } from '../../parent/entities/parent.entity';
 import { ParentStudentEntity } from '../../parent/entities/parent-student.entity';
 import { LineMessagingService } from './line-messaging.service';
 import { ScheduleService } from '../../schedule/schedule.service';
+import { NotificationService } from '../../notification/notification.service';
 
 /**
  * Schedule Notification Service
@@ -31,6 +32,7 @@ export class ScheduleNotificationService {
     private readonly parentStudentRepository: Repository<ParentStudentEntity>,
     private readonly lineMessagingService: LineMessagingService,
     private readonly scheduleService: ScheduleService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -215,7 +217,7 @@ export class ScheduleNotificationService {
   }> {
     const schedule = await this.scheduleRepository.findOne({
       where: { id: scheduleId },
-      relations: ['student'],
+      relations: ['student', 'teacher', 'course'],
     });
 
     if (!schedule) {
@@ -238,6 +240,37 @@ export class ScheduleNotificationService {
       attendance: 'confirmed',
       remark: 'Confirmed by parent via LINE',
     });
+
+    // Notify Teacher
+    if (schedule.teacherId) {
+      await this.notificationService.create(
+        schedule.teacherId,
+        'Schedule Confirmed',
+        `${schedule.student.name} confirmed attendance for ${schedule.course.title} on ${this.formatDate(schedule.date.toString())} at ${schedule.startTime}.`,
+        'schedule_confirmed',
+        { 
+          scheduleId,
+          studentId: schedule.studentId,
+          sessionId: schedule.sessionId 
+        },
+      );
+    }
+
+    // Notify Registrar and Admin
+    const rolesToNotify = ['registrar', 'admin'];
+    for (const role of rolesToNotify) {
+      await this.notificationService.createForRole(
+        role,
+        'Schedule Confirmed',
+        `${schedule.student.name} confirmed attendance for ${schedule.course.title} on ${this.formatDate(schedule.date.toString())} at ${schedule.startTime}.`,
+        'schedule_confirmed',
+        { 
+          scheduleId,
+          studentId: schedule.studentId,
+          sessionId: schedule.sessionId 
+        },
+      );
+    }
 
     this.logger.log(
       `Schedule ${scheduleId} confirmed by LINE user ${lineUserId}`,
@@ -263,7 +296,7 @@ export class ScheduleNotificationService {
   }> {
     const schedule = await this.scheduleRepository.findOne({
       where: { id: scheduleId },
-      relations: ['student'],
+      relations: ['student', 'teacher', 'course'],
     });
 
     if (!schedule) {
@@ -290,8 +323,25 @@ export class ScheduleNotificationService {
       remark: 'Reschedule requested by parent via LINE',
     });
 
-    // The updateSchedule method already creates a replacement schedule
-    // when attendance is changed to 'cancelled'
+    // 1. Notify Registrar (to re-book)
+    await this.notificationService.createForRole(
+      'registrar',
+      'Reschedule Requested',
+      `Parent of ${schedule.student.name} requested to reschedule ${schedule.course.title} on ${this.formatDate(schedule.date.toString())}.`,
+      'schedule_cancelled',
+      { scheduleId, oldDate: schedule.date, oldTime: schedule.startTime },
+    );
+
+    // 2. Notify Teacher (Cancellation)
+    if (schedule.teacherId) {
+      await this.notificationService.create(
+        schedule.teacherId,
+        'Class Cancelled',
+        `Class with ${schedule.student.name} (${schedule.course.title}) on ${this.formatDate(schedule.date.toString())} has been cancelled by parent.`,
+        'schedule_cancelled',
+        { scheduleId },
+      );
+    }
 
     this.logger.log(
       `Reschedule requested for schedule ${scheduleId} by LINE user ${lineUserId}`,

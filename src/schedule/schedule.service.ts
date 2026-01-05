@@ -14,6 +14,7 @@ import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
 import { time } from 'console';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class ScheduleService {
@@ -22,6 +23,7 @@ export class ScheduleService {
     private readonly scheduleRepo: Repository<Schedule>,
     @InjectRepository(TeacherEntity)
     private readonly teacherRepo: Repository<TeacherEntity>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(dto: CreateScheduleDto) {
@@ -52,7 +54,10 @@ export class ScheduleService {
     console.log("DTO feedbackVideos:", dto.feedbackVideos);
     
     // First, get the current schedule to check permissions
-    const existingSchedule = await this.scheduleRepo.findOne({ where: { id } });
+    const existingSchedule = await this.scheduleRepo.findOne({ 
+      where: { id },
+      relations: ['student', 'teacher', 'course'] 
+    });
     if (!existingSchedule) {
       throw new BadRequestException(`Schedule with ID ${id} not found`);
     }
@@ -103,6 +108,21 @@ export class ScheduleService {
         if (dto.feedbackVideos !== undefined) {
           updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
         }
+        
+        // Notify Registrar/Admin about new feedback
+        await this.notificationService.createForRole(
+          'registrar',
+          'Feedback Submitted',
+          `Teacher ${user.name} submitted feedback for ${existingSchedule.student.name} in ${existingSchedule.course.title}.`,
+          'feedback_submitted',
+          { 
+            scheduleId: id, 
+            teacherId: user.id, 
+            studentId: existingSchedule.studentId,
+            sessionId: existingSchedule.sessionId
+          }
+        );
+
         // Don't set modified fields for original teacher
       } else if (user && (user.role === 'admin' || user.role === 'registrar')) {
         // Admin/Registrar can update any feedback
@@ -798,252 +818,150 @@ export class ScheduleService {
       room,
       sort,
       page = 1,
-      pageSize, // Remove default value here since it's already set in controller
+      limit = 10,
     } = filterDto;
 
-    // Use 10 as fallback if pageSize is still undefined
-    const actualPageSize = pageSize || 10;
-
-
-    const qb = this.scheduleRepo
+    const queryBuilder = this.scheduleRepo
       .createQueryBuilder('schedule')
       .leftJoinAndSelect('schedule.student', 'student')
       .leftJoinAndSelect('schedule.teacher', 'teacher')
       .leftJoinAndSelect('schedule.course', 'course')
       .leftJoinAndSelect('schedule.session', 'session')
-      .leftJoinAndSelect('session.classOption', 'classOption');
+      .leftJoinAndSelect('session.classOption', 'classOption'); // For filtering by class type
 
-    // Track if any filters are applied
-    let filtersApplied = 0;
-
+    // 1. Date Range Filter
     if (startDate) {
-      console.log('Applying startDate filter:', startDate);
-      qb.andWhere('schedule.date >= :startDate', { startDate });
-      filtersApplied++;
+      queryBuilder.andWhere('schedule.date >= :startDate', { startDate });
     }
     if (endDate) {
-      console.log('Applying endDate filter:', endDate);
-      qb.andWhere('schedule.date <= :endDate', { endDate });
-      filtersApplied++;
+      queryBuilder.andWhere('schedule.date <= :endDate', { endDate });
     }
+
+    // 2. Student Name Filter (Partial Match)
     if (studentName) {
-      console.log('Applying studentName filter:', studentName);
-      qb.andWhere('student.name ILIKE :studentName', {
+      queryBuilder.andWhere('student.name ILIKE :studentName', {
         studentName: `%${studentName}%`,
       });
-      filtersApplied++;
     }
+
+    // 3. Teacher Name Filter (Partial Match)
     if (teacherName) {
-      console.log('Applying teacherName filter:', teacherName);
-      qb.andWhere('teacher.name ILIKE :teacherName', {
+      queryBuilder.andWhere('teacher.name ILIKE :teacherName', {
         teacherName: `%${teacherName}%`,
       });
-      filtersApplied++;
     }
+
+    // 4. Course Name Filter (Partial Match)
     if (courseName) {
-      console.log('Applying courseName filter:', courseName);
-      qb.andWhere('course.title ILIKE :courseName', {
+      queryBuilder.andWhere('course.title ILIKE :courseName', {
         courseName: `%${courseName}%`,
       });
-      filtersApplied++;
     }
+
+    // 5. Attendance Status Filter
     if (attendanceStatus && attendanceStatus !== 'all') {
-      console.log('Applying attendanceStatus filter:', attendanceStatus);
-      qb.andWhere('schedule.attendance = :attendanceStatus', {
+      queryBuilder.andWhere('schedule.attendance = :attendanceStatus', {
         attendanceStatus,
       });
-      filtersApplied++;
     }
-    if (classStatus && classStatus !== 'all') {
-      console.log('Applying classStatus filter:', classStatus);
-      qb.andWhere('schedule.status = :classStatus', { classStatus });
-      filtersApplied++;
+
+    // 6. Class Status Filter (e.g., Warning vs Normal)
+    if (classStatus === 'conflict') {
+      // Assuming 'conflict' means the warning field is not empty
+      queryBuilder.andWhere("schedule.warning != ''");
+    } else if (classStatus === 'normal') {
+      queryBuilder.andWhere("schedule.warning = ''");
     }
-    if (room) {
-      console.log('Applying room filter:', room);
-      qb.andWhere('schedule.room ILIKE :room', { room: `%${room}%` });
-      filtersApplied++;
-    }
+
+    // 7. Class Option Filter (e.g., Private, Group)
     if (classOption && classOption !== 'all') {
-      console.log('Applying classOption filter:', classOption);
-      qb.andWhere('classOption.classMode = :classOption', {
-        classOption,
-      });
-      filtersApplied++;
+      queryBuilder.andWhere('classOption.name = :classOption', { classOption });
     }
 
-    console.log('Total filters applied:', filtersApplied);
-
-    // Get total count before applying pagination
-    const totalCount = await qb.getCount();
-    console.log('Total count after filters:', totalCount);
-
-    // Sorting
-    switch (sort) {
-      case 'date_asc':
-        qb.orderBy('schedule.date', 'ASC');
-        break;
-      case 'date_desc':
-        qb.orderBy('schedule.date', 'DESC');
-        break;
-      case 'time_asc':
-        qb.orderBy('schedule.startTime', 'ASC');
-        break;
-      case 'time_desc':
-        qb.orderBy('schedule.startTime', 'DESC');
-        break;
-      case 'student_asc':
-        qb.orderBy('student.name', 'ASC');
-        break;
-      case 'student_desc':
-        qb.orderBy('student.name', 'DESC');
-        break;
-      case 'teacher_asc':
-        qb.orderBy('teacher.name', 'ASC');
-        break;
-      case 'teacher_desc':
-        qb.orderBy('teacher.name', 'DESC');
-        break;
-      case 'room_asc':
-        qb.orderBy('schedule.room', 'ASC');
-        break;
-      case 'room_desc':
-        qb.orderBy('schedule.room', 'DESC');
-        break;
-      case 'class_option_asc':
-        qb.orderBy('classOption.classMode', 'ASC');
-        break;
-      case 'class_option_desc':
-        qb.orderBy('classOption.classMode', 'DESC');
-        break;
-      default:
-        qb.orderBy('schedule.date', 'ASC');
+    // 8. Room Filter
+    if (room && room !== 'all') {
+      queryBuilder.andWhere('schedule.room = :room', { room });
     }
 
-    // Apply pagination
-    const offset = (page - 1) * actualPageSize;
-    qb.skip(offset).take(actualPageSize);
+    // 9. Sorting
+    if (sort) {
+      // Expected format: "field:direction" (e.g., "date:asc")
+      const [sortField, sortDirection] = sort.split(':');
+      const direction = sortDirection.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
+      // Map frontend sort fields to database columns
+      const fieldMap = {
+        date: 'schedule.date',
+        startTime: 'schedule.startTime',
+        studentName: 'student.name',
+        teacherName: 'teacher.name',
+        courseName: 'course.title',
+        room: 'schedule.room',
+        attendance: 'schedule.attendance',
+      };
 
-    // Try using getMany() instead of getRawMany() to see if pagination works
-    const schedulesEntities = await qb.getMany();
-    console.log(
-      'Number of schedule entities returned:',
-      schedulesEntities.length,
-    );
+      const dbField = fieldMap[sortField];
+      if (dbField) {
+        queryBuilder.orderBy(dbField, direction);
+      } else {
+        // Default sort if invalid field provided
+        queryBuilder.orderBy('schedule.date', 'ASC');
+      }
+    } else {
+      // Default sort behavior
+      queryBuilder
+        .orderBy('schedule.date', 'DESC')
+        .addOrderBy('schedule.startTime', 'ASC');
+    }
 
-    // Transform entities to the expected format
-    const schedules = schedulesEntities.map((schedule) => ({
-      schedule_id: schedule.id,
-      schedule_date: schedule.date,
-      schedule_startTime: schedule.startTime,
-      schedule_endTime: schedule.endTime,
-      schedule_room: schedule.room,
-      schedule_attendance: schedule.attendance,
-      schedule_remark: schedule.remark,
-      schedule_classNumber: schedule.classNumber,
-      schedule_warning: schedule.warning,
-      schedule_feedback: schedule.feedback,
-      schedule_feedbackDate: schedule.feedbackDate,
-      schedule_verifyFb: schedule.verifyFb,
-      schedule_courseId: schedule.courseId,
-      course_title: schedule.course?.title || null,
-      teacher_name: schedule.teacher?.name || 'TBD',
-      student_id: schedule.student?.id || null,
-      student_name: schedule.student?.name || null,
-      student_nickname: schedule.student?.nickname || null,
-      student_phone: schedule.student?.phone || null,
-      student_profilePicture: schedule.student?.profilePicture || null,
-      class_option: schedule.session?.classOption?.classMode || null,
-    }));
-
-    console.log('Schedules are as follows', schedules);
-
-    // Calculate pagination metadata
-    const totalPages = Math.ceil(totalCount / actualPageSize);
-    const hasNext = page < totalPages;
-    const hasPrev = page > 1;
+    // 10. Pagination
+    const skip = (page - 1) * limit;
+    const [data, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
     return {
-      schedules,
+      schedules: data,
       pagination: {
         currentPage: page,
-        totalPages,
-        totalCount,
-        hasNext,
-        hasPrev,
+        totalPages: Math.ceil(total / limit),
+        totalCount: total,
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
       },
     };
   }
-
-  async getSchedulesByStudentAndSession(sessionId: number, studentId: number) {
-    // for the relations select only student name, teacher name and course title
-    return this.scheduleRepo
-      .createQueryBuilder('schedule')
-      .leftJoin('schedule.student', 'student')
-      .leftJoin('schedule.teacher', 'teacher')
-      .leftJoin('schedule.course', 'course')
-      .addSelect([
-        'student.name',
-        'student.nickname',
-        'student.phone',
-        'student.profilePicture',
-        'teacher.name',
-        'course.title',
-      ])
-      .where('schedule.sessionId = :sessionId', { sessionId })
-      .andWhere('schedule.studentId = :studentId', { studentId })
-      .orderBy('schedule.date', 'ASC')
-      .getRawMany();
-  }
-
-  async getSchedulesBySession(sessionId: number) {
-    // Get schedules by session - return entities with relations
-    const schedules = await this.scheduleRepo
-      .createQueryBuilder('schedule')
-      .leftJoinAndSelect('schedule.student', 'student')
-      .leftJoinAndSelect('schedule.teacher', 'teacher')
-      .leftJoinAndSelect('schedule.course', 'course')
-      .leftJoinAndSelect('schedule.session', 'session')
-      .leftJoinAndSelect('session.classOption', 'classOption')
-      .where('schedule.sessionId = :sessionId', { sessionId })
-      .orderBy('schedule.date', 'ASC')
-      .addOrderBy('schedule.startTime', 'ASC')
-      .getMany();
-
-    return schedules;
-  }
-
-  async updateAttendance(scheduleId: number, attendance: string) {
-    const schedule = await this.scheduleRepo.findOne({
-      where: { id: scheduleId },
-    });
-
-    if (!schedule) {
-      throw new Error('Schedule not found');
-    }
-
-    schedule.attendance = attendance;
-    await this.scheduleRepo.save(schedule);
-
-    return {
-      success: true,
-      message: `Attendance updated to ${attendance}`,
-      schedule,
-    };
-  }
-
+  
   async getSchedulesByStudent(studentId: number) {
     return this.scheduleRepo
       .createQueryBuilder('schedule')
-      .leftJoinAndSelect('schedule.student', 'student')
-      .leftJoinAndSelect('schedule.teacher', 'teacher')
       .leftJoinAndSelect('schedule.course', 'course')
-      .leftJoinAndSelect('schedule.session', 'session')
-      .leftJoinAndSelect('session.classOption', 'classOption')
+      .leftJoinAndSelect('schedule.teacher', 'teacher')
+      .leftJoinAndSelect('schedule.student', 'student') // Need student info for conflict checks
+      .leftJoinAndSelect('schedule.room', 'room')
       .where('schedule.studentId = :studentId', { studentId })
-      .orderBy('schedule.date', 'DESC')
+      .andWhere('schedule.attendance != :attendance', {
+        attendance: 'cancelled',
+      })
+      .orderBy('schedule.date', 'ASC')
       .addOrderBy('schedule.startTime', 'ASC')
       .getMany();
+  }
+
+  async getSchedulesByStudentAndSession(sessionId: number, studentId: number) {
+    return this.scheduleRepo.find({
+      where: { sessionId, studentId },
+      relations: ['session', 'student', 'course'],
+      order: { date: 'ASC' }
+    });
+  }
+
+  async getSchedulesBySession(sessionId: number) {
+    return this.scheduleRepo.find({
+      where: { sessionId },
+      relations: ['session', 'student', 'course', 'teacher'],
+      order: { date: 'ASC' }
+    });
   }
 }

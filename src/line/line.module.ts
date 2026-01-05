@@ -15,6 +15,7 @@ import { ScheduleNotificationService } from './services/schedule-notification.se
 // Entities
 import { ParentEntity } from '../parent/entities/parent.entity';
 import { ParentStudentEntity } from '../parent/entities/parent-student.entity';
+import { NotificationModule } from '../notification/notification.module';
 import { Schedule } from '../schedule/entities/schedule.entity';
 import { Session } from '../session/entities/session.entity';
 
@@ -56,6 +57,7 @@ import { InvoiceModule } from '../invoice/invoice.module';
       Schedule,
       Session,
     ]),
+    NotificationModule,
     
     // External modules
     ParentModule,

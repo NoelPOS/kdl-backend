@@ -20,7 +20,7 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       type: 'postgres',
       url: configService.get<string>('DATABASE_URL'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: false, // Disabled to prevent conflicts - use migrations instead
+      synchronize: configService.get<boolean>('DB_SYNCHRONIZE', false), // Controlled via env var
       // Enhanced logging for performance monitoring
       logging:
         configService.get<string>('NODE_ENV') === 'development'

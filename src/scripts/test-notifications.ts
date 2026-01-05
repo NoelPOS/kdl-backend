@@ -8,13 +8,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app/app.module';
 import { ScheduleNotificationService } from '../line/services/schedule-notification.service';
+import { NotificationService } from '../notification/notification.service';
 import { DataSource } from 'typeorm';
 
 async function bootstrap() {
   console.log('🚀 Starting notification test...\n');
 
   const app = await NestFactory.createApplicationContext(AppModule);
-  const notificationService = app.get(ScheduleNotificationService);
+  const scheduleNotificationService = app.get(ScheduleNotificationService);
+  const notificationService = app.get(NotificationService);
   const dataSource = app.get(DataSource);
 
   try {
@@ -24,16 +26,19 @@ async function bootstrap() {
 
     switch (command) {
       case 'test':
-        await testSingleNotification(notificationService, dataSource, args);
+        await testSingleNotification(scheduleNotificationService, dataSource, args);
         break;
       case 'cron':
-        await testCronJob(notificationService, dataSource);
+        await testCronJob(scheduleNotificationService, dataSource);
         break;
       case 'list':
         await listEligibleSchedules(dataSource);
         break;
       case 'create':
         await createTestSchedule(dataSource, args);
+        break;
+      case 'seed':
+        await seedInAppNotifications(notificationService, dataSource, args);
         break;
       default:
         printHelp();
@@ -44,6 +49,53 @@ async function bootstrap() {
   } finally {
     await app.close();
   }
+}
+
+async function seedInAppNotifications(
+  service: NotificationService,
+  dataSource: DataSource,
+  args: string[],
+) {
+  const userId = args[1] ? parseInt(args[1], 10) : 1; 
+  console.log(`🌱 Seeding in-app notifications for User ID: ${userId}...\n`);
+
+  // Check if user exists
+  const user = await dataSource.query('SELECT id, "userName" as name, role FROM users WHERE id = $1', [userId]);
+  if (!user.length) {
+     console.error(`❌ User ID ${userId} not found.`);
+     return;
+  }
+  console.log(`👤 Target User: ${user[0].name} (${user[0].role})`);
+
+  // Create notifications
+  console.log('Creation 3 notifications...');
+  
+  await service.create(
+    userId,
+    'Schedule Confirmed',
+    'Student John Doe confirmed attendance for Math Class on 2023-10-25 at 10:00.',
+    'schedule_confirmed',
+    { scheduleId: 123, studentId: 1, sessionId: 125 }
+  );
+
+  await service.create(
+    userId,
+    'Schedule Cancelled',
+    'Parent requested to reschedule Science Class on 2023-10-26.',
+    'schedule_cancelled',
+    { scheduleId: 124, oldDate: '2023-10-26', studentId: 1, sessionId: 125 }
+  );
+
+  await service.create(
+    userId,
+    'Feedback Submitted',
+    'Teacher Jane Smith submitted feedback for English Class.',
+    'feedback_submitted',
+    { scheduleId: 125, teacherId: 42, studentId: 1, sessionId: 125 }
+  );
+
+  console.log('✅ In-app notifications seeded successfully!');
+  console.log('📱 Check the Notifications Page in the frontend.\n');
 }
 
 async function testSingleNotification(
@@ -296,12 +348,14 @@ function printHelp() {
   console.log('  test <parentId> <scheduleId>  - Send test notification to specific parent');
   console.log('  cron                          - Trigger the daily notification cron job');
   console.log('  list                          - List all eligible schedules (3 days from now)');
-  console.log('  create                        - Create a test schedule for testing\n');
+  console.log('  create                        - Create a test schedule for testing');
+  console.log('  seed [userId]                 - Seed in-app notifications (default user: 1)\n');
   console.log('Examples:');
   console.log('  npm run test-notification test 1 42');
   console.log('  npm run test-notification cron');
   console.log('  npm run test-notification list');
-  console.log('  npm run test-notification create\n');
+  console.log('  npm run test-notification create');
+  console.log('  npm run test-notification seed 1\n');
 }
 
 bootstrap().catch((error) => {
