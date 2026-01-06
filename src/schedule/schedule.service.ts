@@ -887,7 +887,7 @@ export class ScheduleService {
     if (sort) {
       // Expected format: "field:direction" (e.g., "date:asc")
       const [sortField, sortDirection] = sort.split(':');
-      const direction = sortDirection.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+      const direction = sortDirection?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
       // Map frontend sort fields to database columns
       const fieldMap = {
@@ -921,8 +921,35 @@ export class ScheduleService {
       .take(limit)
       .getManyAndCount();
 
+    // Transform to flat snake_case format matching ClassSchedule type
+    const transformedSchedules = data.map(schedule => ({
+      schedule_id: schedule.id?.toString() || '',
+      schedule_date: schedule.date?.toString() || '',
+      schedule_startTime: schedule.startTime || '',
+      schedule_endTime: schedule.endTime || '',
+      schedule_room: schedule.room || '',
+      schedule_attendance: schedule.attendance || '',
+      schedule_remark: schedule.remark || '',
+      schedule_feedback: schedule.feedback || '',
+      schedule_feedbackDate: schedule.feedbackDate?.toString() || '',
+      schedule_verifyFb: schedule.verifyFb || false,
+      schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
+      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_classNumber: schedule.classNumber || 0,
+      schedule_warning: schedule.warning || '',
+      schedule_courseId: schedule.courseId?.toString() || '',
+      course_title: schedule.course?.title || '',
+      session_mode: schedule.session?.classOption?.classMode || '',
+      teacher_name: schedule.teacher?.name || '',
+      student_id: schedule.student?.id?.toString() || '',
+      student_name: schedule.student?.name || '',
+      student_nickname: schedule.student?.nickname || '',
+      student_profilePicture: schedule.student?.profilePicture || '',
+      student_phone: schedule.student?.phone || '',
+    }));
+
     return {
-      schedules: data,
+      schedules: transformedSchedules,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
@@ -950,18 +977,72 @@ export class ScheduleService {
   }
 
   async getSchedulesByStudentAndSession(sessionId: number, studentId: number) {
-    return this.scheduleRepo.find({
+    const schedules = await this.scheduleRepo.find({
       where: { sessionId, studentId },
-      relations: ['session', 'student', 'course'],
+      relations: ['session', 'session.classOption', 'student', 'course', 'teacher'],
       order: { date: 'ASC' }
     });
+
+    // Transform to flat snake_case format matching ClassSchedule type
+    return schedules.map(schedule => ({
+      schedule_id: schedule.id?.toString() || '',
+      schedule_date: schedule.date?.toString() || '',
+      schedule_startTime: schedule.startTime || '',
+      schedule_endTime: schedule.endTime || '',
+      schedule_room: schedule.room || '',
+      schedule_attendance: schedule.attendance || '',
+      schedule_remark: schedule.remark || '',
+      schedule_feedback: schedule.feedback || '',
+      schedule_feedbackDate: schedule.feedbackDate?.toString() || '',
+      schedule_verifyFb: schedule.verifyFb || false,
+      schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
+      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_classNumber: schedule.classNumber || 0,
+      schedule_warning: schedule.warning || '',
+      schedule_courseId: schedule.courseId?.toString() || '',
+      course_title: schedule.course?.title || '',
+      session_mode: schedule.session?.classOption?.classMode || '',
+      teacher_name: schedule.teacher?.name || '',
+      student_id: schedule.student?.id?.toString() || '',
+      student_name: schedule.student?.name || '',
+      student_nickname: schedule.student?.nickname || '',
+      student_profilePicture: schedule.student?.profilePicture || '',
+      student_phone: schedule.student?.phone || '',
+    }));
   }
 
   async getSchedulesBySession(sessionId: number) {
-    return this.scheduleRepo.find({
+    const schedules = await this.scheduleRepo.find({
       where: { sessionId },
-      relations: ['session', 'student', 'course', 'teacher'],
+      relations: ['session', 'session.classOption', 'student', 'course', 'teacher'],
       order: { date: 'ASC' }
     });
+
+    // Transform to flat snake_case format matching ClassSchedule type
+    return schedules.map(schedule => ({
+      schedule_id: schedule.id?.toString() || '',
+      schedule_date: schedule.date?.toString() || '',
+      schedule_startTime: schedule.startTime || '',
+      schedule_endTime: schedule.endTime || '',
+      schedule_room: schedule.room || '',
+      schedule_attendance: schedule.attendance || '',
+      schedule_remark: schedule.remark || '',
+      schedule_feedback: schedule.feedback || '',
+      schedule_feedbackDate: schedule.feedbackDate?.toString() || '',
+      schedule_verifyFb: schedule.verifyFb || false,
+      schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
+      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_classNumber: schedule.classNumber || 0,
+      schedule_warning: schedule.warning || '',
+      schedule_courseId: schedule.courseId?.toString() || '',
+      course_title: schedule.course?.title || '',
+      session_mode: schedule.session?.classOption?.classMode || '',
+      teacher_name: schedule.teacher?.name || '',
+      student_id: schedule.student?.id?.toString() || '',
+      student_name: schedule.student?.name || '',
+      student_nickname: schedule.student?.nickname || '',
+      student_profilePicture: schedule.student?.profilePicture || '',
+      student_phone: schedule.student?.phone || '',
+    }));
   }
 }
