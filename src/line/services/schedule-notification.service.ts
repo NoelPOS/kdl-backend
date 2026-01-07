@@ -323,14 +323,17 @@ export class ScheduleNotificationService {
       remark: 'Reschedule requested by parent via LINE',
     });
 
-    // 1. Notify Registrar (to re-book)
-    await this.notificationService.createForRole(
-      'registrar',
-      'Reschedule Requested',
-      `Parent of ${schedule.student.name} requested to reschedule ${schedule.course.title} on ${this.formatDate(schedule.date.toString())}.`,
-      'schedule_cancelled',
-      { scheduleId, oldDate: schedule.date, oldTime: schedule.startTime },
-    );
+    // 1. Notify Registrar and Admin (to re-book)
+    const rolesToNotify = ['registrar', 'admin'];
+    for (const role of rolesToNotify) {
+      await this.notificationService.createForRole(
+        role,
+        'Reschedule Requested',
+        `Parent of ${schedule.student.name} requested to reschedule ${schedule.course.title} on ${this.formatDate(schedule.date.toString())}.`,
+        'schedule_cancelled',
+        { scheduleId, oldDate: schedule.date, oldTime: schedule.startTime },
+      );
+    }
 
     // 2. Notify Teacher (Cancellation)
     if (schedule.teacherId) {

@@ -109,19 +109,22 @@ export class ScheduleService {
           updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
         }
         
-        // Notify Registrar/Admin about new feedback
-        await this.notificationService.createForRole(
-          'registrar',
-          'Feedback Submitted',
-          `Teacher ${user.name} submitted feedback for ${existingSchedule.student.name} in ${existingSchedule.course.title}.`,
-          'feedback_submitted',
-          { 
-            scheduleId: id, 
-            teacherId: user.id, 
-            studentId: existingSchedule.studentId,
-            sessionId: existingSchedule.sessionId
-          }
-        );
+        // Notify Registrar and Admin about new feedback
+        const rolesToNotify = ['registrar', 'admin'];
+        for (const role of rolesToNotify) {
+          await this.notificationService.createForRole(
+            role,
+            'Feedback Submitted',
+            `Teacher ${user.name} submitted feedback for ${existingSchedule.student.name} in ${existingSchedule.course.title}.`,
+            'feedback_submitted',
+            { 
+              scheduleId: id, 
+              teacherId: user.id, 
+              studentId: existingSchedule.studentId,
+              sessionId: existingSchedule.sessionId
+            }
+          );
+        }
 
         // Don't set modified fields for original teacher
       } else if (user && (user.role === 'admin' || user.role === 'registrar')) {

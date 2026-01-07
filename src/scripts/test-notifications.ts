@@ -3,6 +3,22 @@
  * 
  * Quick script to test the notification system
  * Run with: npm run test-notification
+ * 
+ * # 1. Create test schedule
+npm run test-notification create
+
+# Output shows: parentId=1, scheduleId=99
+
+# 2. Test single notification
+npm run test-notification test 1 99
+
+# 3. Check LINE app - should receive message
+
+# 4. Test cron job (sends to all eligible)
+npm run test-notification cron
+
+# 5. List what schedules are eligible
+npm run test-notification list
  */
 
 import { NestFactory } from '@nestjs/core';
