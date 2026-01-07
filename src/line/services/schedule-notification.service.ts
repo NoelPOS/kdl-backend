@@ -331,7 +331,13 @@ export class ScheduleNotificationService {
         'Reschedule Requested',
         `Parent of ${schedule.student.name} requested to reschedule ${schedule.course.title} on ${this.formatDate(schedule.date.toString())}.`,
         'schedule_cancelled',
-        { scheduleId, oldDate: schedule.date, oldTime: schedule.startTime },
+        { 
+          scheduleId, 
+          studentId: schedule.studentId,
+          sessionId: schedule.sessionId,
+          oldDate: schedule.date, 
+          oldTime: schedule.startTime 
+        },
       );
     }
 
@@ -342,7 +348,11 @@ export class ScheduleNotificationService {
         'Class Cancelled',
         `Class with ${schedule.student.name} (${schedule.course.title}) on ${this.formatDate(schedule.date.toString())} has been cancelled by parent.`,
         'schedule_cancelled',
-        { scheduleId },
+        { 
+          scheduleId,
+          studentId: schedule.studentId,
+          sessionId: schedule.sessionId
+        },
       );
     }
 
