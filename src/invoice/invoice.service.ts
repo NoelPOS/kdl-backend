@@ -37,18 +37,19 @@ export class InvoiceService {
   async generateDocumentId(): Promise<string> {
     return this.dataSource.transaction(async (manager) => {
       const today = new Date();
-      const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-      const yearMonthDay = dateStr.replace(/-/g, ''); // YYYYMMDD format
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const yearMonth = `${year}${month}`;
 
-      // Try to find existing counter for today
+      // Try to find existing counter for this month
       let counter = await manager.getRepository(DocumentCounter).findOne({
-        where: { date: dateStr },
+        where: { date: yearMonth },
       });
 
       if (!counter) {
-        // Create new counter for today
+        // Create new counter for this month
         counter = manager.getRepository(DocumentCounter).create({
-          date: dateStr,
+          date: yearMonth,
           counter: 1,
         });
       } else {
@@ -59,8 +60,8 @@ export class InvoiceService {
       // Save the updated counter
       await manager.getRepository(DocumentCounter).save(counter);
 
-      // Generate document ID: YYYYMMDDXXXX (where XXXX is 4-digit counter)
-      const documentId = `${yearMonthDay}${counter.counter.toString().padStart(4, '0')}`;
+      // Generate document ID: YYYYMM-XXX (where XXX is 3-digit counter)
+      const documentId = `${yearMonth}-${counter.counter.toString().padStart(3, '0')}`;
 
       return documentId;
     });
@@ -69,15 +70,16 @@ export class InvoiceService {
   async getNextDocumentId(): Promise<string> {
     // Preview next document ID without incrementing counter
     const today = new Date();
-    const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    const yearMonthDay = dateStr.replace(/-/g, ''); // YYYYMMDD format
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const yearMonth = `${year}${month}`;
 
     const counter = await this.documentCounterRepository.findOne({
-      where: { date: dateStr },
+      where: { date: yearMonth },
     });
 
     const nextCounter = counter ? counter.counter + 1 : 1;
-    const documentId = `${yearMonthDay}${nextCounter.toString().padStart(4, '0')}`;
+    const documentId = `${yearMonth}-${nextCounter.toString().padStart(3, '0')}`;
 
     return documentId;
   }
@@ -303,7 +305,8 @@ export class InvoiceService {
     const queryBuilder = this.invoiceRepository
       .createQueryBuilder('invoice')
       .leftJoinAndSelect('invoice.items', 'items')
-      .leftJoin('students', 'student', 'student.id = invoice.studentId');
+      .leftJoin('students', 'student', 'student.id = invoice.studentId')
+      .addSelect('student.nickname', 'studentNickname');
 
     // Apply filters
     if (documentId) {
@@ -349,12 +352,18 @@ export class InvoiceService {
       .orderBy('invoice.createdAt', 'DESC')
       .skip(skip)
       .take(limit)
-      .getMany();
+      .getRawAndEntities();
+
+    // Map raw results to include studentNickname
+    const invoicesWithNickname = invoices.entities.map((invoice, index) => ({
+      ...invoice,
+      studentNickname: invoices.raw[index]?.studentNickname || null,
+    }));
 
     const totalPages = Math.ceil(totalCount / limit);
 
     return {
-      invoices,
+      invoices: invoicesWithNickname,
       pagination: {
         currentPage: page,
         totalPages,

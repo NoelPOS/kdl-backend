@@ -72,6 +72,11 @@ export class AnalyticsService {
       query.andWhere('schedule.date <= :endDate', { endDate: filter.endDate });
     }
 
+    // Apply attendance filter if provided
+    if (filter.attendance) {
+      query.andWhere('schedule.attendance = :attendance', { attendance: filter.attendance });
+    }
+
     const result = await query.getRawOne();
     return parseInt(result?.count || '0');
   }
@@ -109,6 +114,17 @@ export class AnalyticsService {
         query.andWhere('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
       } else {
         query.where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+        hasWhereClause = true;
+      }
+    }
+
+    // Apply attendance filter if provided
+    if (filter?.attendance) {
+      if (hasWhereClause) {
+        query.andWhere('schedule.attendance = :attendance', { attendance: filter.attendance });
+      } else {
+        query.where('schedule.attendance = :attendance', { attendance: filter.attendance });
+        hasWhereClause = true;
       }
     }
 
@@ -148,6 +164,17 @@ export class AnalyticsService {
         query.andWhere('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
       } else {
         query.where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+        hasWhereClause = true;
+      }
+    }
+
+    // Apply attendance filter if provided
+    if (filter?.attendance) {
+      if (hasWhereClause) {
+        query.andWhere('schedule.attendance = :attendance', { attendance: filter.attendance });
+      } else {
+        query.where('schedule.attendance = :attendance', { attendance: filter.attendance });
+        hasWhereClause = true;
       }
     }
 

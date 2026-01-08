@@ -27,4 +27,13 @@ export class AnalyticsFilterDto {
   @IsString()
   @IsIn(['timeslot', 'enrollment'])
   countBy?: 'timeslot' | 'enrollment';
+
+  @ApiPropertyOptional({ 
+    description: 'Filter by attendance status',
+    enum: ['completed', 'confirmed', 'pending', 'cancelled', 'absent']
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['completed', 'confirmed', 'pending', 'cancelled', 'absent'])
+  attendance?: string;
 }

@@ -23,6 +23,10 @@ async function bootstrap() {
   const cookieParser = require('cookie-parser');
   app.use(cookieParser());
 
+  // Set body size limits for file uploads (images up to 10MB, videos up to 100MB)
+  app.use(require('express').json({ limit: '100mb' }));
+  app.use(require('express').urlencoded({ limit: '100mb', extended: true }));
+
   // Express v5 compatibility - support complex query strings
   app.set('query parser', 'extended');
 
