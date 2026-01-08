@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { Brackets, ILike, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { StudentEntity } from './entities/student.entity';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -152,14 +152,14 @@ export class StudentService {
           'student.createdAt',
         ]);
 
-      // Filters
+      // Filters query is for both name and nickname
       if (query) {
-        queryBuilder.andWhere('student.name ILIKE :query', {
-          query: `%${query}%`,
-        });
-        queryBuilder.orWhere('student.nickname ILIKE :query', {
-          query: `%${query}%`,
-        });
+  queryBuilder.andWhere(
+    new Brackets((qb) => {
+      qb.where('student.name ILIKE :query', { query: `%${query}%` })
+        .orWhere('student.nickname ILIKE :query', { query: `%${query}%` });
+    })
+  );
       }
 
       if (active === 'active') {
@@ -261,7 +261,9 @@ export class StudentService {
 
       if (query.name) {
         where.name = ILike(`%${query.name}%`);
-        where.nickname = ILike(`%${query.name}%`);
+      }
+      if (query.nickname) {
+        where.nickname = ILike(`%${query.nickname}%`);
       }
       if (query.id) {
         where.studentId = query.id;

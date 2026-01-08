@@ -302,7 +302,8 @@ export class InvoiceService {
 
     const queryBuilder = this.invoiceRepository
       .createQueryBuilder('invoice')
-      .leftJoinAndSelect('invoice.items', 'items');
+      .leftJoinAndSelect('invoice.items', 'items')
+      .leftJoin('students', 'student', 'student.id = invoice.studentId');
 
     // Apply filters
     if (documentId) {
@@ -311,11 +312,12 @@ export class InvoiceService {
       });
     }
 
-    // Support both 'student' and 'studentName' for filtering by student name
+    // Support both 'student' and 'studentName' for filtering by student name OR nickname
     if (student) {
-      queryBuilder.andWhere('invoice.studentName ILIKE :student', {
-        student: `%${student}%`,
-      });
+      queryBuilder.andWhere(
+        '(invoice.studentName ILIKE :student OR student.nickname ILIKE :student)',
+        { student: `%${student}%` }
+      );
     }
 
     // Support both 'course' and 'courseName' for filtering by course name

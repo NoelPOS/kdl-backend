@@ -292,9 +292,9 @@ export class LineMessagingService {
             type: 'button',
             action: {
               type: 'postback',
-              label: 'Reschedule',
+              label: 'Take Leave',
               data: `action=reschedule&scheduleId=${scheduleData.scheduleId}`,
-              displayText: 'Request reschedule',
+              displayText: 'Request take leave',
             },
             style: 'secondary',
             color: '#aaaaaa',

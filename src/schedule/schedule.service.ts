@@ -840,11 +840,12 @@ export class ScheduleService {
       queryBuilder.andWhere('schedule.date <= :endDate', { endDate });
     }
 
-    // 2. Student Name Filter (Partial Match)
+    // 2. Student Name Filter (Partial Match - searches both name and nickname)
     if (studentName) {
-      queryBuilder.andWhere('student.name ILIKE :studentName', {
-        studentName: `%${studentName}%`,
-      });
+      queryBuilder.andWhere(
+        '(student.name ILIKE :studentName OR student.nickname ILIKE :studentName)',
+        { studentName: `%${studentName}%` }
+      );
     }
 
     // 3. Teacher Name Filter (Partial Match)

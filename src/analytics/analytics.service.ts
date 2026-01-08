@@ -54,9 +54,14 @@ export class AnalyticsService {
       return 0;
     }
 
+    const countBy = filter.countBy || 'timeslot'; // Default to timeslot (teacher perspective)
+    const selectClause = countBy === 'timeslot'
+      ? 'COUNT(DISTINCT CONCAT(schedule.date, schedule.startTime, schedule.endTime))'
+      : 'COUNT(schedule.id)';
+
     const query = this.scheduleRepository
       .createQueryBuilder('schedule')
-      .select('COUNT(DISTINCT CONCAT(schedule.date, schedule.startTime, schedule.endTime))', 'count')
+      .select(selectClause, 'count')
       .where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
 
     // Apply date filters if provided
@@ -72,11 +77,16 @@ export class AnalyticsService {
   }
 
   async getCourseTypeCounts(filter?: AnalyticsFilterDto): Promise<CourseTypeCountDto[]> {
+    const countBy = filter?.countBy || 'timeslot'; // Default to timeslot (teacher perspective)
+    const countClause = countBy === 'timeslot'
+      ? 'COUNT(DISTINCT CONCAT(schedule.date, schedule.startTime, schedule.endTime))'
+      : 'COUNT(schedule.id)';
+
     const query = this.scheduleRepository
       .createQueryBuilder('schedule')
       .leftJoin('schedule.course', 'course')
       .select('course.title', 'subject')
-      .addSelect('COUNT(DISTINCT CONCAT(schedule.date, schedule.startTime, schedule.endTime))', 'count');
+      .addSelect(countClause, 'count');
 
     // Apply date filters if provided
     let hasWhereClause = false;
