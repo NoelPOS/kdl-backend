@@ -259,8 +259,8 @@ export class StudentService {
       if (query.name) {
         where.name = ILike(`%${query.name}%`);
       }
-      if (query.nickname) {
-        where.nickname = ILike(`%${query.nickname}%`);
+      if (query.name) {
+        where.nickname = ILike(`%${query.name}%`);
       }
       if (query.id) {
         where.studentId = query.id;

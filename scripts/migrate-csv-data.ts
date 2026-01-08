@@ -29,9 +29,9 @@ import * as bcrypt from 'bcrypt';
 const CSV_DIR = path.join(__dirname, '..', '..'); // Root of kdl-lms folder
 
 const CSV_FILES = {
-  students2024: path.join(CSV_DIR, 'students-2024.csv'),
+  students2024: path.join(CSV_DIR, 'students_2024.csv'),
   students2025: path.join(CSV_DIR, 'students_2025.csv'),
-  courses: path.join(CSV_DIR, 'courses_2024.csv'),
+  courses: path.join(CSV_DIR, 'courses.csv'),
   sessions2024: path.join(CSV_DIR, 'sessions_2024.csv'),
   sessions2025: path.join(CSV_DIR, 'sessions_2025.csv'),
   schedules: path.join(CSV_DIR, 'schedules_2025.csv'),
