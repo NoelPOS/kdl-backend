@@ -157,6 +157,9 @@ export class StudentService {
         queryBuilder.andWhere('student.name ILIKE :query', {
           query: `%${query}%`,
         });
+        queryBuilder.orWhere('student.nickname ILIKE :query', {
+          query: `%${query}%`,
+        });
       }
 
       if (active === 'active') {
