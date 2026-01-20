@@ -34,4 +34,14 @@ export class CreateClassOptionDto {
   @IsOptional()
   @IsDateString()
   effectiveEndDate?: string;
+
+  @ApiProperty({
+    description: 'Option type: camp, fixed, or check',
+    enum: ['camp', 'fixed', 'check'],
+    required: false,
+    default: 'check',
+  })
+  @IsOptional()
+  @IsString()
+  optionType?: string;
 }

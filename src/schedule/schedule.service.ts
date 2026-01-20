@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
@@ -15,6 +17,8 @@ import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
 import { time } from 'console';
 import { NotificationService } from '../notification/notification.service';
+import { ParentService } from '../parent/parent.service';
+import { LineMessagingService } from '../line/services/line-messaging.service';
 
 @Injectable()
 export class ScheduleService {
@@ -24,6 +28,9 @@ export class ScheduleService {
     @InjectRepository(TeacherEntity)
     private readonly teacherRepo: Repository<TeacherEntity>,
     private readonly notificationService: NotificationService,
+    private readonly parentService: ParentService,
+    @Inject(forwardRef(() => LineMessagingService))
+    private readonly lineMessagingService: LineMessagingService,
   ) {}
 
   async create(dto: CreateScheduleDto) {
@@ -329,6 +336,30 @@ export class ScheduleService {
 
     if (result.affected === 0) {
       throw new NotFoundException(`Failed to update schedule with ID ${id}`);
+    }
+
+    // Send LINE notification to parent(s) about verified feedback
+    try {
+      const parents = await this.parentService.getParentsByStudentId(existingSchedule.studentId);
+      const verifiedParents = parents.filter(p => p.lineId); // Only notify verified parents
+      
+      for (const parent of verifiedParents) {
+        await this.lineMessagingService.sendFeedbackAvailableNotification(
+          parent.lineId,
+          {
+            studentName: existingSchedule.student?.name || 'Student',
+            courseName: existingSchedule.course?.title || 'Course',
+            date: existingSchedule.date 
+              ? new Date(existingSchedule.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+              : 'N/A',
+            scheduleId: id,
+            feedbackPreview: dto.feedback?.substring(0, 100),
+          },
+        );
+      }
+    } catch (error) {
+      // Log but don't fail the verification if notification fails
+      console.error('Failed to send feedback notification to parents:', error);
     }
 
     return {
@@ -936,6 +967,8 @@ export class ScheduleService {
       schedule_remark: schedule.remark || '',
       schedule_feedback: schedule.feedback || '',
       schedule_feedbackDate: schedule.feedbackDate?.toString() || '',
+      schedule_feedbackImages: schedule.feedbackImages || [],
+      schedule_feedbackVideos: schedule.feedbackVideos || [],
       schedule_verifyFb: schedule.verifyFb || false,
       schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
       schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
@@ -998,6 +1031,8 @@ export class ScheduleService {
       schedule_remark: schedule.remark || '',
       schedule_feedback: schedule.feedback || '',
       schedule_feedbackDate: schedule.feedbackDate?.toString() || '',
+      schedule_feedbackImages: schedule.feedbackImages || [],
+      schedule_feedbackVideos: schedule.feedbackVideos || [],
       schedule_verifyFb: schedule.verifyFb || false,
       schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
       schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
@@ -1033,6 +1068,8 @@ export class ScheduleService {
       schedule_remark: schedule.remark || '',
       schedule_feedback: schedule.feedback || '',
       schedule_feedbackDate: schedule.feedbackDate?.toString() || '',
+      schedule_feedbackImages: schedule.feedbackImages || [],
+      schedule_feedbackVideos: schedule.feedbackVideos || [],
       schedule_verifyFb: schedule.verifyFb || false,
       schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
       schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',

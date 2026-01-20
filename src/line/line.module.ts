@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnModuleInit, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 
@@ -62,7 +62,7 @@ import { InvoiceModule } from '../invoice/invoice.module';
     // External modules
     ParentModule,
     SessionModule,
-    ScheduleModule,
+    forwardRef(() => ScheduleModule),
     InvoiceModule,
   ],
   controllers: [

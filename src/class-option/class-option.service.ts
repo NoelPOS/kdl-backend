@@ -15,6 +15,27 @@ export class ClassOptionService {
   async create(
     createClassOptionDto: CreateClassOptionDto,
   ): Promise<ClassOption> {
+    // Check for existing active option with same classMode (case-insensitive)
+    // This implements soft versioning: old records keep their pricing reference
+    const existingActiveOption = await this.classOptionRepository
+      .createQueryBuilder('co')
+      .where('LOWER(co.classMode) = LOWER(:classMode)', {
+        classMode: createClassOptionDto.classMode,
+      })
+      .andWhere('co.effectiveEndDate IS NULL')
+      .getOne();
+
+    if (existingActiveOption) {
+      // Set expiry date to the day before new option's start date
+      const newStartDate = new Date(createClassOptionDto.effectiveStartDate);
+      const expiryDate = new Date(newStartDate);
+      expiryDate.setDate(expiryDate.getDate() - 1);
+
+      await this.classOptionRepository.update(existingActiveOption.id, {
+        effectiveEndDate: expiryDate,
+      });
+    }
+
     const classOption = this.classOptionRepository.create({
       ...createClassOptionDto,
       effectiveStartDate: new Date(createClassOptionDto.effectiveStartDate),

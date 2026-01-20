@@ -337,6 +337,167 @@ export class LineMessagingService {
   }
 
   /**
+   * Send notification to parent when feedback is approved/verified
+   * Opens LIFF schedule detail page where parent can view feedback
+   */
+  async sendFeedbackAvailableNotification(
+    userId: string,
+    data: {
+      studentName: string;
+      courseName: string;
+      date: string;
+      scheduleId: number;
+      feedbackPreview?: string;
+    },
+  ): Promise<void> {
+    if (!this.client) {
+      this.logger.warn('LINE client not initialized, skipping notification');
+      return;
+    }
+
+    const liffId = this.configService.get<string>('LINE_LIFF_ID');
+
+    const feedbackBubble: FlexBubble = {
+      type: 'bubble',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '📝 New Feedback Available!',
+            weight: 'bold',
+            size: 'lg',
+            color: '#1DB446',
+          },
+          {
+            type: 'separator',
+            margin: 'md',
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'lg',
+            contents: [
+              {
+                type: 'box',
+                layout: 'horizontal',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'Student:',
+                    size: 'sm',
+                    color: '#8a8a8a',
+                    flex: 2,
+                  },
+                  {
+                    type: 'text',
+                    text: data.studentName,
+                    size: 'sm',
+                    color: '#1a1a1a',
+                    flex: 4,
+                    wrap: true,
+                  },
+                ],
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'sm',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'Course:',
+                    size: 'sm',
+                    color: '#8a8a8a',
+                    flex: 2,
+                  },
+                  {
+                    type: 'text',
+                    text: data.courseName,
+                    size: 'sm',
+                    color: '#1a1a1a',
+                    flex: 4,
+                    wrap: true,
+                  },
+                ],
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'sm',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'Date:',
+                    size: 'sm',
+                    color: '#8a8a8a',
+                    flex: 2,
+                  },
+                  {
+                    type: 'text',
+                    text: data.date,
+                    size: 'sm',
+                    color: '#1a1a1a',
+                    flex: 4,
+                  },
+                ],
+              },
+            ],
+          },
+          ...(data.feedbackPreview
+            ? [
+                {
+                  type: 'text' as const,
+                  text: `"${data.feedbackPreview.substring(0, 100)}${data.feedbackPreview.length > 100 ? '...' : ''}"`,
+                  margin: 'lg' as const,
+                  size: 'sm' as const,
+                  color: '#666666',
+                  wrap: true,
+                  style: 'italic' as const,
+                },
+              ]
+            : []),
+        ],
+        paddingAll: 'xl',
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '📖 View Feedback',
+              uri: `https://liff.line.me/${liffId}/schedule/${data.scheduleId}`,
+            },
+            style: 'primary',
+            color: '#1DB446',
+          },
+        ],
+        paddingAll: 'md',
+      },
+    };
+
+    const message: FlexMessage = {
+      type: 'flex',
+      altText: `New feedback available for ${data.studentName} - ${data.courseName}`,
+      contents: feedbackBubble,
+    };
+
+    try {
+      await this.client.pushMessage(userId, message);
+      this.logger.log(
+        `Sent feedback notification to ${userId} for schedule ${data.scheduleId}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send feedback notification: ${error.message}`);
+      // Don't throw - we don't want to fail the verification just because notification failed
+    }
+  }
+
+  /**
    * Reply to webhook events
    */
   async replyMessage(replyToken: string, messages: Message[]): Promise<void> {
