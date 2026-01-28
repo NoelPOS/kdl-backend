@@ -58,3 +58,10 @@ pnpm-lock.yaml
 
 
 backend.env
+
+# OCR Service
+ocr-service/venv/
+**/__pycache__/
+*.pyc
+temp_*.jpg
+.paddlex/
