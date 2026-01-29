@@ -41,15 +41,24 @@ export class ScheduleNotificationService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async sendDailyNotifications(): Promise<void> {
-    this.logger.log('Starting daily schedule notification job...');
+    // Default to 3 days from now for cron job
+    await this.sendNotificationsForDaysOffset(3);
+  }
+
+  /**
+   * Send notifications for schedules N days from now (or today if daysOffset is 0)
+   * @param daysOffset Number of days from today (0 = today, 3 = 3 days from now)
+   */
+  async sendNotificationsForDaysOffset(daysOffset: number = 3): Promise<string> {
+    this.logger.log(`Starting schedule notification job for ${daysOffset === 0 ? 'today' : `${daysOffset} days from now`}...`);
 
     try {
-      // Calculate date 3 days from now
+      // Calculate target date
       const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + 3);
+      targetDate.setDate(targetDate.getDate() + daysOffset);
       const dateString = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD
 
-      // Find schedules for 3 days from now with pending attendance
+      // Find schedules for target date with pending attendance
       const schedules = await this.scheduleRepository.find({
         where: {
           date: dateString as any,
@@ -58,7 +67,7 @@ export class ScheduleNotificationService {
         relations: ['student', 'course', 'teacher', 'session'],
       });
 
-      this.logger.log(`Found ${schedules.length} schedules to notify`);
+      this.logger.log(`Found ${schedules.length} schedules to notify for date ${dateString}`);
 
       // Group schedules by student (to avoid duplicate messages to same parent)
       const schedulesByStudent = new Map<number, Schedule[]>();
@@ -75,9 +84,11 @@ export class ScheduleNotificationService {
         await this.notifyParentsForStudent(studentId, studentSchedules);
       }
 
-      this.logger.log('Daily notification job completed');
+      this.logger.log(`Notification job completed for date ${dateString}`);
+      return dateString;
     } catch (error) {
-      this.logger.error(`Failed to send daily notifications: ${error.message}`, error.stack);
+      this.logger.error(`Failed to send notifications: ${error.message}`, error.stack);
+      throw error;
     }
   }
 

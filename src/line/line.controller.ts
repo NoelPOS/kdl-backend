@@ -8,6 +8,7 @@ import {
   BadRequestException,
   Get,
   Param,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { LineMessagingService } from './services/line-messaging.service';
@@ -383,38 +384,47 @@ export class LineController {
 
   /**
    * Manually trigger the daily notification cron job
-   * GET /api/v1/line/trigger-daily-notifications
+   * GET /api/v1/line/trigger-daily-notifications?daysOffset=3
    * 
    * Use this to test the cron job logic without waiting for 9 AM
+   * 
+   * @param daysOffset Number of days from today (0 = today, 3 = 3 days from now, default: 3)
    */
   @Get('trigger-daily-notifications')
   @ApiOperation({ 
     summary: 'Manually trigger the daily notification cron job',
-    description: 'Run the cron job that sends notifications for schedules 3 days in advance'
+    description: 'Run the cron job that sends notifications for schedules. Use daysOffset=0 for today, daysOffset=3 for 3 days from now (default).'
   })
   @ApiResponse({
     status: 200,
     description: 'Daily notification job triggered',
   })
-  async triggerDailyNotifications(): Promise<{ 
+  async triggerDailyNotifications(
+    @Query('daysOffset') daysOffset?: string,
+  ): Promise<{ 
     success: boolean; 
     message: string;
-    targetDate: string;
+    targetDate: string | null;
+    daysOffset: number;
   }> {
     try {
-      this.logger.log('Manually triggering daily notification job...');
+      // Parse daysOffset, default to 3 if not provided
+      const offset = daysOffset ? parseInt(daysOffset, 10) : 3;
       
-      // Calculate the target date (3 days from now)
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + 3);
-      const dateString = targetDate.toISOString().split('T')[0];
+      if (isNaN(offset) || offset < 0) {
+        throw new BadRequestException('daysOffset must be a non-negative integer');
+      }
+
+      const offsetLabel = offset === 0 ? 'today' : `${offset} day${offset > 1 ? 's' : ''} from now`;
+      this.logger.log(`Manually triggering notification job for ${offsetLabel}...`);
       
-      await this.scheduleNotificationService.sendDailyNotifications();
+      const dateString = await this.scheduleNotificationService.sendNotificationsForDaysOffset(offset);
       
       return {
         success: true,
-        message: 'Daily notification job completed. Check logs for details.',
+        message: `Notification job completed for ${offsetLabel}. Check logs for details.`,
         targetDate: dateString,
+        daysOffset: offset,
       };
     } catch (error) {
       this.logger.error(`Failed to trigger daily notifications: ${error.message}`);
@@ -422,6 +432,7 @@ export class LineController {
         success: false,
         message: `Failed: ${error.message}`,
         targetDate: null,
+        daysOffset: daysOffset ? parseInt(daysOffset, 10) : 3,
       };
     }
   }
