@@ -997,20 +997,45 @@ export class ScheduleService {
     };
   }
   
+  /**
+   * Get all schedules for a student (used by LIFF \"All Courses\" calendar view)
+   * Returns the same flat snake_case structure as getSchedulesBySession so
+   * the frontend can reuse the same Schedule interface.
+   */
   async getSchedulesByStudent(studentId: number) {
-    return this.scheduleRepo
-      .createQueryBuilder('schedule')
-      .leftJoinAndSelect('schedule.course', 'course')
-      .leftJoinAndSelect('schedule.teacher', 'teacher')
-      .leftJoinAndSelect('schedule.student', 'student') // Need student info for conflict checks
-      .leftJoinAndSelect('schedule.room', 'room')
-      .where('schedule.studentId = :studentId', { studentId })
-      .andWhere('schedule.attendance != :attendance', {
-        attendance: 'cancelled',
-      })
-      .orderBy('schedule.date', 'ASC')
-      .addOrderBy('schedule.startTime', 'ASC')
-      .getMany();
+    const schedules = await this.scheduleRepo.find({
+      where: { studentId },
+      relations: ['session', 'session.classOption', 'student', 'course', 'teacher'],
+      order: { date: 'ASC' },
+    });
+
+    return schedules.map((schedule) => ({
+      schedule_id: schedule.id?.toString() || '',
+      schedule_date: schedule.date?.toString() || '',
+      schedule_startTime: schedule.startTime || '',
+      schedule_endTime: schedule.endTime || '',
+      schedule_room: schedule.room || '',
+      schedule_attendance: schedule.attendance || '',
+      schedule_remark: schedule.remark || '',
+      schedule_feedback: schedule.feedback || '',
+      schedule_feedbackDate: schedule.feedbackDate?.toString() || '',
+      schedule_feedbackImages: schedule.feedbackImages || [],
+      schedule_feedbackVideos: schedule.feedbackVideos || [],
+      schedule_verifyFb: schedule.verifyFb || false,
+      schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
+      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_classNumber: schedule.classNumber || 0,
+      schedule_warning: schedule.warning || '',
+      schedule_courseId: schedule.courseId?.toString() || '',
+      course_title: schedule.course?.title || '',
+      session_mode: schedule.session?.classOption?.classMode || '',
+      teacher_name: schedule.teacher?.name || '',
+      student_id: schedule.student?.id?.toString() || '',
+      student_name: schedule.student?.name || '',
+      student_nickname: schedule.student?.nickname || '',
+      student_profilePicture: schedule.student?.profilePicture || '',
+      student_phone: schedule.student?.phone || '',
+    }));
   }
 
   async getSchedulesByStudentAndSession(sessionId: number, studentId: number) {
