@@ -59,6 +59,9 @@ pnpm-lock.yaml
 
 backend.env
 
+# Google Cloud credentials
+google-credentials.json
+
 # OCR Service
 ocr-service/venv/
 **/__pycache__/

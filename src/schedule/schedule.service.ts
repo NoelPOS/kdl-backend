@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Schedule } from './entities/schedule.entity';
 import { TeacherEntity } from '../teacher/entities/teacher.entity';
+import { TeacherAbsence } from '../teacher/entities/teacher-absence.entity';
 import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
 import { time } from 'console';
@@ -27,6 +28,8 @@ export class ScheduleService {
     private readonly scheduleRepo: Repository<Schedule>,
     @InjectRepository(TeacherEntity)
     private readonly teacherRepo: Repository<TeacherEntity>,
+    @InjectRepository(TeacherAbsence)
+    private readonly teacherAbsenceRepo: Repository<TeacherAbsence>,
     private readonly notificationService: NotificationService,
     private readonly parentService: ParentService,
     @Inject(forwardRef(() => LineMessagingService))
@@ -573,10 +576,65 @@ export class ScheduleService {
     return this.scheduleRepo.find({ where: { teacherId } });
   }
 
+  // Helper function to get day of week
+  private getDayOfWeek(date: Date): string {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[date.getDay()];
+  }
+
   async checkConflict(dto: CheckScheduleConflictDto) {
     const { date, startTime, endTime, room, teacherId, studentId, excludeId } =
       dto;
+    
+    console.log('checkConflict called with excludeId:', excludeId, 'type:', typeof excludeId);
 
+    // ===== STEP 1: Check teacher availability (working days & absences for full-time teachers) =====
+    if (teacherId) {
+      const teacher = await this.teacherRepo.findOne({ where: { id: teacherId } });
+      
+      if (teacher && teacher.teacherType === 'full-time') {
+        const checkDate = new Date(date);
+        
+        // Check 1: Is it a working day?
+        const dayOfWeek = this.getDayOfWeek(checkDate);
+        const workingDays = teacher.workingDays || [];
+        
+        if (workingDays.length > 0 && !workingDays.includes(dayOfWeek)) {
+          return {
+            conflictType: 'teacher_unavailable' as const,
+            room: room || 'N/A',
+            time: `${startTime} - ${endTime}`,
+            startTime,
+            endTime,
+            courseTitle: 'N/A',
+            teacherName: teacher.name,
+            studentName: 'N/A',
+            unavailableReason: `${teacher.name} does not work on ${dayOfWeek}s`,
+          };
+        }
+        
+        // Check 2: Is there an absence on this date?
+        const absence = await this.teacherAbsenceRepo.findOne({
+          where: { teacherId, absenceDate: checkDate },
+        });
+        
+        if (absence) {
+          return {
+            conflictType: 'teacher_unavailable' as const,
+            room: room || 'N/A',
+            time: `${startTime} - ${endTime}`,
+            startTime,
+            endTime,
+            courseTitle: 'N/A',
+            teacherName: teacher.name,
+            studentName: 'N/A',
+            unavailableReason: `${teacher.name} is on leave: ${absence.reason || 'No reason specified'}`,
+          };
+        }
+      }
+    }
+
+    // ===== STEP 2: Check schedule conflicts (room, teacher, student) =====
     const queryBuilder = this.scheduleRepo
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.course', 'course')
@@ -602,6 +660,8 @@ export class ScheduleService {
     }
 
     const existing = await queryBuilder.getOne();
+    
+    console.log('Conflict query result:', existing ? `Found schedule ID: ${existing.id}` : 'No conflict found');
 
     if (existing) {
       const isRoomConflict = existing.room === room;

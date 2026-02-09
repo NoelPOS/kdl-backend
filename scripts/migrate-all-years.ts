@@ -26,7 +26,7 @@ import * as bcrypt from 'bcrypt';
 
 // Configuration
 const ROOT_DIR = path.join(__dirname, '../..');
-const OCR_OUTPUT_DIR = path.join(ROOT_DIR, 'ocr-output');
+const OCR_OUTPUT_DIR = path.join(ROOT_DIR, 'ocr-output-gemini');
 
 // Clean data files
 const CLEAN_FILES = {
@@ -226,15 +226,16 @@ function mergeAllParents(): any[] {
       const name = record.name?.trim();
       if (!name) continue;
       
-      // Use name + contactNo as key for deduplication (more accurate than name alone)
-      const key = `${name.toLowerCase()}_${(record.contactNo || '').trim()}`;
+      // Use name + phone as key for deduplication (more accurate than name alone)
+      const contactNo = (record.phone || record.contactNo || '').trim();
+      const key = `${name.toLowerCase()}_${contactNo}`;
       
       // Only add if not already exists (first occurrence wins)
       if (!parentMap.has(key)) {
         parentMap.set(key, {
           name: name,
           email: record.email || '',
-          contactNo: record.contactNo || '',
+          contactNo: contactNo,
           lineId: record.lineId || '',
           address: record.address || '',
           profilePicture: record.profilePicture || '',
@@ -271,7 +272,7 @@ function mergeAllSessions(): any[] {
         classOptionId: parseInt(record.classOptionId) || 1,
         classCancel: parseInt(record.classCancel) || 0,
         payment: record.payment || 'Pending',
-        status: record.status || 'wip',
+        status: record.status || 'completed',
         teacherId: record.teacherId ? parseInt(record.teacherId) : null,
         invoiceDone: false,
         packageGroupId: null,
@@ -735,7 +736,7 @@ async function linkParentsToStudents(
     for (const parent of parents) {
       const sourceImage = parent.sourceImage?.trim();
       const parentName = parent.name?.trim();
-      const contactNo = parent.contactNo?.trim();
+      const contactNo = (parent.phone || parent.contactNo || '')?.trim();
       if (sourceImage && parentName) {
         const key = `${parentName.toLowerCase()}_${contactNo}`;
         parentsByImage.set(sourceImage, { parent, key });

@@ -22,10 +22,7 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       synchronize: configService.get<boolean>('DB_SYNCHRONIZE', false), // Controlled via env var
       // Enhanced logging for performance monitoring
-      logging:
-        configService.get<string>('NODE_ENV') === 'development'
-          ? ['query', 'error', 'warn', 'info']
-          : ['error', 'warn'],
+      logging: false,
       // Log slow queries (>500ms) - great for performance monitoring
       maxQueryExecutionTime: 500,
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],

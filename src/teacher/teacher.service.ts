@@ -565,6 +565,7 @@ export class TeacherService {
     date: string,
     startTime?: string,
     endTime?: string,
+    excludeScheduleId?: number,
   ): Promise<{ available: boolean; reason?: string }> {
     const teacher = await this.findTeacherById(teacherId);
     const checkDate = new Date(date);
@@ -597,15 +598,21 @@ export class TeacherService {
 
     // Check 3: Does teacher already have a class at this time?
     if (startTime && endTime) {
-      const existingSchedule = await this.scheduleRepo
+      const queryBuilder = this.scheduleRepo
         .createQueryBuilder('schedule')
         .where('schedule.teacherId = :teacherId', { teacherId })
         .andWhere('schedule.date = :date', { date })
         .andWhere(
           '(schedule.startTime < :endTime AND schedule.endTime > :startTime)',
           { startTime, endTime },
-        )
-        .getOne();
+        );
+      
+      // Exclude the current schedule being edited (to prevent self-conflict)
+      if (excludeScheduleId) {
+        queryBuilder.andWhere('schedule.id != :excludeScheduleId', { excludeScheduleId });
+      }
+      
+      const existingSchedule = await queryBuilder.getOne();
 
       if (existingSchedule) {
         return {

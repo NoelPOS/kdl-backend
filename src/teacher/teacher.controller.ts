@@ -399,6 +399,7 @@ export class TeacherController {
   @ApiQuery({ name: 'date', required: true, description: 'Date to check (YYYY-MM-DD)' })
   @ApiQuery({ name: 'startTime', required: false, description: 'Start time (HH:MM)' })
   @ApiQuery({ name: 'endTime', required: false, description: 'End time (HH:MM)' })
+  @ApiQuery({ name: 'excludeScheduleId', required: false, description: 'Schedule ID to exclude (for editing)' })
   @ApiResponse({
     status: 200,
     description: 'Returns availability status',
@@ -415,8 +416,15 @@ export class TeacherController {
     @Query('date') date: string,
     @Query('startTime') startTime?: string,
     @Query('endTime') endTime?: string,
+    @Query('excludeScheduleId') excludeScheduleId?: string,
   ) {
-    return this.teacherService.checkTeacherAvailability(id, date, startTime, endTime);
+    return this.teacherService.checkTeacherAvailability(
+      id, 
+      date, 
+      startTime, 
+      endTime,
+      excludeScheduleId ? parseInt(excludeScheduleId) : undefined
+    );
   }
 }
 
