@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, IsBoolean } from 'class-validator';
 
 export class VerifyFeedbackDto {
   @ApiProperty({
@@ -30,6 +30,15 @@ export class VerifyFeedbackDto {
   @IsArray()
   @IsString({ each: true })
   feedbackImages?: string[];
+
+  @ApiProperty({
+    description: 'Verify feedback status',
+    required: false,
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  verifyFb?: boolean;
 
   @ApiProperty({
     description: 'Array of S3 URLs for feedback videos',

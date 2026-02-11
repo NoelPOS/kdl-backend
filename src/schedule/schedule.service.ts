@@ -871,7 +871,7 @@ export class ScheduleService {
       });
     }
 
-    const schedules = await queryBuilder
+    const rawSchedules = await queryBuilder
       .select([
         'schedule.id',
         'DATE(schedule.date) as schedule_date', // Format date directly in SQL
@@ -881,7 +881,12 @@ export class ScheduleService {
         'schedule.remark',
         'schedule.attendance',
         'schedule.feedback',
+        'schedule.feedbackDate',
+        'schedule.feedbackImages',
+        'schedule.feedbackVideos',
         'schedule.verifyFb',
+        'schedule.feedbackModifiedByName',
+        'schedule.feedbackModifiedAt',
         'schedule.warning',
         'student.id',
         'student.name',
@@ -895,6 +900,22 @@ export class ScheduleService {
       ])
       .orderBy('schedule.startTime', 'ASC')
       .getRawMany();
+
+    // Transform feedbackImages and feedbackVideos from comma-separated strings to arrays
+    // getRawMany bypasses entity transformers, so we need to do this manually
+    const schedules = rawSchedules.map(schedule => ({
+      ...schedule,
+      schedule_feedbackImages: schedule.schedule_feedbackImages
+        ? (typeof schedule.schedule_feedbackImages === 'string'
+            ? schedule.schedule_feedbackImages.split(',').filter(url => url.trim().length > 0)
+            : schedule.schedule_feedbackImages)
+        : [],
+      schedule_feedbackVideos: schedule.schedule_feedbackVideos
+        ? (typeof schedule.schedule_feedbackVideos === 'string'
+            ? schedule.schedule_feedbackVideos.split(',').filter(url => url.trim().length > 0)
+            : schedule.schedule_feedbackVideos)
+        : [],
+    }));
 
     return schedules;
   }
