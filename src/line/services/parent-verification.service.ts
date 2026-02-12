@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import {
   Injectable,
   NotFoundException,
@@ -101,6 +102,28 @@ export class ParentVerificationService {
 
     const parent = parents[0];
 
+    // Verify password if provided (it should be provided for security)
+    if (dto.password) {
+      if (!parent.password) {
+        // Migration case or first time setup:
+        // If parent has no password, we might want to allow them to set it?
+        // Or if we ran the script, they SHOULD have a password.
+        // For now, if no password in DB, we can't verify by password.
+        // But since we want to enforce it, we should fail or handle it.
+        // Let's assume script ran and everyone has password.
+        throw new BadRequestException('Account not set up for password login. Please contact admin.');
+      }
+
+      const isPasswordValid = await bcrypt.compare(dto.password, parent.password);
+      if (!isPasswordValid) {
+        throw new BadRequestException('Invalid password');
+      }
+    } else {
+      // Temporary fallback or if we want to allow password-less for legacy (but user wanted password)
+      // For this task, we want to enforce password.
+      throw new BadRequestException('Password is required');
+    }
+
     // Check if parent already has a LINE ID linked
     if (parent.lineId && parent.lineId !== dto.lineUserId) {
       throw new BadRequestException(
@@ -202,5 +225,26 @@ export class ParentVerificationService {
     await this.richMenuService.assignUnverifiedMenu(lineUserId);
 
     this.logger.log(`Unlinked LINE account from parent ${parentId}`);
+  }
+
+  /**
+   * Change parent password
+   */
+  async changePassword(parentId: number, newPassword: string): Promise<void> {
+    const parent = await this.parentRepository.findOne({
+      where: { id: parentId },
+    });
+
+    if (!parent) {
+      throw new NotFoundException('Parent not found');
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    parent.password = hashedPassword;
+    await this.parentRepository.save(parent);
+
+    this.logger.log(`Password updated for parent ${parentId}`);
   }
 }

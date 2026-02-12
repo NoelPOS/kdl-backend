@@ -31,4 +31,13 @@ export class VerifyParentDto {
   @IsString()
   @IsOptional()
   contactNo?: string;
+
+  @ApiProperty({
+    description: 'Parent password',
+    example: '123456',
+    required: true,
+  })
+  @IsString()
+  @IsNotEmpty()
+  password: string;
 }

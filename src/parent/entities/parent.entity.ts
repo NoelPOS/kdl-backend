@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -47,4 +48,8 @@ export class ParentEntity {
   })
   @ApiProperty({ description: 'Parent profile key' })
   profileKey: string;
+
+  @Column({ nullable: true })
+  @Exclude()
+  password: string;
 }

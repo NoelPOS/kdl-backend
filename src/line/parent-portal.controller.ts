@@ -8,6 +8,7 @@ import {
   Query,
   DefaultValuePipe,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +20,8 @@ import {
 } from '@nestjs/swagger';
 import { ParentVerificationService } from './services/parent-verification.service';
 import { VerifyParentDto } from './dto/verify-parent.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import * as bcrypt from 'bcrypt';
 import { ParentService } from '../parent/parent.service';
 import { SessionService } from '../session/session.service';
 import { ScheduleService } from '../schedule/schedule.service';
@@ -295,6 +298,45 @@ export class ParentPortalController {
     return {
       success: true,
       message: 'Account unlinked successfully',
+    };
+  }
+
+  /**
+   * Change parent password
+   */
+  @Post('change-password')
+  @ApiOperation({ summary: 'Change parent password' })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password changed successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid current password' })
+  async changePassword(@Body() dto: ChangePasswordDto) {
+    // 1. Get parent by LINE ID
+    const parent = await this.parentVerificationService.getParentByLineId(dto.lineUserId);
+
+    // 2. Verify current password
+    // For now, we trust the LIFF context or if they provide current password?
+    // User requested: "Enter Current Password (To confirm it's really them)"
+    
+    if (dto.currentPassword) {
+      const isMatch = await bcrypt.compare(dto.currentPassword, parent.password);
+      if (!isMatch) {
+         throw new BadRequestException('Current password does not match');
+      }
+    } else {
+       // If no current password provided, maybe we should require it?
+       // Let's require it for security.
+       throw new BadRequestException('Current password is required');
+    }
+
+    // 3. Change password
+    await this.parentVerificationService.changePassword(parent.id, dto.newPassword);
+
+    return {
+      success: true,
+      message: 'Password changed successfully',
     };
   }
 
