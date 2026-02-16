@@ -144,6 +144,32 @@ export class TeacherController {
     return this.teacherService.assignCoursesToTeacher(teacherId, dto.courseIds);
   }
 
+  @ApiTags('Teacher-Course Relationships')
+  @Delete(':teacherId/courses/:courseId')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Remove a course from a teacher' })
+  @ApiParam({
+    name: 'teacherId',
+    type: Number,
+    description: 'ID of the teacher',
+  })
+  @ApiParam({
+    name: 'courseId',
+    type: Number,
+    description: 'ID of the course',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Course successfully removed from teacher',
+  })
+  @ApiResponse({ status: 404, description: 'Association not found' })
+  removeCourseFromTeacher(
+    @Param('teacherId', ParseIntPipe) teacherId: number,
+    @Param('courseId', ParseIntPipe) courseId: number,
+  ) {
+    return this.teacherService.removeCourseFromTeacher(teacherId, courseId);
+  }
+
   @ApiTags('Teachers')
   @Get('course/:courseId')
   @Roles(UserRole.ADMIN, UserRole.REGISTRAR)

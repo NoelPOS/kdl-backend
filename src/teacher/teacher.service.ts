@@ -97,6 +97,18 @@ export class TeacherService {
     return this.teacherCourseRepo.save(assignments);
   }
 
+  async removeCourseFromTeacher(teacherId: number, courseId: number): Promise<void> {
+    const teacherCourse = await this.teacherCourseRepo.findOne({
+      where: { teacherId, courseId },
+    });
+
+    if (!teacherCourse) {
+      throw new NotFoundException(`Course ${courseId} is not assigned to teacher ${teacherId}`);
+    }
+
+    await this.teacherCourseRepo.remove(teacherCourse);
+  }
+
   async getCoursesByTeacherId(teacherId: number): Promise<CourseEntity[]> {
     const teacherCourses = await this.teacherCourseRepo.find({
       where: { teacherId },

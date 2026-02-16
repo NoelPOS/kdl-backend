@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CreatePackageDto } from './dto/create-package.dto';
@@ -12,6 +12,7 @@ import { TeacherSessionFilterDto } from './dto/teacher-session-filter.dto';
 import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 import { CoursePlus } from '../course-plus/entities/course-plus.entity';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
+import { SwapSessionTypeDto } from './dto/swap-session-type.dto';
 // Import separated entities
 import { ClassOption } from '../class-option/entities/class-option.entity';
 import { CourseEntity } from '../course/entities/course.entity';
@@ -409,6 +410,7 @@ export class SessionService {
     // Map the results to include the counts
     return result.entities.map((session, index) => ({
       ...session,
+      courseId: session.courseId,
       completedCount: parseInt(result.raw[index].completedCount || '0'),
       totalScheduledCount: parseInt(result.raw[index].totalScheduledCount || '0'),
       canceledCount: parseInt(result.raw[index].canceledCount || '0'),
@@ -442,6 +444,56 @@ export class SessionService {
     return !!session;
   }
 
+  async swapSessionType(id: number, dto: SwapSessionTypeDto) {
+    return this.dataSource.transaction(async (manager) => {
+      const session = await manager.getRepository(Session).findOne({
+        where: { id },
+      });
+
+      if (!session) {
+        throw new NotFoundException(`Session with ID ${id} not found`);
+      }
+
+      // 1. Update session class option
+      await manager.getRepository(Session).update(id, {
+        classOptionId: dto.classOptionId,
+      });
+
+      // 2. Delete non-completed schedules (future/pending/cancelled)
+      // We preserve 'completed' schedules as history.
+      await manager.getRepository(Schedule).delete({
+        sessionId: id,
+        attendance: Not('completed'),
+      });
+
+      // 3. Create new schedules
+      if (dto.newSchedules && dto.newSchedules.length > 0) {
+        const newSchedules = dto.newSchedules.map((scheduleDto, index) => {
+          return manager.getRepository(Schedule).create({
+            ...scheduleDto,
+            sessionId: id,
+            courseId: session.courseId,
+            studentId: session.studentId,
+            // Use provided teacherId or fallback to session teacher (if any)
+            teacherId: scheduleDto.teacherId || session.teacherId,
+            attendance: 'pending',
+            verifyFb: false,
+            // Use current existing completed count + index + 1 ?
+            // Or just index + 1?
+            // If we are swapping, we might want to continue numbering?
+            // For now let's just use index + 1, user can adjust if needed or we can query count.
+            // But usually 'classNumber' is for that specific schedule set.
+            classNumber: index + 1, 
+          });
+        });
+
+        await manager.getRepository(Schedule).save(newSchedules);
+      }
+
+      return { success: true };
+    });
+  }
+
   async getSessionOverviewByStudentId(studentId: number) {
     // Optimized query: Join with schedules and use subquery to avoid N+1
     const result = await this.sessionRepository
@@ -464,6 +516,7 @@ export class SessionService {
     // Transform the result to match the expected format
     return result.entities.map((session, index) => ({
       sessionId: session.id,
+      courseId: session.courseId,
       courseTitle: session.course?.title,
       courseDescription: session.course?.description,
       mode: session.classOption.classMode,
@@ -584,6 +637,7 @@ export class SessionService {
 
       return {
         sessionId: session.id,
+        courseId: session.courseId,
         courseTitle: session.course?.title,
         courseDescription: session.course?.description,
         mode: session.classOption.classMode,
@@ -704,6 +758,7 @@ export class SessionService {
 
       return {
         sessionId: session.id,
+        courseId: session.courseId,
         courseTitle: session.course?.title,
         courseDescription: session.course?.description,
         mode: session.classOption.classMode,

@@ -33,6 +33,7 @@ import { TeacherSessionFilterDto } from './dto/teacher-session-filter.dto';
 import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 import { PaginatedSessionOverviewResponseDto } from './dto/paginated-session-overview-response.dto';
 import { AddCoursePlusDto } from './dto/add-course-plus.dto';
+import { SwapSessionTypeDto } from './dto/swap-session-type.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -458,6 +459,23 @@ export class SessionController {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
     return updatedSession;
+  }
+
+  @ApiTags('Sessions')
+  @Patch(':id/swap-type')
+  @ApiOperation({ summary: 'Swap session type and replace future schedules' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBody({ type: SwapSessionTypeDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Session type swapped and schedules updated.',
+  })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async swapSessionType(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() swapDto: SwapSessionTypeDto,
+  ) {
+    return this.sessionService.swapSessionType(id, swapDto);
   }
 
   @ApiTags('Sessions')

@@ -65,4 +65,8 @@ export class CreateScheduleDto {
   @IsOptional()
   @IsInt()
   classNumber?: number;
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  warning?: string;
 }
