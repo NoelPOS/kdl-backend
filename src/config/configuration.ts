@@ -1,10 +1,12 @@
+import type { AppConfig } from './config.interface';
+
 /**
  * Configuration settings for the application
  * Values are loaded from environment variables with sensible defaults
  */
-export default () => ({
+export default (): AppConfig => ({
   // Application settings
-  NODE_ENV: process.env.NODE_ENV || 'development',
+  NODE_ENV: (process.env.NODE_ENV || 'development') as AppConfig['NODE_ENV'],
   PORT: parseInt(process.env.PORT, 10) || 3000,
   DATABASE_ENABLED: process.env.DATABASE_ENABLED === 'true',
 

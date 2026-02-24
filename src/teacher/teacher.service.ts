@@ -8,10 +8,12 @@ import { ILike, In, Repository, Not } from 'typeorm';
 import { TeacherEntity } from './entities/teacher.entity';
 import { TeacherCourseEntity } from './entities/teacher-course.entity';
 import { TeacherAbsence } from './entities/teacher-absence.entity';
+import { TeacherAvailability } from './entities/teacher-availability.entity';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { CreateAbsenceDto } from './dto/create-absence.dto';
 import { UpdateAbsenceDto } from './dto/update-absence.dto';
+import { CreateAvailabilityDto } from './dto/create-availability.dto';
 import { CourseEntity } from '../course/entities/course.entity';
 import { Session } from '../session/entities/session.entity';
 import { Schedule } from '../schedule/entities/schedule.entity';
@@ -28,6 +30,9 @@ export class TeacherService {
 
     @InjectRepository(TeacherAbsence)
     private teacherAbsenceRepo: Repository<TeacherAbsence>,
+
+    @InjectRepository(TeacherAvailability)
+    private teacherAvailabilityRepo: Repository<TeacherAvailability>,
 
     @InjectRepository(Session)
     private sessionRepo: Repository<Session>,
@@ -582,7 +587,6 @@ export class TeacherService {
     const teacher = await this.findTeacherById(teacherId);
     const checkDate = new Date(date);
 
-    // Only check availability for full-time teachers
     if (teacher.teacherType === 'full-time') {
       // Check 1: Is it a working day?
       const dayOfWeek = this.getDayOfWeek(checkDate);
@@ -606,9 +610,48 @@ export class TeacherService {
           reason: `${teacher.name} is on leave: ${absence.reason || 'No reason specified'}`,
         };
       }
+    } else if (teacher.teacherType === 'part-time') {
+      // For part-time teachers: check that the requested time slot falls within an availability slot
+      if (startTime && endTime) {
+        const checkDateDay = this.getDayOfWeek(checkDate);
+        const slots = await this.teacherAvailabilityRepo
+          .createQueryBuilder('avail')
+          .where('avail.teacherId = :teacherId', { teacherId })
+          .andWhere('avail.dayOfWeek = :dayOfWeek', { dayOfWeek: checkDateDay })
+          .getMany();
+
+        if (slots.length === 0) {
+          // Fetch all their slots to show when they ARE available
+          const allSlots = await this.teacherAvailabilityRepo
+            .createQueryBuilder('avail')
+            .where('avail.teacherId = :teacherId', { teacherId })
+            .getMany();
+            
+          const availableInfo = allSlots.length > 0 
+            ? ` (Available on: ${[...new Set(allSlots.map(s => s.dayOfWeek + ' ' + s.startTime + '-' + s.endTime))].join(', ')})`
+            : ' (No availability slots defined)';
+
+          return {
+            available: false,
+            reason: `${teacher.name} has no availability slots set for this date.${availableInfo}`,
+          };
+        }
+
+        // The requested time must be fully contained within at least one slot
+        const fits = slots.some(
+          (slot) => slot.startTime <= startTime && slot.endTime >= endTime,
+        );
+
+        if (!fits) {
+          return {
+            available: false,
+            reason: `${teacher.name} is not available from ${startTime} to ${endTime} on this date. Available slots: ${slots.map((s) => `${s.startTime}–${s.endTime}`).join(', ')}`,
+          };
+        }
+      }
     }
 
-    // Check 3: Does teacher already have a class at this time?
+    // Check: Does teacher already have a class at this time?
     if (startTime && endTime) {
       const queryBuilder = this.scheduleRepo
         .createQueryBuilder('schedule')
@@ -618,12 +661,11 @@ export class TeacherService {
           '(schedule.startTime < :endTime AND schedule.endTime > :startTime)',
           { startTime, endTime },
         );
-      
-      // Exclude the current schedule being edited (to prevent self-conflict)
+
       if (excludeScheduleId) {
         queryBuilder.andWhere('schedule.id != :excludeScheduleId', { excludeScheduleId });
       }
-      
+
       const existingSchedule = await queryBuilder.getOne();
 
       if (existingSchedule) {
@@ -635,6 +677,50 @@ export class TeacherService {
     }
 
     return { available: true };
+  }
+
+  // ==================== TEACHER AVAILABILITY SLOTS (part-time) ====================
+
+  async getAvailabilitySlots(teacherId: number): Promise<TeacherAvailability[]> {
+    await this.findTeacherById(teacherId); // throws if not found
+    return this.teacherAvailabilityRepo.find({
+      where: { teacherId },
+      order: { dayOfWeek: 'ASC', startTime: 'ASC' },
+    });
+  }
+
+  async addAvailabilitySlot(
+    teacherId: number,
+    dto: CreateAvailabilityDto,
+  ): Promise<TeacherAvailability> {
+    await this.findTeacherById(teacherId); // throws if not found
+
+    if (dto.startTime >= dto.endTime) {
+      throw new BadRequestException('startTime must be before endTime');
+    }
+
+    const slot = this.teacherAvailabilityRepo.create({
+      teacherId,
+      dayOfWeek: dto.dayOfWeek,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+    });
+
+    return this.teacherAvailabilityRepo.save(slot);
+  }
+
+  async removeAvailabilitySlot(teacherId: number, slotId: number): Promise<void> {
+    const slot = await this.teacherAvailabilityRepo.findOne({
+      where: { id: slotId, teacherId },
+    });
+
+    if (!slot) {
+      throw new NotFoundException(
+        `Availability slot with ID ${slotId} not found for teacher ${teacherId}`,
+      );
+    }
+
+    await this.teacherAvailabilityRepo.remove(slot);
   }
 }
 

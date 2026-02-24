@@ -16,6 +16,7 @@ import { SwapSessionTypeDto } from './dto/swap-session-type.dto';
 // Import separated entities
 import { ClassOption } from '../class-option/entities/class-option.entity';
 import { CourseEntity } from '../course/entities/course.entity';
+import { CoursePackage } from '../course-package/entities/course-package.entity';
 import { Invoice } from '../invoice/entities/invoice.entity';
 import { InvoiceItem } from '../invoice/entities/invoice-item.entity';
 import { DocumentCounter } from '../invoice/entities/document-counter.entity';
@@ -56,6 +57,9 @@ export class SessionService {
 
     @InjectRepository(CoursePlus)
     private readonly coursePlusRepo: Repository<CoursePlus>,
+
+    @InjectRepository(CoursePackage)
+    private readonly coursePackageRepo: Repository<CoursePackage>,
 
     @InjectRepository(DocumentCounter)
     private readonly documentCounterRepo: Repository<DocumentCounter>,
@@ -128,28 +132,38 @@ export class SessionService {
 
   async createPackage(dto: CreatePackageDto): Promise<{ success: boolean }> {
     return this.dataSource.transaction(async (manager) => {
-      // 1. Find course by name
-      const course = await this.courseRepo.findOne({
-        where: { title: ILike(`%${dto.courseName}%`) }
+      // 1. Fetch the course package template
+      const coursePackage = await manager.getRepository(CoursePackage).findOne({
+        where: { id: dto.packageId },
       });
-      
-      if (!course) {
-        throw new BadRequestException(`Course with name "${dto.courseName}" not found`);
+
+      if (!coursePackage) {
+        throw new BadRequestException(`Course package with ID ${dto.packageId} not found`);
       }
 
-      // 2. Find class option by class mode
+      // 2. Find TBC course for both the package session and TBC sessions
+      const tbcCourse = await this.courseRepo.findOne({
+        where: { title: ILike('%TBC%') },
+      });
+
+      if (!tbcCourse) {
+        throw new BadRequestException('TBC course not found. Please create a course titled "TBC" first.');
+      }
+
+      // 3. Use the first available class option (or a default one)
       const classOption = await this.classOptionRepo.findOne({
-        where: { classMode: ILike(`%${dto.classOption}%`) }
+        where: {},
+        order: { id: 'ASC' },
       });
-      
+
       if (!classOption) {
-        throw new BadRequestException(`Class option "${dto.classOption}" not found`);
+        throw new BadRequestException('No class options found. Please create a class option first.');
       }
 
-      // 3. Create the main package session
+      // 4. Create the main package session
       const packageSession = manager.getRepository(Session).create({
         studentId: dto.studentId,
-        courseId: course.id,
+        courseId: tbcCourse.id,
         classOptionId: classOption.id,
         classCancel: 0,
         payment: 'unpaid',
@@ -157,56 +171,37 @@ export class SessionService {
         teacherId: null,
         invoiceDone: false,
         createdAt: new Date(),
-        packageGroupId: null // Will be set after saving
+        packageGroupId: null, // Will be set after saving
+        comment: coursePackage.name, // Store package name for display in invoice list
+        price: dto.price, // Store the custom price for invoice pre-fill
       });
 
       const savedPackageSession = await manager.getRepository(Session).save(packageSession);
 
-      // 4. Set the packageGroupId to its own ID for the package session
+      // 5. Set the packageGroupId to its own ID for the package session
       await manager.getRepository(Session).update(savedPackageSession.id, {
-        packageGroupId: savedPackageSession.id
+        packageGroupId: savedPackageSession.id,
       });
 
-      // 5. Determine package size and create TBC sessions
-      let packageSize = 0;
-      if (dto.courseName.toLowerCase().includes('2 courses')) {
-        packageSize = 2;
-      } else if (dto.courseName.toLowerCase().includes('4 courses')) {
-        packageSize = 4;
-      } else if (dto.courseName.toLowerCase().includes('10 courses')) {
-        packageSize = 10;
-      }
-
-      if (packageSize > 0) {
-        // 6. Find TBC course
-        const tbcCourse = await this.courseRepo.findOne({
-          where: { title: ILike('%TBC%') }
+      // 6. Create TBC sessions linked to the package (numberOfCourses sessions)
+      const tbcSessions = [];
+      for (let i = 0; i < coursePackage.numberOfCourses; i++) {
+        const tbcSession = manager.getRepository(Session).create({
+          studentId: dto.studentId,
+          courseId: tbcCourse.id,
+          classOptionId: classOption.id,
+          classCancel: 0,
+          payment: 'unpaid',
+          status: 'wip',
+          teacherId: null,
+          invoiceDone: false,
+          createdAt: new Date(),
+          packageGroupId: savedPackageSession.id, // Link to package session
         });
-        
-        if (!tbcCourse) {
-          throw new BadRequestException('TBC course not found');
-        }
-
-        // 7. Create TBC sessions linked to the package
-        const tbcSessions = [];
-        for (let i = 0; i < packageSize; i++) {
-          const tbcSession = manager.getRepository(Session).create({
-            studentId: dto.studentId,
-            courseId: tbcCourse.id,
-            classOptionId: classOption.id, // Same class option as package
-            classCancel: 0,
-            payment: 'unpaid',
-            status: 'wip',
-            teacherId: null,
-            invoiceDone: false,
-            createdAt: new Date(),
-            packageGroupId: savedPackageSession.id // Link to package session
-          });
-          tbcSessions.push(tbcSession);
-        }
-
-        await manager.getRepository(Session).save(tbcSessions);
+        tbcSessions.push(tbcSession);
       }
+
+      await manager.getRepository(Session).save(tbcSessions);
 
       return { success: true };
     });
@@ -877,6 +872,8 @@ export class SessionService {
           'session.status as session_status',
           'session.payment as session_payment',
           'session.invoiceDone as session_invoiceDone',
+          'session.comment as session_comment',
+          'session.price as session_price',
           'student.id as student_id',
           'student.name as student_name',
           'course.id as course_id',
@@ -995,7 +992,11 @@ export class SessionService {
       session_createdat:
         enrollment.session_createdAt || enrollment.session_createdat,
       classoption_tuitionfee:
-        enrollment.classOption_tuitionFee || enrollment.classoption_tuitionfee,
+        enrollment.session_price !== undefined && enrollment.session_price !== null 
+          ? enrollment.session_price 
+          : (enrollment.classOption_tuitionFee || enrollment.classoption_tuitionfee),
+      course_title:
+        enrollment.session_comment || enrollment.course_title,
     }));
 
     console.log(
@@ -1070,11 +1071,13 @@ export class SessionService {
       .leftJoin('session.course', 'course')
       .leftJoin('session.classOption', 'classOption')
       .select([
-        'session.id',
-        'session.createdAt',
-        'student.id',
-        'student.name',
-        'course.title',
+        'session.id as session_id',
+        'session.createdAt as session_createdat',
+        'session.comment as session_comment',
+        'session.price as session_price',
+        'student.id as student_id',
+        'student.name as student_name',
+        'course.title as course_title',
         'classOption.tuitionFee as classoption_tuitionfee',
       ])
       .andWhere('session.id = :sessionId', { sessionId })
@@ -1082,6 +1085,8 @@ export class SessionService {
 
     if (session) {
       session.type = 'session'; // Add type for consistency
+      session.course_title = session.session_comment || session.course_title;
+      session.classoption_tuitionfee = session.session_price !== null && session.session_price !== undefined ? session.session_price : session.classoption_tuitionfee;
     }
     return session;
   }
