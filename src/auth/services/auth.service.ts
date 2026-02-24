@@ -187,7 +187,7 @@ export class AuthService {
       const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
 
       // Store the reset token
-      this.tokenStorageService.storeResetToken(email, role, resetToken);
+      await this.tokenStorageService.storeResetToken(email, role, resetToken);
 
       // Send the reset token via email
       const emailTemplate = PASSWORD_RESET_REQUEST_TEMPLATE.replace(
@@ -218,8 +218,8 @@ export class AuthService {
     role: UserRole,
   ): Promise<{ message: string }> {
     try {
-      const isValid = this.tokenStorageService.verifyResetToken(email, role, token);
-      
+      const isValid = await this.tokenStorageService.verifyResetToken(email, role, token);
+
       if (!isValid) {
         throw new BadRequestException('Invalid or expired reset token');
       }
@@ -242,8 +242,8 @@ export class AuthService {
   ): Promise<{ message: string }> {
     try {
       // Verify the token first
-      const isValid = this.tokenStorageService.verifyResetToken(email, role, token);
-      
+      const isValid = await this.tokenStorageService.verifyResetToken(email, role, token);
+
       if (!isValid) {
         throw new BadRequestException('Invalid or expired reset token');
       }
@@ -281,7 +281,7 @@ export class AuthService {
       }
 
       // Consume the token so it can't be used again
-      this.tokenStorageService.consumeResetToken(email, role);
+      await this.tokenStorageService.consumeResetToken(email, role);
 
       // Send success email
       const emailTemplate = PASSWORD_RESET_SUCCESS_TEMPLATE.replace(
