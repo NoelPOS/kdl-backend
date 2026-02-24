@@ -408,693 +408,792 @@
       "sourceId": 55,
       "sourceTitle": "Halocode Intermediate",
       "targetId": 29,
-      "targetTitle": "Mastering Halocode Intermediate"
+      "targetTitle": "Mastering Halocode Intermediate",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 56,
       "sourceTitle": "Halocode Beginner",
       "targetId": 28,
-      "targetTitle": "Mastering Halocode Beginner"
+      "targetTitle": "Mastering Halocode Beginner",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 57,
       "sourceTitle": "VEX Competition Training",
       "targetId": 22,
-      "targetTitle": "VEX IQ Roboticcs Competition I"
+      "targetTitle": "VEX IQ Roboticcs Competition I",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 58,
       "sourceTitle": "Botzees Beginner",
       "targetId": 4,
-      "targetTitle": "Fun Coding and AR with Botzees"
+      "targetTitle": "Fun Coding and AR with Botzees",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 59,
       "sourceTitle": "Botzees Intermediate",
       "targetId": 5,
-      "targetTitle": "Fun Coding with Botzees Intermediate"
+      "targetTitle": "Fun Coding with Botzees Intermediate",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 60,
       "sourceTitle": "K-mBot Beginner",
       "targetId": 10,
-      "targetTitle": "Fun Coding with mBot Beginner (K)"
+      "targetTitle": "Fun Coding with mBot Beginner (K)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 61,
       "sourceTitle": "C-mBot Beginner",
       "targetId": 16,
-      "targetTitle": "Fun Coding with mBot Beginner (C)"
+      "targetTitle": "Fun Coding with mBot Beginner (C)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 62,
       "sourceTitle": "C-mBot Intermediate I",
       "targetId": 17,
-      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 63,
       "sourceTitle": "Pygame",
       "targetId": 44,
-      "targetTitle": "Game Development with Python I"
+      "targetTitle": "Game Development with Python I",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 64,
       "sourceTitle": "K-mBot Intermediate I",
       "targetId": 11,
-      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 65,
       "sourceTitle": "IOT",
       "targetId": 52,
-      "targetTitle": "Welcome to World of IoT (ESP32)"
+      "targetTitle": "Welcome to World of IoT (ESP32)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 66,
       "sourceTitle": "Robot Arm",
       "targetId": 53,
-      "targetTitle": "Getting to know a Robot Arm"
+      "targetTitle": "Getting to know a Robot Arm",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 67,
       "sourceTitle": "Funjai",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 68,
       "sourceTitle": "3D Design and Printing",
       "targetId": 14,
-      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 69,
       "sourceTitle": "3D (Tinkercad) Project",
       "targetId": 15,
-      "targetTitle": "Creativity with 3D Modeling Project"
+      "targetTitle": "Creativity with 3D Modeling Project",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 70,
       "sourceTitle": "Roblox Beginner",
       "targetId": 37,
-      "targetTitle": "Game Design Roblox Studio Beginner"
+      "targetTitle": "Game Design Roblox Studio Beginner",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 71,
       "sourceTitle": "Roblox Game Design",
       "targetId": 37,
-      "targetTitle": "Game Design Roblox Studio Beginner"
+      "targetTitle": "Game Design Roblox Studio Beginner",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 72,
       "sourceTitle": "C-mBot Intermediate II",
       "targetId": 18,
-      "targetTitle": "Fun Coding with mBot Intermediate II (C)"
+      "targetTitle": "Fun Coding with mBot Intermediate II (C)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 73,
       "sourceTitle": "3D",
       "targetId": 14,
-      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 74,
       "sourceTitle": "A Level",
       "targetId": 56,
-      "targetTitle": "A Level"
+      "targetTitle": "A Level",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 75,
       "sourceTitle": "Codey Rocky Beginner",
       "targetId": 8,
-      "targetTitle": "Codey Rocky Champion"
+      "targetTitle": "Codey Rocky Champion",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 76,
       "sourceTitle": "Python Beginner",
       "targetId": 42,
-      "targetTitle": "Pure Python I"
+      "targetTitle": "Pure Python I",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 77,
       "sourceTitle": "VEX Beginner",
       "targetId": 21,
-      "targetTitle": "VEX Robotics Starter (VEX IQ)"
+      "targetTitle": "VEX Robotics Starter (VEX IQ)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 78,
       "sourceTitle": "Mit App(1000)",
       "targetId": 36,
-      "targetTitle": "Application Design (MIT App Inventor)"
+      "targetTitle": "Application Design (MIT App Inventor)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 79,
       "sourceTitle": "K-mBot Intermediate II",
       "targetId": 12,
-      "targetTitle": "Fun Coding with mBot Intermediate II (K)"
+      "targetTitle": "Fun Coding with mBot Intermediate II (K)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 80,
       "sourceTitle": "VEX continue",
       "targetId": 22,
-      "targetTitle": "VEX IQ Roboticcs Competition I"
+      "targetTitle": "VEX IQ Roboticcs Competition I",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 81,
       "sourceTitle": "3D TInkercad",
       "targetId": 14,
-      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 82,
       "sourceTitle": "Tinkamo Intermediate",
       "targetId": 2,
-      "targetTitle": "TInkamo Tinkerer Intermediate I"
+      "targetTitle": "TInkamo Tinkerer Intermediate I",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 83,
       "sourceTitle": "3D Halloween",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 84,
       "sourceTitle": "3D Design",
       "targetId": 14,
-      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 85,
       "sourceTitle": "Funjai Project",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 86,
       "sourceTitle": "IGCSE Computer Science",
       "targetId": 57,
-      "targetTitle": "IGCSE: Computer Science"
+      "targetTitle": "IGCSE: Computer Science",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 87,
       "sourceTitle": "3D Tinkercad Project",
       "targetId": 33,
-      "targetTitle": "Creativity with 3D Modeling Project (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling Project (Tinkercad)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 88,
       "sourceTitle": "Project: Cascade PID Controller for stabilizing Inverted Pendulum Kiddee Robot",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 89,
       "sourceTitle": "Digital Literacy",
       "targetId": 59,
-      "targetTitle": "Digital Literacy Workshop"
+      "targetTitle": "Digital Literacy Workshop",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 90,
       "sourceTitle": "Project",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 91,
       "sourceTitle": "Python",
       "targetId": 42,
-      "targetTitle": "Pure Python I"
+      "targetTitle": "Pure Python I",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 92,
       "sourceTitle": "3D Project",
       "targetId": 33,
-      "targetTitle": "Creativity with 3D Modeling Project (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling Project (Tinkercad)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 94,
       "sourceTitle": "3D Course",
       "targetId": 14,
-      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 95,
       "sourceTitle": "3D Shapr3D",
       "targetId": 47,
-      "targetTitle": "Creativity with 3D Modeling (Shapr3D)"
+      "targetTitle": "Creativity with 3D Modeling (Shapr3D)",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 96,
       "sourceTitle": "Arduino I + II",
       "targetId": 49,
-      "targetTitle": "Exploring Arduino with Python I"
+      "targetTitle": "Exploring Arduino with Python I",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 97,
       "sourceTitle": "Vex Earthquake Project",
       "targetId": 25,
-      "targetTitle": "Vex Earthquake Project"
+      "targetTitle": "Vex Earthquake Project",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 98,
       "sourceTitle": "UX/UI",
       "targetId": 40,
-      "targetTitle": "UX/UI Design"
+      "targetTitle": "UX/UI Design",
+      "reason": "Explicit mapping list"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 99,
       "sourceTitle": "C-Challenge1",
       "targetId": 17,
-      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 100,
       "sourceTitle": "C-B3L1",
       "targetId": 17,
-      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 101,
       "sourceTitle": "Full Stax",
       "targetId": 41,
-      "targetTitle": "Web Design Development"
+      "targetTitle": "Web Design Development",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 102,
       "sourceTitle": "K C",
       "targetId": 10,
-      "targetTitle": "Fun Coding with mBot Beginner (K)"
+      "targetTitle": "Fun Coding with mBot Beginner (K)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 103,
       "sourceTitle": "Intermediate1/2/3",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 104,
       "sourceTitle": "Summer Course Kids",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 105,
       "sourceTitle": "Summer Camp Movie+Halocode",
       "targetId": 28,
-      "targetTitle": "Mastering Halocode Beginner"
+      "targetTitle": "Mastering Halocode Beginner",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 106,
       "sourceTitle": "C-Challenge1-2",
       "targetId": 17,
-      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 107,
       "sourceTitle": "C-Movie 2",
       "targetId": 17,
-      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 108,
       "sourceTitle": "Summer Course Child",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 109,
       "sourceTitle": "Summer Course Child: Beginner and Intermediate",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 110,
       "sourceTitle": "Beginner and Intermediate",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 111,
       "sourceTitle": "K2C-Beginner",
       "targetId": 10,
-      "targetTitle": "Fun Coding with mBot Beginner (K)"
+      "targetTitle": "Fun Coding with mBot Beginner (K)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 112,
       "sourceTitle": "Child: Beginner and Intermediate",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 113,
       "sourceTitle": "Application Project",
       "targetId": 51,
-      "targetTitle": "Challenge with Application Project"
+      "targetTitle": "Challenge with Application Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 114,
       "sourceTitle": "Python Application Project",
       "targetId": 51,
-      "targetTitle": "Challenge with Application Project"
+      "targetTitle": "Challenge with Application Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 115,
       "sourceTitle": "Halo Code 3 + Python",
       "targetId": 29,
-      "targetTitle": "Mastering Halocode Intermediate"
+      "targetTitle": "Mastering Halocode Intermediate",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 116,
       "sourceTitle": "3D 1 day workshop",
       "targetId": 14,
-      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 117,
       "sourceTitle": "K-B1L1",
       "targetId": 10,
-      "targetTitle": "Fun Coding with mBot Beginner (K)"
+      "targetTitle": "Fun Coding with mBot Beginner (K)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 118,
       "sourceTitle": "PK- Tinkamo Beginner",
       "targetId": 1,
-      "targetTitle": "Tinkamo Tinkerer Begineer"
+      "targetTitle": "Tinkamo Tinkerer Begineer",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 119,
       "sourceTitle": "C-Movie 2-3",
       "targetId": 17,
-      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 120,
       "sourceTitle": "PK-Intermediate",
       "targetId": 2,
-      "targetTitle": "TInkamo Tinkerer Intermediate I"
+      "targetTitle": "TInkamo Tinkerer Intermediate I",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 121,
       "sourceTitle": "PK-Beginner 4",
       "targetId": 1,
-      "targetTitle": "Tinkamo Tinkerer Begineer"
+      "targetTitle": "Tinkamo Tinkerer Begineer",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 122,
       "sourceTitle": "PK-Beginner 3",
       "targetId": 1,
-      "targetTitle": "Tinkamo Tinkerer Begineer"
+      "targetTitle": "Tinkamo Tinkerer Begineer",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 123,
       "sourceTitle": "PK-Beginner 2",
       "targetId": 1,
-      "targetTitle": "Tinkamo Tinkerer Begineer"
+      "targetTitle": "Tinkamo Tinkerer Begineer",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 124,
       "sourceTitle": "PK-Beginner1",
       "targetId": 1,
-      "targetTitle": "Tinkamo Tinkerer Begineer"
+      "targetTitle": "Tinkamo Tinkerer Begineer",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 125,
       "sourceTitle": "Beginner 123",
       "targetId": 1,
-      "targetTitle": "Tinkamo Tinkerer Begineer"
+      "targetTitle": "Tinkamo Tinkerer Begineer",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 126,
       "sourceTitle": "PK- Codey Rocky Beginner",
       "targetId": 8,
-      "targetTitle": "Codey Rocky Champion"
+      "targetTitle": "Codey Rocky Champion",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 127,
       "sourceTitle": "Animation & Game Creator 3",
       "targetId": 20,
-      "targetTitle": "Animation and Game Creator"
+      "targetTitle": "Animation and Game Creator",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 128,
       "sourceTitle": "Tinkamo Beginner 2-3",
       "targetId": 1,
-      "targetTitle": "Tinkamo Tinkerer Begineer"
+      "targetTitle": "Tinkamo Tinkerer Begineer",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 129,
       "sourceTitle": "K-mBot Beginner + Intermediate I",
       "targetId": 11,
-      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 130,
       "sourceTitle": "VEX RoboSoccer 1 day workshop",
       "targetId": 24,
-      "targetTitle": "VEX Robotics Workshop"
+      "targetTitle": "VEX Robotics Workshop",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 131,
       "sourceTitle": "Tinkamo Intermediate II",
       "targetId": 3,
-      "targetTitle": "Tinkamo TInkerer Intermediate II"
+      "targetTitle": "Tinkamo TInkerer Intermediate II",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 132,
       "sourceTitle": "Minecraft Scratch II",
       "targetId": 13,
-      "targetTitle": "Minecraft Education (Scratch)"
+      "targetTitle": "Minecraft Education (Scratch)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 133,
       "sourceTitle": "Project camp",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 134,
       "sourceTitle": "Swift",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 135,
       "sourceTitle": "Science and Maths",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 136,
       "sourceTitle": "K-mBot Intermediate + MC Scratch",
       "targetId": 11,
-      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 137,
       "sourceTitle": "Machine Learning",
       "targetId": 54,
-      "targetTitle": "Machine Learning I"
+      "targetTitle": "Machine Learning I",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 138,
       "sourceTitle": "Machine Learning with Balancing Ball",
       "targetId": 55,
-      "targetTitle": "Machine Learning II"
+      "targetTitle": "Machine Learning II",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 139,
       "sourceTitle": "Robotics",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 140,
       "sourceTitle": "K6BILI & BILZ",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 141,
       "sourceTitle": "mbot mt 1",
       "targetId": 10,
-      "targetTitle": "Fun Coding with mBot Beginner (K)"
+      "targetTitle": "Fun Coding with mBot Beginner (K)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 142,
       "sourceTitle": "My SQL",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 143,
       "sourceTitle": "NJID",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 144,
       "sourceTitle": "Ferris Wheel",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 145,
       "sourceTitle": "4 days camp",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 146,
       "sourceTitle": "2 days 2 activities",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 147,
       "sourceTitle": "Botzees/mTiny 2 days/ Tinkamo 2 days",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 148,
       "sourceTitle": "3D Design and Printing- K-mbot Int.",
       "targetId": 14,
-      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 149,
       "sourceTitle": "Embedded System",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 150,
       "sourceTitle": "Codey Rocky Intermediate 1125",
       "targetId": 9,
-      "targetTitle": "Codey Rocky Champion Intermediate"
+      "targetTitle": "Codey Rocky Champion Intermediate",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 151,
       "sourceTitle": "1 Day Workshop: 3D Halloween",
       "targetId": 60,
-      "targetTitle": "Special Project"
+      "targetTitle": "Special Project",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 152,
       "sourceTitle": "mBot Intermediate 1 class",
       "targetId": 11,
-      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 153,
       "sourceTitle": "Botzees 1 class",
       "targetId": 4,
-      "targetTitle": "Fun Coding and AR with Botzees"
+      "targetTitle": "Fun Coding and AR with Botzees",
+      "reason": "Auto-mapped by semantic language matching"
     },
     {
       "action": "CONSOLIDATE",
       "sourceId": 154,
       "sourceTitle": "Android Course",
       "targetId": 36,
-      "targetTitle": "Application Design (MIT App Inventor)"
+      "targetTitle": "Application Design (MIT App Inventor)",
+      "reason": "Auto-mapped by semantic language matching"
     }
   ],
   "deletions": [
@@ -1105,30 +1204,5 @@
       "reason": "Explicit delete request"
     }
   ],
-  "leftAloneExtra": [
-    {
-      "action": "LEAVE",
-      "sourceId": 65,
-      "sourceTitle": "4 courses package",
-      "reason": "Unmapped package or special core concept"
-    },
-    {
-      "action": "LEAVE",
-      "sourceId": 66,
-      "sourceTitle": "10 courses package",
-      "reason": "Unmapped package or special core concept"
-    },
-    {
-      "action": "LEAVE",
-      "sourceId": 67,
-      "sourceTitle": "2 courses package",
-      "reason": "Unmapped package or special core concept"
-    },
-    {
-      "action": "LEAVE",
-      "sourceId": 70,
-      "sourceTitle": "TBC",
-      "reason": "Unmapped package or special core concept"
-    }
-  ]
+  "leftAloneExtra": []
 }
