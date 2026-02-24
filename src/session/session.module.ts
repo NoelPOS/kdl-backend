@@ -9,6 +9,7 @@ import { CourseEntity } from '../course/entities/course.entity';
 import { ClassOptionModule } from '../class-option/class-option.module';
 import { InvoiceModule } from '../invoice/invoice.module';
 import { ReceiptModule } from '../receipt/receipt.module';
+import { CoursePackageModule } from '../course-package/course-package.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ReceiptModule } from '../receipt/receipt.module';
     ClassOptionModule,
     InvoiceModule,
     ReceiptModule,
+    CoursePackageModule,
   ],
   controllers: [SessionController],
   providers: [SessionService],
