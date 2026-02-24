@@ -67,6 +67,10 @@ export class Session {
   @ApiProperty({ description: 'Session comment', required: false })
   comment?: string;
 
+  @Column({ nullable: true, type: 'decimal', precision: 10, scale: 2 })
+  @ApiProperty({ description: 'Custom price for package sessions set by admin', required: false })
+  price?: number;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Session creation date' })
   createdAt: Date;
