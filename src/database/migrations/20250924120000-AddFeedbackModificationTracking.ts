@@ -4,11 +4,11 @@ export class AddFeedbackModificationTracking20250924120000 implements MigrationI
     name = 'AddFeedbackModificationTracking20250924120000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // Add feedback modification tracking columns to schedules table
+        // Add feedback modification tracking columns to schedules table if they don't exist
         await queryRunner.query(`
             ALTER TABLE "schedules" 
-            ADD COLUMN "feedbackModifiedByName" character varying,
-            ADD COLUMN "feedbackModifiedAt" TIMESTAMP
+            ADD COLUMN IF NOT EXISTS "feedbackModifiedByName" character varying,
+            ADD COLUMN IF NOT EXISTS "feedbackModifiedAt" TIMESTAMP
         `);
     }
 
