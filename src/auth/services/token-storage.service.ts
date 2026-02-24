@@ -1,58 +1,50 @@
 import { Injectable } from '@nestjs/common';
-
-interface ResetToken {
-  email: string;
-  role: string;
-  token: string;
-  expiresAt: Date;
-}
+import { InjectRepository } from '@nestjs/typeorm';
+import { LessThan, Repository } from 'typeorm';
+import { PasswordResetTokenEntity } from '../entities/password-reset-token.entity';
 
 @Injectable()
 export class TokenStorageService {
-  private tokens = new Map<string, ResetToken>();
+  constructor(
+    @InjectRepository(PasswordResetTokenEntity)
+    private readonly tokenRepo: Repository<PasswordResetTokenEntity>,
+  ) {}
 
-  storeResetToken(email: string, role: string, token: string): void {
-    const key = `${email}:${role}`;
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15); // Token expires in 15 minutes
+  async storeResetToken(
+    email: string,
+    role: string,
+    token: string,
+  ): Promise<void> {
+    // Invalidate any existing unused tokens for this email + role
+    await this.tokenRepo.update({ email, role, used: false }, { used: true });
 
-    this.tokens.set(key, {
-      email,
-      role,
-      token,
-      expiresAt,
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await this.tokenRepo.save({ email, role, token, used: false, expiresAt });
+  }
+
+  async verifyResetToken(
+    email: string,
+    role: string,
+    token: string,
+  ): Promise<boolean> {
+    const record = await this.tokenRepo.findOne({
+      where: { email, role, used: false },
+      order: { createdAt: 'DESC' },
     });
-  }
 
-  verifyResetToken(email: string, role: string, token: string): boolean {
-    const key = `${email}:${role}`;
-    const storedToken = this.tokens.get(key);
-
-    if (!storedToken) {
+    if (!record || record.expiresAt < new Date()) {
       return false;
     }
 
-    const now = new Date();
-    if (now > storedToken.expiresAt) {
-      this.tokens.delete(key);
-      return false;
-    }
-
-    return storedToken.token === token;
+    return record.token === token;
   }
 
-  consumeResetToken(email: string, role: string): void {
-    const key = `${email}:${role}`;
-    this.tokens.delete(key);
+  async consumeResetToken(email: string, role: string): Promise<void> {
+    await this.tokenRepo.update({ email, role, used: false }, { used: true });
   }
 
-  // Clean up expired tokens periodically
-  cleanupExpiredTokens(): void {
-    const now = new Date();
-    for (const [key, token] of this.tokens.entries()) {
-      if (now > token.expiresAt) {
-        this.tokens.delete(key);
-      }
-    }
+  async deleteExpiredTokens(): Promise<void> {
+    await this.tokenRepo.delete({ expiresAt: LessThan(new Date()) });
   }
 }

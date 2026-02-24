@@ -94,21 +94,41 @@ async function bootstrap() {
     exposedHeaders: ['Set-Cookie'],
   });
 
-  await app.listen(port);
-  console.log('🔥🔥 SERVER RESTARTED 🔥🔥');
+  if (process.env.VERCEL) {
+    await app.init();
+    return app.getHttpAdapter().getInstance();
+  } else {
+    await app.listen(port);
+    console.log('🔥🔥 SERVER RESTARTED 🔥🔥');
 
-  logger.log(`Application is running in ${environment} mode on port ${port}`);
-  logger.log(`Listening on http://localhost:${port}`);
-  logger.log(`Environment: ${environment}`);
-  if (swaggerEnabled) {
-    logger.log(
-      `API Documentation available at http://localhost:${port}/api/docs`,
-    );
-  }
-  if (module.hot) {
-    module.hot.accept();
-    module.hot.dispose(() => app.close());
+    logger.log(`Application is running in ${environment} mode on port ${port}`);
+    logger.log(`Listening on http://localhost:${port}`);
+    logger.log(`Environment: ${environment}`);
+    if (swaggerEnabled) {
+      logger.log(
+        `API Documentation available at http://localhost:${port}/api/docs`,
+      );
+    }
+    if (module.hot) {
+      module.hot.accept();
+      module.hot.dispose(() => app.close());
+    }
   }
 }
 
-bootstrap();
+let cachedServer: any;
+
+export const vercelHandler = async (req: any, res: any) => {
+  if (!cachedServer) {
+    cachedServer = await bootstrap();
+  }
+  return cachedServer(req, res);
+};
+
+// Required by Vercel for CommonJS exports
+module.exports = vercelHandler;
+
+// Only run the server directly if we are not on Vercel
+if (!process.env.VERCEL) {
+  bootstrap();
+}
