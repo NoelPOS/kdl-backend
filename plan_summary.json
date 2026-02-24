@@ -1,0 +1,1134 @@
+{
+  "canonicalTotal": 61,
+  "updatesToMaster": [
+    {
+      "type": "UPDATE_MASTER",
+      "id": 7,
+      "oldTitle": "Fun Coding with Lego Boost",
+      "newTitle": "Fun Coding with Lego Boost",
+      "newAge": "6-8 yrs",
+      "newMedium": "iPad"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 8,
+      "oldTitle": "Fun Coding with Lego Boost",
+      "newTitle": "Codey Rocky Champion",
+      "newAge": "6-8 yrs",
+      "newMedium": "iPad"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 10,
+      "oldTitle": "Fun Coding with mBot Beginner",
+      "newTitle": "Fun Coding with mBot Beginner (K)",
+      "newAge": "7-8 yrs",
+      "newMedium": "iPad"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 11,
+      "oldTitle": "Fun Coding with mBot Intermediate I",
+      "newTitle": "Fun Coding with mBot Intermediate I (K)",
+      "newAge": "7-8 yrs",
+      "newMedium": "iPad"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 12,
+      "oldTitle": "Fun Coding with mBot Intermediate II",
+      "newTitle": "Fun Coding with mBot Intermediate II (K)",
+      "newAge": "7-8 yrs",
+      "newMedium": "iPad"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 16,
+      "oldTitle": "Animation and Game Creator",
+      "newTitle": "Fun Coding with mBot Beginner (C)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 17,
+      "oldTitle": "Fun Coding with mBot Beginner",
+      "newTitle": "Fun Coding with mBot Intermediate I (C)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 18,
+      "oldTitle": "Fun Coding with mBot Intermediate I, II",
+      "newTitle": "Fun Coding with mBot Intermediate II (C)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 20,
+      "oldTitle": "VEX Robotics Starter (VEX IQ)",
+      "newTitle": "Animation and Game Creator",
+      "newAge": "8-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 21,
+      "oldTitle": "VEX IQ Roboticcs Competition I,II",
+      "newTitle": "VEX Robotics Starter (VEX IQ)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 22,
+      "oldTitle": "Animation and Game Creator",
+      "newTitle": "VEX IQ Roboticcs Competition I",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 23,
+      "oldTitle": "Mastering Halocode Beginner",
+      "newTitle": "VEX IQ Roboticcs Competition II",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 24,
+      "oldTitle": "Advanced Game Creator",
+      "newTitle": "VEX Robotics Workshop",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 25,
+      "oldTitle": "2 Players Game Creator",
+      "newTitle": "Vex Earthquake Project",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 26,
+      "oldTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "newTitle": "Robomaster Workshop",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 27,
+      "oldTitle": "Creativity with 3D Modeling Project",
+      "newTitle": "Robomaster",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 28,
+      "oldTitle": "Minecraft Education (Scratch/Python)",
+      "newTitle": "Mastering Halocode Beginner",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 29,
+      "oldTitle": "Application Design (MIT App Inventor)",
+      "newTitle": "Mastering Halocode Intermediate",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 30,
+      "oldTitle": "Game Design Roblox Studio Beginner",
+      "newTitle": "Advanced Game Creator with Joystick",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 31,
+      "oldTitle": "Game Design Roblox Studio Intermediate",
+      "newTitle": "2 Players Game Creator",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 32,
+      "oldTitle": "Everyday Electronics",
+      "newTitle": "Creativity with 3D Modeling (Tinkercad)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 33,
+      "oldTitle": "Application Design (MIT App Inventor)",
+      "newTitle": "Creativity with 3D Modeling Project (Tinkercad)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 34,
+      "oldTitle": "Web Design Development",
+      "newTitle": "Minecraft Education (Scratch)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 35,
+      "oldTitle": "Pure Python I",
+      "newTitle": "Minecraft Education (Python)",
+      "newAge": "9-12 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 36,
+      "oldTitle": "Python Project Based",
+      "newTitle": "Application Design (MIT App Inventor)",
+      "newAge": "9-18 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 37,
+      "oldTitle": "Game Development with Python I",
+      "newTitle": "Game Design Roblox Studio Beginner",
+      "newAge": "9-15 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 38,
+      "oldTitle": "Game Development with Python II",
+      "newTitle": "Game Design Roblox Studio Intermediate",
+      "newAge": "9-15 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 39,
+      "oldTitle": "Pure Python II",
+      "newTitle": "Everyday Electronics",
+      "newAge": "12-18 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 40,
+      "oldTitle": "Data Handling/ Data Science",
+      "newTitle": "UX/UI Design",
+      "newAge": "12-18 yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 41,
+      "oldTitle": "Creativity with 3D Modeling (Shapr3D)",
+      "newTitle": "Web Design Development",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 42,
+      "oldTitle": "Creativity with 3D Modeling Project",
+      "newTitle": "Pure Python I",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 43,
+      "oldTitle": "Everyday Electronics",
+      "newTitle": "Python Project Based",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 44,
+      "oldTitle": "Exploring Arduino with Python I",
+      "newTitle": "Game Development with Python I",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 45,
+      "oldTitle": "Exploring Arduino with Python II",
+      "newTitle": "Game Development with Python II",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 46,
+      "oldTitle": "Challenge with Application Project",
+      "newTitle": "Data Handling/ Data Science",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 47,
+      "oldTitle": "Welcome to World of IoT (ESP32)",
+      "newTitle": "Creativity with 3D Modeling (Shapr3D)",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 48,
+      "oldTitle": "Getting to know a Robot Arm",
+      "newTitle": "Creativity with 3D Modeling Project (Shapr3D)",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 49,
+      "oldTitle": "Free Trial",
+      "newTitle": "Exploring Arduino with Python I",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 50,
+      "oldTitle": "4 courses package",
+      "newTitle": "Exploring Arduino with Python II",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 51,
+      "oldTitle": "10 courses package",
+      "newTitle": "Challenge with Application Project",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 52,
+      "oldTitle": "2 courses package",
+      "newTitle": "Welcome to World of IoT (ESP32)",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 53,
+      "oldTitle": "TBC",
+      "newTitle": "Getting to know a Robot Arm",
+      "newAge": "13+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 54,
+      "oldTitle": "Robomaster",
+      "newTitle": "Machine Learning I",
+      "newAge": "14+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 55,
+      "oldTitle": "Halocode Intermediate",
+      "newTitle": "Machine Learning II",
+      "newAge": "14+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 56,
+      "oldTitle": "Halocode Beginner",
+      "newTitle": "A Level",
+      "newAge": "17+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 57,
+      "oldTitle": "VEX Competition Training",
+      "newTitle": "IGCSE: Computer Science",
+      "newAge": "14+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 58,
+      "oldTitle": "Botzees Beginner",
+      "newTitle": "IGCSE: Math",
+      "newAge": "14+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 59,
+      "oldTitle": "Botzees Intermediate",
+      "newTitle": "Digital Literacy Workshop",
+      "newAge": "9+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 60,
+      "oldTitle": "K-mBot Beginner",
+      "newTitle": "Special Project",
+      "newAge": "16+ yrs",
+      "newMedium": "Computer"
+    },
+    {
+      "type": "UPDATE_MASTER",
+      "id": 61,
+      "oldTitle": "C-mBot Beginner",
+      "newTitle": "Free Trial",
+      "newAge": "-",
+      "newMedium": "-"
+    }
+  ],
+  "consolidations": [
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 55,
+      "sourceTitle": "Halocode Intermediate",
+      "targetId": 29,
+      "targetTitle": "Mastering Halocode Intermediate"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 56,
+      "sourceTitle": "Halocode Beginner",
+      "targetId": 28,
+      "targetTitle": "Mastering Halocode Beginner"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 57,
+      "sourceTitle": "VEX Competition Training",
+      "targetId": 22,
+      "targetTitle": "VEX IQ Roboticcs Competition I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 58,
+      "sourceTitle": "Botzees Beginner",
+      "targetId": 4,
+      "targetTitle": "Fun Coding and AR with Botzees"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 59,
+      "sourceTitle": "Botzees Intermediate",
+      "targetId": 5,
+      "targetTitle": "Fun Coding with Botzees Intermediate"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 60,
+      "sourceTitle": "K-mBot Beginner",
+      "targetId": 10,
+      "targetTitle": "Fun Coding with mBot Beginner (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 61,
+      "sourceTitle": "C-mBot Beginner",
+      "targetId": 16,
+      "targetTitle": "Fun Coding with mBot Beginner (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 62,
+      "sourceTitle": "C-mBot Intermediate I",
+      "targetId": 17,
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 63,
+      "sourceTitle": "Pygame",
+      "targetId": 44,
+      "targetTitle": "Game Development with Python I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 64,
+      "sourceTitle": "K-mBot Intermediate I",
+      "targetId": 11,
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 65,
+      "sourceTitle": "IOT",
+      "targetId": 52,
+      "targetTitle": "Welcome to World of IoT (ESP32)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 66,
+      "sourceTitle": "Robot Arm",
+      "targetId": 53,
+      "targetTitle": "Getting to know a Robot Arm"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 67,
+      "sourceTitle": "Funjai",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 68,
+      "sourceTitle": "3D Design and Printing",
+      "targetId": 14,
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 69,
+      "sourceTitle": "3D (Tinkercad) Project",
+      "targetId": 15,
+      "targetTitle": "Creativity with 3D Modeling Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 70,
+      "sourceTitle": "Roblox Beginner",
+      "targetId": 37,
+      "targetTitle": "Game Design Roblox Studio Beginner"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 71,
+      "sourceTitle": "Roblox Game Design",
+      "targetId": 37,
+      "targetTitle": "Game Design Roblox Studio Beginner"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 72,
+      "sourceTitle": "C-mBot Intermediate II",
+      "targetId": 18,
+      "targetTitle": "Fun Coding with mBot Intermediate II (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 73,
+      "sourceTitle": "3D",
+      "targetId": 14,
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 74,
+      "sourceTitle": "A Level",
+      "targetId": 56,
+      "targetTitle": "A Level"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 75,
+      "sourceTitle": "Codey Rocky Beginner",
+      "targetId": 8,
+      "targetTitle": "Codey Rocky Champion"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 76,
+      "sourceTitle": "Python Beginner",
+      "targetId": 42,
+      "targetTitle": "Pure Python I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 77,
+      "sourceTitle": "VEX Beginner",
+      "targetId": 21,
+      "targetTitle": "VEX Robotics Starter (VEX IQ)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 78,
+      "sourceTitle": "Mit App(1000)",
+      "targetId": 36,
+      "targetTitle": "Application Design (MIT App Inventor)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 79,
+      "sourceTitle": "K-mBot Intermediate II",
+      "targetId": 12,
+      "targetTitle": "Fun Coding with mBot Intermediate II (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 80,
+      "sourceTitle": "VEX continue",
+      "targetId": 22,
+      "targetTitle": "VEX IQ Roboticcs Competition I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 81,
+      "sourceTitle": "3D TInkercad",
+      "targetId": 14,
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 82,
+      "sourceTitle": "Tinkamo Intermediate",
+      "targetId": 2,
+      "targetTitle": "TInkamo Tinkerer Intermediate I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 83,
+      "sourceTitle": "3D Halloween",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 84,
+      "sourceTitle": "3D Design",
+      "targetId": 14,
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 85,
+      "sourceTitle": "Funjai Project",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 86,
+      "sourceTitle": "IGCSE Computer Science",
+      "targetId": 57,
+      "targetTitle": "IGCSE: Computer Science"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 87,
+      "sourceTitle": "3D Tinkercad Project",
+      "targetId": 33,
+      "targetTitle": "Creativity with 3D Modeling Project (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 88,
+      "sourceTitle": "Project: Cascade PID Controller for stabilizing Inverted Pendulum Kiddee Robot",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 89,
+      "sourceTitle": "Digital Literacy",
+      "targetId": 59,
+      "targetTitle": "Digital Literacy Workshop"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 90,
+      "sourceTitle": "Project",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 91,
+      "sourceTitle": "Python",
+      "targetId": 42,
+      "targetTitle": "Pure Python I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 92,
+      "sourceTitle": "3D Project",
+      "targetId": 33,
+      "targetTitle": "Creativity with 3D Modeling Project (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 94,
+      "sourceTitle": "3D Course",
+      "targetId": 14,
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 95,
+      "sourceTitle": "3D Shapr3D",
+      "targetId": 47,
+      "targetTitle": "Creativity with 3D Modeling (Shapr3D)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 96,
+      "sourceTitle": "Arduino I + II",
+      "targetId": 49,
+      "targetTitle": "Exploring Arduino with Python I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 97,
+      "sourceTitle": "Vex Earthquake Project",
+      "targetId": 25,
+      "targetTitle": "Vex Earthquake Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 98,
+      "sourceTitle": "UX/UI",
+      "targetId": 40,
+      "targetTitle": "UX/UI Design"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 99,
+      "sourceTitle": "C-Challenge1",
+      "targetId": 17,
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 100,
+      "sourceTitle": "C-B3L1",
+      "targetId": 17,
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 101,
+      "sourceTitle": "Full Stax",
+      "targetId": 41,
+      "targetTitle": "Web Design Development"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 102,
+      "sourceTitle": "K C",
+      "targetId": 10,
+      "targetTitle": "Fun Coding with mBot Beginner (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 103,
+      "sourceTitle": "Intermediate1/2/3",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 104,
+      "sourceTitle": "Summer Course Kids",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 105,
+      "sourceTitle": "Summer Camp Movie+Halocode",
+      "targetId": 28,
+      "targetTitle": "Mastering Halocode Beginner"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 106,
+      "sourceTitle": "C-Challenge1-2",
+      "targetId": 17,
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 107,
+      "sourceTitle": "C-Movie 2",
+      "targetId": 17,
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 108,
+      "sourceTitle": "Summer Course Child",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 109,
+      "sourceTitle": "Summer Course Child: Beginner and Intermediate",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 110,
+      "sourceTitle": "Beginner and Intermediate",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 111,
+      "sourceTitle": "K2C-Beginner",
+      "targetId": 10,
+      "targetTitle": "Fun Coding with mBot Beginner (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 112,
+      "sourceTitle": "Child: Beginner and Intermediate",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 113,
+      "sourceTitle": "Application Project",
+      "targetId": 51,
+      "targetTitle": "Challenge with Application Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 114,
+      "sourceTitle": "Python Application Project",
+      "targetId": 51,
+      "targetTitle": "Challenge with Application Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 115,
+      "sourceTitle": "Halo Code 3 + Python",
+      "targetId": 29,
+      "targetTitle": "Mastering Halocode Intermediate"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 116,
+      "sourceTitle": "3D 1 day workshop",
+      "targetId": 14,
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 117,
+      "sourceTitle": "K-B1L1",
+      "targetId": 10,
+      "targetTitle": "Fun Coding with mBot Beginner (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 118,
+      "sourceTitle": "PK- Tinkamo Beginner",
+      "targetId": 1,
+      "targetTitle": "Tinkamo Tinkerer Begineer"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 119,
+      "sourceTitle": "C-Movie 2-3",
+      "targetId": 17,
+      "targetTitle": "Fun Coding with mBot Intermediate I (C)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 120,
+      "sourceTitle": "PK-Intermediate",
+      "targetId": 2,
+      "targetTitle": "TInkamo Tinkerer Intermediate I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 121,
+      "sourceTitle": "PK-Beginner 4",
+      "targetId": 1,
+      "targetTitle": "Tinkamo Tinkerer Begineer"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 122,
+      "sourceTitle": "PK-Beginner 3",
+      "targetId": 1,
+      "targetTitle": "Tinkamo Tinkerer Begineer"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 123,
+      "sourceTitle": "PK-Beginner 2",
+      "targetId": 1,
+      "targetTitle": "Tinkamo Tinkerer Begineer"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 124,
+      "sourceTitle": "PK-Beginner1",
+      "targetId": 1,
+      "targetTitle": "Tinkamo Tinkerer Begineer"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 125,
+      "sourceTitle": "Beginner 123",
+      "targetId": 1,
+      "targetTitle": "Tinkamo Tinkerer Begineer"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 126,
+      "sourceTitle": "PK- Codey Rocky Beginner",
+      "targetId": 8,
+      "targetTitle": "Codey Rocky Champion"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 127,
+      "sourceTitle": "Animation & Game Creator 3",
+      "targetId": 20,
+      "targetTitle": "Animation and Game Creator"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 128,
+      "sourceTitle": "Tinkamo Beginner 2-3",
+      "targetId": 1,
+      "targetTitle": "Tinkamo Tinkerer Begineer"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 129,
+      "sourceTitle": "K-mBot Beginner + Intermediate I",
+      "targetId": 11,
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 130,
+      "sourceTitle": "VEX RoboSoccer 1 day workshop",
+      "targetId": 24,
+      "targetTitle": "VEX Robotics Workshop"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 131,
+      "sourceTitle": "Tinkamo Intermediate II",
+      "targetId": 3,
+      "targetTitle": "Tinkamo TInkerer Intermediate II"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 132,
+      "sourceTitle": "Minecraft Scratch II",
+      "targetId": 13,
+      "targetTitle": "Minecraft Education (Scratch)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 133,
+      "sourceTitle": "Project camp",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 134,
+      "sourceTitle": "Swift",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 135,
+      "sourceTitle": "Science and Maths",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 136,
+      "sourceTitle": "K-mBot Intermediate + MC Scratch",
+      "targetId": 11,
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 137,
+      "sourceTitle": "Machine Learning",
+      "targetId": 54,
+      "targetTitle": "Machine Learning I"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 138,
+      "sourceTitle": "Machine Learning with Balancing Ball",
+      "targetId": 55,
+      "targetTitle": "Machine Learning II"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 139,
+      "sourceTitle": "Robotics",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 140,
+      "sourceTitle": "K6BILI & BILZ",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 141,
+      "sourceTitle": "mbot mt 1",
+      "targetId": 10,
+      "targetTitle": "Fun Coding with mBot Beginner (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 142,
+      "sourceTitle": "My SQL",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 143,
+      "sourceTitle": "NJID",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 144,
+      "sourceTitle": "Ferris Wheel",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 145,
+      "sourceTitle": "4 days camp",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 146,
+      "sourceTitle": "2 days 2 activities",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 147,
+      "sourceTitle": "Botzees/mTiny 2 days/ Tinkamo 2 days",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 148,
+      "sourceTitle": "3D Design and Printing- K-mbot Int.",
+      "targetId": 14,
+      "targetTitle": "Creativity with 3D Modeling (Tinkercad)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 149,
+      "sourceTitle": "Embedded System",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 150,
+      "sourceTitle": "Codey Rocky Intermediate 1125",
+      "targetId": 9,
+      "targetTitle": "Codey Rocky Champion Intermediate"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 151,
+      "sourceTitle": "1 Day Workshop: 3D Halloween",
+      "targetId": 60,
+      "targetTitle": "Special Project"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 152,
+      "sourceTitle": "mBot Intermediate 1 class",
+      "targetId": 11,
+      "targetTitle": "Fun Coding with mBot Intermediate I (K)"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 153,
+      "sourceTitle": "Botzees 1 class",
+      "targetId": 4,
+      "targetTitle": "Fun Coding and AR with Botzees"
+    },
+    {
+      "action": "CONSOLIDATE",
+      "sourceId": 154,
+      "sourceTitle": "Android Course",
+      "targetId": 36,
+      "targetTitle": "Application Design (MIT App Inventor)"
+    }
+  ],
+  "deletions": [
+    {
+      "action": "DELETE",
+      "sourceId": 93,
+      "sourceTitle": "Kid 5 days 5 activities",
+      "reason": "Explicit delete request"
+    }
+  ],
+  "leftAloneExtra": [
+    {
+      "action": "LEAVE",
+      "sourceId": 65,
+      "sourceTitle": "4 courses package",
+      "reason": "Unmapped package or special core concept"
+    },
+    {
+      "action": "LEAVE",
+      "sourceId": 66,
+      "sourceTitle": "10 courses package",
+      "reason": "Unmapped package or special core concept"
+    },
+    {
+      "action": "LEAVE",
+      "sourceId": 67,
+      "sourceTitle": "2 courses package",
+      "reason": "Unmapped package or special core concept"
+    },
+    {
+      "action": "LEAVE",
+      "sourceId": 70,
+      "sourceTitle": "TBC",
+      "reason": "Unmapped package or special core concept"
+    }
+  ]
+}
