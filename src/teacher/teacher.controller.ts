@@ -20,6 +20,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { AssignCoursesToTeacherDto } from './dto/assign-course-teacher.dto';
 import { CreateAbsenceDto } from './dto/create-absence.dto';
 import { UpdateAbsenceDto } from './dto/update-absence.dto';
+import { CreateAvailabilityDto } from './dto/create-availability.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -445,12 +446,49 @@ export class TeacherController {
     @Query('excludeScheduleId') excludeScheduleId?: string,
   ) {
     return this.teacherService.checkTeacherAvailability(
-      id, 
-      date, 
-      startTime, 
+      id,
+      date,
+      startTime,
       endTime,
       excludeScheduleId ? parseInt(excludeScheduleId) : undefined
     );
+  }
+
+  // ==================== TEACHER AVAILABILITY SLOTS (part-time) ====================
+
+  @ApiTags('Teacher Availability')
+  @Get(':id/availability-slots')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Get all availability slots for a part-time teacher' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  getAvailabilitySlots(@Param('id', ParseIntPipe) id: number) {
+    return this.teacherService.getAvailabilitySlots(id);
+  }
+
+  @ApiTags('Teacher Availability')
+  @Post(':id/availability-slots')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Add an availability slot for a part-time teacher' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiBody({ type: CreateAvailabilityDto })
+  addAvailabilitySlot(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateAvailabilityDto,
+  ) {
+    return this.teacherService.addAvailabilitySlot(id, dto);
+  }
+
+  @ApiTags('Teacher Availability')
+  @Delete(':id/availability-slots/:slotId')
+  @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
+  @ApiOperation({ summary: 'Delete an availability slot for a part-time teacher' })
+  @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
+  @ApiParam({ name: 'slotId', required: true, description: 'Availability slot ID' })
+  removeAvailabilitySlot(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('slotId', ParseIntPipe) slotId: number,
+  ) {
+    return this.teacherService.removeAvailabilitySlot(id, slotId);
   }
 }
 

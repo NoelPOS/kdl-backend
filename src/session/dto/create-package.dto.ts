@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
+import { IsNumber, IsNotEmpty, IsPositive } from 'class-validator';
 
 export class CreatePackageDto {
   @IsNumber()
@@ -7,13 +7,13 @@ export class CreatePackageDto {
   @ApiProperty({ description: 'Student ID' })
   studentId: number;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  @ApiProperty({ description: 'Course name for the package' })
-  courseName: string;
+  @ApiProperty({ description: 'Course package template ID from course_packages table' })
+  packageId: number;
 
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ description: 'Class option/mode for the package' })
-  classOption: string;
+  @IsNumber()
+  @IsPositive()
+  @ApiProperty({ description: 'Custom price entered by admin for this package assignment' })
+  price: number;
 }

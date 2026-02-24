@@ -5,6 +5,7 @@ import { TeacherService } from './teacher.service';
 import { TeacherEntity } from './entities/teacher.entity';
 import { TeacherCourseEntity } from './entities/teacher-course.entity';
 import { TeacherAbsence } from './entities/teacher-absence.entity';
+import { TeacherAvailability } from './entities/teacher-availability.entity';
 import { CommonModule } from '../common/common.module';
 import { Session } from '../session/entities/session.entity';
 import { CourseEntity } from '../course/entities/course.entity';
@@ -16,6 +17,7 @@ import { Schedule } from '../schedule/entities/schedule.entity';
       TeacherEntity,
       TeacherCourseEntity,
       TeacherAbsence,
+      TeacherAvailability,
       Session,
       CourseEntity,
       Schedule,
@@ -27,4 +29,3 @@ import { Schedule } from '../schedule/entities/schedule.entity';
   exports: [TeacherService, TypeOrmModule],
 })
 export class TeacherModule {}
-
