@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './services/auth.service';
 import { TokenStorageService } from './services/token-storage.service';
+import { AuthCleanupService } from './auth-cleanup.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -12,11 +13,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../user/entities/user.entity';
 import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { TeacherModule } from '../teacher/teacher.module';
+import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([UserEntity, TeacherEntity]),
+    TypeOrmModule.forFeature([UserEntity, TeacherEntity, PasswordResetTokenEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -32,7 +34,7 @@ import { TeacherModule } from '../teacher/teacher.module';
     CommonModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokenStorageService, JwtStrategy],
+  providers: [AuthService, TokenStorageService, AuthCleanupService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
