@@ -620,6 +620,19 @@ export class LineMessagingService {
   }
 
   /**
+   * Push messages to a user (no reply token needed — used from LIFF API endpoints)
+   */
+  async pushMessages(userId: string, messages: Message[]): Promise<void> {
+    try {
+      await this.client.pushMessage(userId, messages);
+      this.logger.log(`Pushed ${messages.length} message(s) to ${userId}`);
+    } catch (error) {
+      this.logger.error(`Failed to push message: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get user profile from LINE
    */
   async getUserProfile(userId: string): Promise<line.Profile> {

@@ -26,6 +26,7 @@ import { ParentService } from '../parent/parent.service';
 import { SessionService } from '../session/session.service';
 import { ScheduleService } from '../schedule/schedule.service';
 import { InvoiceService } from '../invoice/invoice.service';
+import { LineMessagingService } from './services/line-messaging.service';
 
 /**
  * Parent Portal Controller
@@ -50,6 +51,7 @@ export class ParentPortalController {
     private readonly sessionService: SessionService,
     private readonly scheduleService: ScheduleService,
     private readonly invoiceService: InvoiceService,
+    private readonly lineMessagingService: LineMessagingService,
   ) {}
 
   /**
@@ -227,12 +229,36 @@ export class ParentPortalController {
   })
   async confirmSchedule(
     @Param('scheduleId', ParseIntPipe) scheduleId: number,
+    @Body() body: { lineUserId?: string },
   ) {
     // Update attendance to confirmed
     const result = await this.scheduleService.updateSchedule(scheduleId, {
       attendance: 'confirmed',
     });
-    
+
+    // Send LINE push message to parent if lineUserId provided
+    if (body?.lineUserId) {
+      try {
+        const schedule = await this.scheduleService.findOne(scheduleId);
+        const roomRaw = schedule?.room;
+        const room = roomRaw && roomRaw !== '-' ? roomRaw : null;
+        const dateStr = schedule?.date
+          ? new Date(schedule.date).toLocaleDateString('en-US', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+            })
+          : '';
+        const locationText = room ? ` in ${room}` : '';
+        await this.lineMessagingService.pushMessages(body.lineUserId, [
+          {
+            type: 'text',
+            text: `✅ Confirmed!\n\n${schedule?.student?.name ?? 'Your child'}'s class on ${dateStr} is confirmed.\n\nSee you at ${schedule?.startTime}${locationText}! 🎓`,
+          },
+        ]);
+      } catch (e) {
+        // Non-fatal: log but don't fail the HTTP response
+      }
+    }
+
     return {
       success: true,
       message: 'Attendance confirmed successfully',
@@ -257,14 +283,36 @@ export class ParentPortalController {
   })
   async rescheduleSchedule(
     @Param('scheduleId', ParseIntPipe) scheduleId: number,
+    @Body() body: { lineUserId?: string },
   ) {
+    // Fetch schedule before updating (need details for the push message)
+    const schedule = await this.scheduleService.findOne(scheduleId);
+
     // Update attendance to cancelled - this will trigger:
     // 1. Removal of conflicts
     // 2. Creation of replacement schedule
     const result = await this.scheduleService.updateSchedule(scheduleId, {
       attendance: 'cancelled',
     });
-    
+
+    // Send LINE rich flex push message to parent if lineUserId provided
+    if (body?.lineUserId && schedule) {
+      try {
+        const dateStr = schedule.date
+          ? new Date(schedule.date).toLocaleDateString('en-US', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+            })
+          : '';
+        const richMessage = this.lineMessagingService.buildRescheduleSuccessFlexMessage({
+          studentName: schedule?.student?.name ?? 'Your child',
+          date: dateStr,
+        });
+        await this.lineMessagingService.pushMessages(body.lineUserId, [richMessage]);
+      } catch (e) {
+        // Non-fatal: log but don't fail the HTTP response
+      }
+    }
+
     return {
       success: true,
       message: 'Schedule cancelled and replacement schedule created. Our team will contact you to arrange a new time.',

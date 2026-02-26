@@ -240,7 +240,7 @@ export class LineController {
       await this.lineMessagingService.replyMessage(replyToken, [
         {
           type: 'text',
-          text: `✅ Confirmed!\n\n${result.studentName}'s class on ${result.date} is confirmed.\n\nSee you at ${result.startTime} in ${result.room}! 🎓`,
+          text: `✅ Confirmed!\n\n${result.studentName}'s class on ${result.date} is confirmed.\n\nSee you at ${result.startTime}${result.room && result.room !== '-' ? ` in ${result.room}` : ''}! 🎓`,
         },
       ]);
     } catch (error) {
