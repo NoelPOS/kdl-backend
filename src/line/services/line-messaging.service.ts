@@ -498,6 +498,115 @@ export class LineMessagingService {
   }
 
   /**
+   * Build a rich flex message for reschedule request confirmation (reply token usage)
+   */
+  buildRescheduleSuccessFlexMessage(data: {
+    studentName: string;
+    date: string;
+  }): FlexMessage {
+    const bubble: FlexBubble = {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '📋 Reschedule Requested',
+            weight: 'bold',
+            size: 'lg',
+            color: '#ffffff',
+          },
+        ],
+        backgroundColor: '#F59E0B',
+        paddingAll: 'lg',
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'text',
+                text: 'Student:',
+                size: 'sm',
+                color: '#8a8a8a',
+                flex: 3,
+              },
+              {
+                type: 'text',
+                text: data.studentName,
+                size: 'sm',
+                color: '#1a1a1a',
+                flex: 5,
+                weight: 'bold',
+                wrap: true,
+              },
+            ],
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            margin: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: 'Date:',
+                size: 'sm',
+                color: '#8a8a8a',
+                flex: 3,
+              },
+              {
+                type: 'text',
+                text: data.date,
+                size: 'sm',
+                color: '#1a1a1a',
+                flex: 5,
+              },
+            ],
+          },
+          {
+            type: 'separator',
+            margin: 'lg',
+          },
+          {
+            type: 'text',
+            text: 'We have received your request. Our team will contact you within 24 hours to confirm the new schedule.',
+            size: 'sm',
+            color: '#555555',
+            wrap: true,
+            margin: 'lg',
+          },
+        ],
+        paddingAll: 'xl',
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: 'Thank you 🙏',
+            size: 'sm',
+            color: '#888888',
+            align: 'center',
+          },
+        ],
+        paddingAll: 'md',
+      },
+    };
+
+    return {
+      type: 'flex',
+      altText: `Reschedule request received for ${data.studentName} on ${data.date}`,
+      contents: bubble,
+    };
+  }
+
+  /**
    * Reply to webhook events
    */
   async replyMessage(replyToken: string, messages: Message[]): Promise<void> {

@@ -4,6 +4,7 @@ import {
   Patch,
   Param,
   Query,
+  Body,
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators';
+import { UpdateWorkflowStatusDto } from './dto/update-workflow-status.dto';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -28,6 +30,7 @@ export class NotificationController {
   @ApiQuery({ name: 'type', required: false, type: String })
   @ApiQuery({ name: 'isRead', required: false, type: Boolean })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'workflowStatus', required: false, type: String })
   findAll(
     @GetUser() user: any,
     @Query('page') page: number = 1,
@@ -37,6 +40,7 @@ export class NotificationController {
     @Query('type') type?: string,
     @Query('isRead') isRead?: string, // received as string from query
     @Query('search') search?: string,
+    @Query('workflowStatus') workflowStatus?: string,
   ) {
     const isReadBool = isRead === 'true' ? true : isRead === 'false' ? false : undefined;
     return this.notificationService.findAll(user.id, page, limit, {
@@ -45,6 +49,7 @@ export class NotificationController {
       type,
       isRead: isReadBool,
       search,
+      workflowStatus,
     });
   }
 
@@ -67,5 +72,15 @@ export class NotificationController {
   @ApiOperation({ summary: 'Mark all notifications as read' })
   markAllAsRead(@GetUser() user: any) {
     return this.notificationService.markAllAsRead(user.id);
+  }
+
+  @Patch(':id/workflow-status')
+  @ApiOperation({ summary: 'Update workflow status of a notification' })
+  updateWorkflowStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: any,
+    @Body() dto: UpdateWorkflowStatusDto,
+  ) {
+    return this.notificationService.updateWorkflowStatus(id, user.id, dto);
   }
 }

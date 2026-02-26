@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotificationEntity } from './entities/notification.entity';
 import { UserEntity } from '../user/entities/user.entity';
+import { UpdateWorkflowStatusDto } from './dto/update-workflow-status.dto';
 
 @Injectable()
 export class NotificationService {
@@ -85,6 +86,7 @@ export class NotificationService {
       type?: string;
       isRead?: boolean;
       search?: string;
+      workflowStatus?: string;
     },
   ) {
     const queryBuilder = this.notificationRepo.createQueryBuilder('notification');
@@ -119,6 +121,12 @@ export class NotificationService {
         '(notification.title ILIKE :search OR notification.message ILIKE :search)',
         { search: `%${filters.search}%` },
       );
+    }
+
+    if (filters?.workflowStatus && filters.workflowStatus !== 'all') {
+      queryBuilder.andWhere('notification.workflowStatus = :workflowStatus', {
+        workflowStatus: filters.workflowStatus,
+      });
     }
 
     const [items, total] = await queryBuilder.getManyAndCount();
@@ -168,5 +176,24 @@ export class NotificationService {
       { isRead: true }
     );
     return { success: true };
+  }
+
+  /**
+   * Update workflow status of a notification
+   */
+  async updateWorkflowStatus(id: number, userId: number, dto: UpdateWorkflowStatusDto) {
+    const notification = await this.notificationRepo.findOne({ where: { id, userId } });
+    if (!notification) throw new NotFoundException(`Notification ${id} not found`);
+
+    notification.workflowStatus = dto.workflowStatus;
+    notification.wipBy = dto.wipBy ?? notification.wipBy;
+    notification.remark = dto.remark ?? notification.remark;
+
+    // Auto-mark as read when actioned
+    if (dto.workflowStatus !== 'incoming') {
+      notification.isRead = true;
+    }
+
+    return this.notificationRepo.save(notification);
   }
 }

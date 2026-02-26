@@ -13,7 +13,7 @@ export class CoursePackageService {
   ) {}
 
   async findAll(): Promise<CoursePackage[]> {
-    return this.repo.find({ order: { createdAt: 'DESC' } });
+    return this.repo.find({ order: { effectiveStartDate: 'DESC' } });
   }
 
   async findOne(id: number): Promise<CoursePackage> {
@@ -23,18 +23,43 @@ export class CoursePackageService {
   }
 
   async create(dto: CreateCoursePackageDto): Promise<CoursePackage> {
-    const pkg = this.repo.create(dto);
+    // Soft versioning: if there's an active package with the same name,
+    // auto-expire it the day before the new one starts.
+    const existingActive = await this.repo
+      .createQueryBuilder('cp')
+      .where('LOWER(cp.name) = LOWER(:name)', { name: dto.name })
+      .andWhere('cp.effectiveEndDate IS NULL')
+      .getOne();
+
+    if (existingActive) {
+      const newStart = new Date(dto.effectiveStartDate);
+      const expiryDate = new Date(newStart);
+      expiryDate.setDate(expiryDate.getDate() - 1);
+      await this.repo.update(existingActive.id, { effectiveEndDate: expiryDate });
+    }
+
+    const pkg = this.repo.create({
+      name: dto.name,
+      numberOfCourses: dto.numberOfCourses,
+      effectiveStartDate: new Date(dto.effectiveStartDate),
+      effectiveEndDate: dto.effectiveEndDate ? new Date(dto.effectiveEndDate) : null,
+    });
     return this.repo.save(pkg);
   }
 
+  // Only allows setting effectiveEndDate — name/numberOfCourses are immutable.
   async update(id: number, dto: UpdateCoursePackageDto): Promise<CoursePackage> {
     await this.findOne(id); // throws if not found
-    await this.repo.update(id, dto);
+    if (dto.effectiveEndDate !== undefined) {
+      await this.repo.update(id, {
+        effectiveEndDate: new Date(dto.effectiveEndDate),
+      });
+    }
     return this.findOne(id);
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // throws if not found
-    await this.repo.delete(id);
+    const pkg = await this.findOne(id); // throws if not found
+    await this.repo.delete(pkg.id);
   }
 }

@@ -120,6 +120,9 @@ export class ScheduleService {
         }
         
         // Notify Registrar and Admin about new feedback
+        const parents = await this.parentService.getParentsByStudentId(existingSchedule.studentId);
+        const primaryParent = parents[0] ?? null;
+
         const rolesToNotify = ['registrar', 'admin'];
         for (const role of rolesToNotify) {
           await this.notificationService.createForRole(
@@ -127,11 +130,15 @@ export class ScheduleService {
             'Feedback Submitted',
             `Teacher ${user.name} submitted feedback for ${existingSchedule.student.name} in ${existingSchedule.course.title}.`,
             'feedback_submitted',
-            { 
-              scheduleId: id, 
-              teacherId: user.id, 
+            {
+              scheduleId: id,
+              teacherId: user.id,
               studentId: existingSchedule.studentId,
-              sessionId: existingSchedule.sessionId
+              sessionId: existingSchedule.sessionId,
+              studentName: existingSchedule.student.name,
+              parentName: primaryParent?.name ?? null,
+              parentPhone: primaryParent?.contactNo ?? null,
+              parentLine: primaryParent?.lineId ?? null,
             }
           );
         }

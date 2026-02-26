@@ -1,15 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsInt, IsOptional, Min } from 'class-validator';
+import { IsDateString, IsOptional } from 'class-validator';
 
+// Only effectiveEndDate is mutable after creation.
+// name and numberOfCourses are frozen — create a new version instead.
 export class UpdateCoursePackageDto {
-  @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ description: 'Package name' })
-  name?: string;
-
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  @ApiPropertyOptional({ description: 'Number of classes in the package' })
-  numberOfCourses?: number;
+  @IsDateString()
+  @ApiPropertyOptional({ description: 'Set to deactivate this package version', example: '2026-12-31' })
+  effectiveEndDate?: string;
 }

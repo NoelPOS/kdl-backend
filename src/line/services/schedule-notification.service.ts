@@ -235,6 +235,11 @@ export class ScheduleNotificationService {
       throw new NotFoundException('Schedule not found');
     }
 
+    // Fetch the parent who triggered this action (for notification data)
+    const triggeringParent = await this.parentRepository.findOne({
+      where: { lineId: lineUserId },
+    });
+
     // Check if already confirmed (Idempotency)
     if (schedule.attendance === 'confirmed') {
       this.logger.log(`Schedule ${scheduleId} is already confirmed. Skipping update.`);
@@ -252,6 +257,16 @@ export class ScheduleNotificationService {
       remark: 'Confirmed by parent via LINE',
     });
 
+    const confirmNotificationData = {
+      scheduleId,
+      studentId: schedule.studentId,
+      sessionId: schedule.sessionId,
+      studentName: schedule.student.name,
+      parentName: triggeringParent?.name ?? null,
+      parentPhone: triggeringParent?.contactNo ?? null,
+      parentLine: triggeringParent?.lineId ?? null,
+    };
+
     // Notify Teacher
     if (schedule.teacherId) {
       await this.notificationService.create(
@@ -259,11 +274,7 @@ export class ScheduleNotificationService {
         'Schedule Confirmed',
         `${schedule.student.name} confirmed attendance for ${schedule.course.title} on ${this.formatDate(schedule.date.toString())} at ${schedule.startTime}.`,
         'schedule_confirmed',
-        { 
-          scheduleId,
-          studentId: schedule.studentId,
-          sessionId: schedule.sessionId 
-        },
+        confirmNotificationData,
       );
     }
 
@@ -275,11 +286,7 @@ export class ScheduleNotificationService {
         'Schedule Confirmed',
         `${schedule.student.name} confirmed attendance for ${schedule.course.title} on ${this.formatDate(schedule.date.toString())} at ${schedule.startTime}.`,
         'schedule_confirmed',
-        { 
-          scheduleId,
-          studentId: schedule.studentId,
-          sessionId: schedule.sessionId 
-        },
+        confirmNotificationData,
       );
     }
 
@@ -314,6 +321,11 @@ export class ScheduleNotificationService {
       throw new NotFoundException('Schedule not found');
     }
 
+    // Fetch the parent who triggered this action (for notification data)
+    const triggeringParent = await this.parentRepository.findOne({
+      where: { lineId: lineUserId },
+    });
+
     // Check if already cancelled (Idempotency)
     if (schedule.attendance === 'cancelled') {
       this.logger.log(`Schedule ${scheduleId} is already cancelled. Skipping update.`);
@@ -334,6 +346,18 @@ export class ScheduleNotificationService {
       remark: 'Reschedule requested by parent via LINE',
     });
 
+    const rescheduleNotificationData = {
+      scheduleId,
+      studentId: schedule.studentId,
+      sessionId: schedule.sessionId,
+      studentName: schedule.student.name,
+      parentName: triggeringParent?.name ?? null,
+      parentPhone: triggeringParent?.contactNo ?? null,
+      parentLine: triggeringParent?.lineId ?? null,
+      oldDate: schedule.date,
+      oldTime: schedule.startTime,
+    };
+
     // 1. Notify Registrar and Admin (to re-book)
     const rolesToNotify = ['registrar', 'admin'];
     for (const role of rolesToNotify) {
@@ -342,13 +366,7 @@ export class ScheduleNotificationService {
         'Reschedule Requested',
         `Parent of ${schedule.student.name} requested to reschedule ${schedule.course.title} on ${this.formatDate(schedule.date.toString())}.`,
         'schedule_cancelled',
-        { 
-          scheduleId, 
-          studentId: schedule.studentId,
-          sessionId: schedule.sessionId,
-          oldDate: schedule.date, 
-          oldTime: schedule.startTime 
-        },
+        rescheduleNotificationData,
       );
     }
 
@@ -359,11 +377,7 @@ export class ScheduleNotificationService {
         'Class Cancelled',
         `Class with ${schedule.student.name} (${schedule.course.title}) on ${this.formatDate(schedule.date.toString())} has been cancelled by parent.`,
         'schedule_cancelled',
-        { 
-          scheduleId,
-          studentId: schedule.studentId,
-          sessionId: schedule.sessionId
-        },
+        rescheduleNotificationData,
       );
     }
 

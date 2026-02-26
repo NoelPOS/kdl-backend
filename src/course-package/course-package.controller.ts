@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -46,9 +46,9 @@ export class CoursePackageController {
     return this.service.create(dto);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a course package template' })
+  @ApiOperation({ summary: 'Deactivate a course package version (set effectiveEndDate)' })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCoursePackageDto,

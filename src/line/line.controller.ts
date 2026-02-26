@@ -268,15 +268,11 @@ export class LineController {
         scheduleId,
       );
 
-      await this.lineMessagingService.replyMessage(replyToken, [
-        {
-          type: 'text',
-          text: `📝 Reschedule Request Submitted\n\n` +
-                `We've received your request to reschedule ${result.studentName}'s class on ${result.date}.\n\n` +
-                `Our team will contact you within 24 hours to confirm the new schedule.\n\n` +
-                `Thank you! 🙏`,
-        },
-      ]);
+      const richMessage = this.lineMessagingService.buildRescheduleSuccessFlexMessage({
+        studentName: result.studentName,
+        date: result.date,
+      });
+      await this.lineMessagingService.replyMessage(replyToken, [richMessage]);
     } catch (error) {
       this.logger.error(`Failed to request reschedule: ${error.message}`);
       
