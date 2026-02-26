@@ -14,6 +14,7 @@ import { ConnectParentStudentDto } from './dto/connect-parent-student.dto';
 import { PaginatedParentResponseDto } from './dto/paginated-parent-response.dto';
 import { PaginatedParentChildrenResponseDto } from './dto/paginated-parent-children-response.dto';
 import { AssignChildrenToParentDto } from './dto/assign-children-parent.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ParentService {
@@ -190,6 +191,8 @@ export class ParentService {
       parent.address = createParentDto.address;
       parent.profilePicture = createParentDto.profilePicture || '';
       parent.profileKey = createParentDto.profileKey || '';
+      const salt = await bcrypt.genSalt();
+      parent.password = await bcrypt.hash('123456', salt);
       const savedParent = await this.parentRepository.save(parent);
       return savedParent;
     } catch (error) {

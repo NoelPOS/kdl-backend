@@ -53,10 +53,11 @@ export class ScheduleNotificationService {
     this.logger.log(`Starting schedule notification job for ${daysOffset === 0 ? 'today' : `${daysOffset} days from now`}...`);
 
     try {
-      // Calculate target date
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + daysOffset);
-      const dateString = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD
+      // Calculate target date in Bangkok timezone (UTC+7)
+      // toISOString() is always UTC — on the EC2 server (UTC), dates before 7AM Bangkok
+      // would resolve to the previous calendar day. Using Bangkok locale avoids this.
+      const dateString = new Date(Date.now() + daysOffset * 86400000)
+        .toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // en-CA → YYYY-MM-DD
 
       // Find schedules for target date with pending attendance
       const schedules = await this.scheduleRepository.find({
