@@ -74,7 +74,9 @@ export class UpdateStudentDto {
   })
   @IsOptional()
   @IsString({ message: 'Gender must be a string' })
-  @IsIn(['Male', 'Female', 'male', 'female'], { message: 'Gender must be either Male or Female' })
+  @IsIn(['Male', 'Female', 'male', 'female'], {
+    message: 'Gender must be either Male or Female',
+  })
   @Transform(({ value }) => value?.trim())
   gender?: string;
 

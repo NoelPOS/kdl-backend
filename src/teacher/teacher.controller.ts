@@ -338,7 +338,9 @@ export class TeacherController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRoleDto: UpdateRoleDto,
   ) {
-    const teacher = await this.teacherService.updateTeacher(id, { role: updateRoleDto.role });
+    const teacher = await this.teacherService.updateTeacher(id, {
+      role: updateRoleDto.role,
+    });
     if (!teacher) {
       throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
@@ -421,12 +423,30 @@ export class TeacherController {
   @ApiTags('Teacher Availability')
   @Get(':id/availability')
   @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
-  @ApiOperation({ summary: 'Check if a teacher is available on a specific date/time' })
+  @ApiOperation({
+    summary: 'Check if a teacher is available on a specific date/time',
+  })
   @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
-  @ApiQuery({ name: 'date', required: true, description: 'Date to check (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'startTime', required: false, description: 'Start time (HH:MM)' })
-  @ApiQuery({ name: 'endTime', required: false, description: 'End time (HH:MM)' })
-  @ApiQuery({ name: 'excludeScheduleId', required: false, description: 'Schedule ID to exclude (for editing)' })
+  @ApiQuery({
+    name: 'date',
+    required: true,
+    description: 'Date to check (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'startTime',
+    required: false,
+    description: 'Start time (HH:MM)',
+  })
+  @ApiQuery({
+    name: 'endTime',
+    required: false,
+    description: 'End time (HH:MM)',
+  })
+  @ApiQuery({
+    name: 'excludeScheduleId',
+    required: false,
+    description: 'Schedule ID to exclude (for editing)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Returns availability status',
@@ -450,7 +470,7 @@ export class TeacherController {
       date,
       startTime,
       endTime,
-      excludeScheduleId ? parseInt(excludeScheduleId) : undefined
+      excludeScheduleId ? parseInt(excludeScheduleId) : undefined,
     );
   }
 
@@ -459,7 +479,9 @@ export class TeacherController {
   @ApiTags('Teacher Availability')
   @Get(':id/availability-slots')
   @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
-  @ApiOperation({ summary: 'Get all availability slots for a part-time teacher' })
+  @ApiOperation({
+    summary: 'Get all availability slots for a part-time teacher',
+  })
   @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
   getAvailabilitySlots(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.getAvailabilitySlots(id);
@@ -481,9 +503,15 @@ export class TeacherController {
   @ApiTags('Teacher Availability')
   @Delete(':id/availability-slots/:slotId')
   @Roles(UserRole.ADMIN, UserRole.REGISTRAR)
-  @ApiOperation({ summary: 'Delete an availability slot for a part-time teacher' })
+  @ApiOperation({
+    summary: 'Delete an availability slot for a part-time teacher',
+  })
   @ApiParam({ name: 'id', required: true, description: 'Teacher ID' })
-  @ApiParam({ name: 'slotId', required: true, description: 'Availability slot ID' })
+  @ApiParam({
+    name: 'slotId',
+    required: true,
+    description: 'Availability slot ID',
+  })
   removeAvailabilitySlot(
     @Param('id', ParseIntPipe) id: number,
     @Param('slotId', ParseIntPipe) slotId: number,
@@ -491,4 +519,3 @@ export class TeacherController {
     return this.teacherService.removeAvailabilitySlot(id, slotId);
   }
 }
-

@@ -8,7 +8,10 @@ import { Invoice } from '../invoice/entities/invoice.entity';
 import { Receipt } from '../receipt/entities/receipt.entity';
 import { StudentEntity } from '../student/entities/student.entity';
 import { TeacherEntity } from '../teacher/entities/teacher.entity';
-import { DashboardOverviewDto, CourseTypeCountDto } from './dto/dashboard-overview.dto';
+import {
+  DashboardOverviewDto,
+  CourseTypeCountDto,
+} from './dto/dashboard-overview.dto';
 import { AnalyticsFilterDto } from './dto/analytics-filter.dto';
 import { Schedule } from '../schedule/entities/schedule.entity';
 
@@ -33,14 +36,17 @@ export class AnalyticsService {
     private readonly scheduleRepository: Repository<Schedule>,
   ) {}
 
-  async getDashboardOverview(filter?: AnalyticsFilterDto): Promise<DashboardOverviewDto> {
+  async getDashboardOverview(
+    filter?: AnalyticsFilterDto,
+  ): Promise<DashboardOverviewDto> {
     // Execute all queries in parallel for better performance
-    const [timeslotCount, scheduleCount, courseTypeCounts, activeStudentCount] = await Promise.all([
-      this.getTimeslotCount(filter),
-      this.getScheduleCount(filter),
-      this.getCourseTypeCounts(filter),
-      this.getActiveStudentCount(filter),
-    ]);
+    const [timeslotCount, scheduleCount, courseTypeCounts, activeStudentCount] =
+      await Promise.all([
+        this.getTimeslotCount(filter),
+        this.getScheduleCount(filter),
+        this.getCourseTypeCounts(filter),
+        this.getActiveStudentCount(filter),
+      ]);
 
     const distinctCourseCount = courseTypeCounts?.length ?? 0;
 
@@ -92,26 +98,46 @@ export class AnalyticsService {
   ): void {
     let hasWhere = false;
     if (filter?.startDate) {
-      query.where('schedule.date >= :startDate', { startDate: filter.startDate });
+      query.where('schedule.date >= :startDate', {
+        startDate: filter.startDate,
+      });
       hasWhere = true;
     }
     if (filter?.endDate) {
-      if (hasWhere) query.andWhere('schedule.date <= :endDate', { endDate: filter.endDate });
-      else query.where('schedule.date <= :endDate', { endDate: filter.endDate });
+      if (hasWhere)
+        query.andWhere('schedule.date <= :endDate', {
+          endDate: filter.endDate,
+        });
+      else
+        query.where('schedule.date <= :endDate', { endDate: filter.endDate });
       hasWhere = true;
     }
     if (filter?.teacherId) {
-      if (hasWhere) query.andWhere('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
-      else query.where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+      if (hasWhere)
+        query.andWhere('schedule.teacherId = :teacherId', {
+          teacherId: filter.teacherId,
+        });
+      else
+        query.where('schedule.teacherId = :teacherId', {
+          teacherId: filter.teacherId,
+        });
       hasWhere = true;
     }
     if (filter?.attendance) {
-      if (hasWhere) query.andWhere('schedule.attendance = :attendance', { attendance: filter.attendance });
-      else query.where('schedule.attendance = :attendance', { attendance: filter.attendance });
+      if (hasWhere)
+        query.andWhere('schedule.attendance = :attendance', {
+          attendance: filter.attendance,
+        });
+      else
+        query.where('schedule.attendance = :attendance', {
+          attendance: filter.attendance,
+        });
     }
   }
 
-  async getCourseTypeCounts(filter?: AnalyticsFilterDto): Promise<CourseTypeCountDto[]> {
+  async getCourseTypeCounts(
+    filter?: AnalyticsFilterDto,
+  ): Promise<CourseTypeCountDto[]> {
     const countBy = filter?.countBy || 'timeslot';
     const countClause =
       countBy === 'timeslot'
@@ -127,12 +153,16 @@ export class AnalyticsService {
     // Apply date filters if provided
     let hasWhereClause = false;
     if (filter?.startDate) {
-      query.where('schedule.date >= :startDate', { startDate: filter.startDate });
+      query.where('schedule.date >= :startDate', {
+        startDate: filter.startDate,
+      });
       hasWhereClause = true;
     }
     if (filter?.endDate) {
       if (hasWhereClause) {
-        query.andWhere('schedule.date <= :endDate', { endDate: filter.endDate });
+        query.andWhere('schedule.date <= :endDate', {
+          endDate: filter.endDate,
+        });
       } else {
         query.where('schedule.date <= :endDate', { endDate: filter.endDate });
         hasWhereClause = true;
@@ -142,9 +172,13 @@ export class AnalyticsService {
     // Apply teacher filter if provided
     if (filter?.teacherId) {
       if (hasWhereClause) {
-        query.andWhere('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+        query.andWhere('schedule.teacherId = :teacherId', {
+          teacherId: filter.teacherId,
+        });
       } else {
-        query.where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+        query.where('schedule.teacherId = :teacherId', {
+          teacherId: filter.teacherId,
+        });
         hasWhereClause = true;
       }
     }
@@ -152,18 +186,20 @@ export class AnalyticsService {
     // Apply attendance filter if provided
     if (filter?.attendance) {
       if (hasWhereClause) {
-        query.andWhere('schedule.attendance = :attendance', { attendance: filter.attendance });
+        query.andWhere('schedule.attendance = :attendance', {
+          attendance: filter.attendance,
+        });
       } else {
-        query.where('schedule.attendance = :attendance', { attendance: filter.attendance });
+        query.where('schedule.attendance = :attendance', {
+          attendance: filter.attendance,
+        });
         hasWhereClause = true;
       }
     }
 
-    const results = await query
-      .groupBy('course.title')
-      .getRawMany();
+    const results = await query.groupBy('course.title').getRawMany();
 
-    return results.map(r => ({
+    return results.map((r) => ({
       subject: r.subject || 'Unknown',
       count: parseInt(r.count || '0'),
     }));
@@ -177,12 +213,16 @@ export class AnalyticsService {
     // Apply date filters if provided
     let hasWhereClause = false;
     if (filter?.startDate) {
-      query.where('schedule.date >= :startDate', { startDate: filter.startDate });
+      query.where('schedule.date >= :startDate', {
+        startDate: filter.startDate,
+      });
       hasWhereClause = true;
     }
     if (filter?.endDate) {
       if (hasWhereClause) {
-        query.andWhere('schedule.date <= :endDate', { endDate: filter.endDate });
+        query.andWhere('schedule.date <= :endDate', {
+          endDate: filter.endDate,
+        });
       } else {
         query.where('schedule.date <= :endDate', { endDate: filter.endDate });
         hasWhereClause = true;
@@ -192,9 +232,13 @@ export class AnalyticsService {
     // Apply teacher filter if provided
     if (filter?.teacherId) {
       if (hasWhereClause) {
-        query.andWhere('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+        query.andWhere('schedule.teacherId = :teacherId', {
+          teacherId: filter.teacherId,
+        });
       } else {
-        query.where('schedule.teacherId = :teacherId', { teacherId: filter.teacherId });
+        query.where('schedule.teacherId = :teacherId', {
+          teacherId: filter.teacherId,
+        });
         hasWhereClause = true;
       }
     }
@@ -202,9 +246,13 @@ export class AnalyticsService {
     // Apply attendance filter if provided
     if (filter?.attendance) {
       if (hasWhereClause) {
-        query.andWhere('schedule.attendance = :attendance', { attendance: filter.attendance });
+        query.andWhere('schedule.attendance = :attendance', {
+          attendance: filter.attendance,
+        });
       } else {
-        query.where('schedule.attendance = :attendance', { attendance: filter.attendance });
+        query.where('schedule.attendance = :attendance', {
+          attendance: filter.attendance,
+        });
         hasWhereClause = true;
       }
     }

@@ -8,7 +8,12 @@ import {
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators';
@@ -42,7 +47,8 @@ export class NotificationController {
     @Query('search') search?: string,
     @Query('workflowStatus') workflowStatus?: string,
   ) {
-    const isReadBool = isRead === 'true' ? true : isRead === 'false' ? false : undefined;
+    const isReadBool =
+      isRead === 'true' ? true : isRead === 'false' ? false : undefined;
     return this.notificationService.findAll(user.id, page, limit, {
       startDate,
       endDate,
@@ -61,10 +67,7 @@ export class NotificationController {
 
   @Patch(':id/read')
   @ApiOperation({ summary: 'Mark notification as read' })
-  markAsRead(
-    @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: any,
-  ) {
+  markAsRead(@Param('id', ParseIntPipe) id: number, @GetUser() user: any) {
     return this.notificationService.markAsRead(id, user.id);
   }
 

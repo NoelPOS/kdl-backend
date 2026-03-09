@@ -1,14 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as line from '@line/bot-sdk';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as https from 'https';
 
 /**
  * Rich Menu Service
  * Manages LINE Rich Menus (the persistent menu at bottom of chat)
- * 
+ *
  * Two menu states:
  * 1. Unverified Menu - Only shows "Login" button
  * 2. Verified Menu - Shows "My Portal" button to access LIFF app
@@ -46,8 +44,10 @@ export class RichMenuService {
   async initializeRichMenus(): Promise<void> {
     try {
       // Check if menu IDs exist in environment variables
-      const envUnverifiedMenuId = this.configService.get<string>('UNVERIFIED_MENU_ID');
-      const envVerifiedMenuId = this.configService.get<string>('VERIFIED_MENU_ID');
+      const envUnverifiedMenuId =
+        this.configService.get<string>('UNVERIFIED_MENU_ID');
+      const envVerifiedMenuId =
+        this.configService.get<string>('VERIFIED_MENU_ID');
 
       if (envUnverifiedMenuId && envVerifiedMenuId) {
         // Use existing menu IDs from .env
@@ -56,12 +56,16 @@ export class RichMenuService {
         this.logger.log(`✅ Using existing rich menus from .env:`);
         this.logger.log(`   Unverified: ${this.unverifiedMenuId}`);
         this.logger.log(`   Verified: ${this.verifiedMenuId}`);
-        this.logger.log(`⚠️  Make sure images are uploaded using: npm run upload-rich-menu-images`);
+        this.logger.log(
+          `⚠️  Make sure images are uploaded using: npm run upload-rich-menu-images`,
+        );
       } else {
         // Create new menus if they don't exist in .env
-        this.logger.warn(`⚠️  UNVERIFIED_MENU_ID or VERIFIED_MENU_ID not found in .env`);
+        this.logger.warn(
+          `⚠️  UNVERIFIED_MENU_ID or VERIFIED_MENU_ID not found in .env`,
+        );
         this.logger.log(`🔄 Creating new rich menus...`);
-        
+
         this.unverifiedMenuId = await this.createUnverifiedMenu();
         this.logger.log(`✅ Unverified menu created: ${this.unverifiedMenuId}`);
 
@@ -114,7 +118,9 @@ export class RichMenuService {
 
     // Note: Image upload disabled - use upload-rich-menu-images.ts script instead
     // This prevents automatic placeholder uploads and lets you use custom images
-    this.logger.log(`⚠️  Remember to upload image for menu ${menuId} using the upload script`);
+    this.logger.log(
+      `⚠️  Remember to upload image for menu ${menuId} using the upload script`,
+    );
 
     return menuId;
   }
@@ -155,7 +161,9 @@ export class RichMenuService {
 
     // Note: Image upload disabled - use upload-rich-menu-images.ts script instead
     // This prevents automatic placeholder uploads and lets you use custom images
-    this.logger.log(`⚠️  Remember to upload image for menu ${menuId} using the upload script`);
+    this.logger.log(
+      `⚠️  Remember to upload image for menu ${menuId} using the upload script`,
+    );
 
     return menuId;
   }
@@ -165,22 +173,27 @@ export class RichMenuService {
    * Uses a solid color background with text
    * Size: 2500x843px (required by LINE)
    */
-  private async createPlaceholderImage(text: string, color: string): Promise<Buffer> {
+  private async createPlaceholderImage(
+    text: string,
+    color: string,
+  ): Promise<Buffer> {
     // For now, return a simple solid color PNG
     // In production, you should use a proper image library like 'canvas' or upload real images
     // This is a minimal 2500x843 PNG with solid color
-    
+
     // Download from a placeholder service or create locally
     // For simplicity, we'll use a public placeholder API
     const url = `https://via.placeholder.com/2500x843/${color.replace('#', '')}/${color.replace('#', '')}?text=${encodeURIComponent(text)}`;
-    
+
     return new Promise((resolve, reject) => {
-      https.get(url, (response) => {
-        const chunks: Buffer[] = [];
-        response.on('data', (chunk) => chunks.push(chunk));
-        response.on('end', () => resolve(Buffer.concat(chunks)));
-        response.on('error', reject);
-      }).on('error', reject);
+      https
+        .get(url, (response) => {
+          const chunks: Buffer[] = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+          response.on('error', reject);
+        })
+        .on('error', reject);
     });
   }
 
@@ -197,9 +210,7 @@ export class RichMenuService {
       await this.client.linkRichMenuToUser(userId, this.unverifiedMenuId);
       this.logger.log(`Assigned unverified menu to user ${userId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to assign unverified menu: ${error.message}`,
-      );
+      this.logger.error(`Failed to assign unverified menu: ${error.message}`);
     }
   }
 
@@ -208,19 +219,28 @@ export class RichMenuService {
    */
   async assignVerifiedMenu(userId: string): Promise<void> {
     if (!this.verifiedMenuId) {
-      this.logger.error('❌ Verified menu not initialized - cannot upgrade rich menu');
+      this.logger.error(
+        '❌ Verified menu not initialized - cannot upgrade rich menu',
+      );
       throw new Error('Verified menu not available');
     }
 
     try {
-      this.logger.log(`🔄 Upgrading rich menu for user ${userId} to verified state...`);
+      this.logger.log(
+        `🔄 Upgrading rich menu for user ${userId} to verified state...`,
+      );
       this.logger.log(`Using verified menu ID: ${this.verifiedMenuId}`);
-      
+
       await this.client.linkRichMenuToUser(userId, this.verifiedMenuId);
-      
-      this.logger.log(`✅ Successfully assigned verified menu to user ${userId}`);
+
+      this.logger.log(
+        `✅ Successfully assigned verified menu to user ${userId}`,
+      );
     } catch (error) {
-      this.logger.error(`❌ Failed to assign verified menu to user ${userId}:`, error);
+      this.logger.error(
+        `❌ Failed to assign verified menu to user ${userId}:`,
+        error,
+      );
       this.logger.error(`Error details: ${error.message}`);
       this.logger.error(`Stack: ${error.stack}`);
       throw error; // Re-throw so the verification service knows it failed
@@ -241,7 +261,11 @@ export class RichMenuService {
    * Upload image to an existing rich menu
    * Useful for updating existing menus or fixing missing images
    */
-  async uploadImageToMenu(menuId: string, text: string, color: string = '#10B981'): Promise<void> {
+  async uploadImageToMenu(
+    menuId: string,
+    text: string,
+    color: string = '#10B981',
+  ): Promise<void> {
     try {
       this.logger.log(`📤 Uploading image to rich menu ${menuId}...`);
       const imageBuffer = await this.createPlaceholderImage(text, color);
@@ -260,10 +284,18 @@ export class RichMenuService {
   async fixExistingMenus(): Promise<void> {
     try {
       if (this.unverifiedMenuId) {
-        await this.uploadImageToMenu(this.unverifiedMenuId, '🔐 Login to KDL', '#10B981');
+        await this.uploadImageToMenu(
+          this.unverifiedMenuId,
+          '🔐 Login to KDL',
+          '#10B981',
+        );
       }
       if (this.verifiedMenuId) {
-        await this.uploadImageToMenu(this.verifiedMenuId, '📱 My KDL Portal', '#059669');
+        await this.uploadImageToMenu(
+          this.verifiedMenuId,
+          '📱 My KDL Portal',
+          '#059669',
+        );
       }
       this.logger.log(`✅ All menu images uploaded successfully`);
     } catch (error) {

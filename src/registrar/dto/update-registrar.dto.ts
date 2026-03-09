@@ -1,5 +1,4 @@
-import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
-import { CreateRegistrarDto } from './create-registrar.dto';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEmail, IsEnum } from 'class-validator';
 import { UserRole } from '../../common/enums/user-role.enum';
 

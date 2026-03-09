@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { DataSource } from 'typeorm';
 import dataSource from '../data-source';
 import { DataSeeder } from './data-seeder';
 

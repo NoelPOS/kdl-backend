@@ -6,7 +6,11 @@ export class CreateAbsenceDto {
   @IsDateString()
   absenceDate: string;
 
-  @ApiProperty({ description: 'Reason for absence', required: false, example: 'Christmas leave' })
+  @ApiProperty({
+    description: 'Reason for absence',
+    required: false,
+    example: 'Christmas leave',
+  })
   @IsOptional()
   @IsString()
   reason?: string;

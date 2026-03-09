@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { CoursePlusService } from './course-plus.service';
 import { CreateCoursePlusDto } from './dto/create-course-plus.dto';
-import { UpdateCoursePlusDto } from './dto/update-course-plus.dto';
 import {
   ApiTags,
   ApiOperation,

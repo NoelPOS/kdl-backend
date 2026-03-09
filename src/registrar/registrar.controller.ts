@@ -183,7 +183,9 @@ export class RegistrarController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRoleDto: UpdateRoleDto,
   ) {
-    const registrar = await this.registrarService.updateRegistrar(id, { role: updateRoleDto.role });
+    const registrar = await this.registrarService.updateRegistrar(id, {
+      role: updateRoleDto.role,
+    });
     return registrar;
   }
 

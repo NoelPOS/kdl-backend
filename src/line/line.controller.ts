@@ -15,7 +15,12 @@ import { LineMessagingService } from './services/line-messaging.service';
 import { RichMenuService } from './services/rich-menu.service';
 import { ParentVerificationService } from './services/parent-verification.service';
 import { ScheduleNotificationService } from './services/schedule-notification.service';
-import { WebhookEvent, MessageEvent, PostbackEvent, FollowEvent } from '@line/bot-sdk';
+import {
+  WebhookEvent,
+  MessageEvent,
+  PostbackEvent,
+  FollowEvent,
+} from '@line/bot-sdk';
 
 /**
  * LINE Webhook Controller
@@ -23,7 +28,7 @@ import { WebhookEvent, MessageEvent, PostbackEvent, FollowEvent } from '@line/bo
  * - Follow events (user adds bot)
  * - Message events (user sends message)
  * - Postback events (user clicks flex message buttons)
- * 
+ *
  * Security: Validates LINE signature for all requests
  */
 @ApiTags('LINE Webhook')
@@ -81,7 +86,10 @@ export class LineController {
       try {
         await this.handleEvent(event);
       } catch (error) {
-        this.logger.error(`Error handling event: ${error.message}`, error.stack);
+        this.logger.error(
+          `Error handling event: ${error.message}`,
+          error.stack,
+        );
       }
     }
 
@@ -144,7 +152,6 @@ export class LineController {
       return;
     }
 
-    const userId = event.source.userId;
     const replyToken = event.replyToken;
     const messageText = event.message.text.toLowerCase();
 
@@ -153,20 +160,22 @@ export class LineController {
       await this.lineMessagingService.replyMessage(replyToken, [
         {
           type: 'text',
-          text: '📚 KDL Bot Help\n\n' +
-                '• Tap "KDL Portal" to view schedules\n' +
-                '• You will receive notifications 3 days before each class\n' +
-                '• Use the Confirm/Reschedule buttons in notifications\n\n' +
-                'Need assistance? Contact KDL office.',
+          text:
+            '📚 KDL Bot Help\n\n' +
+            '• Tap "KDL Portal" to view schedules\n' +
+            '• You will receive notifications 3 days before each class\n' +
+            '• Use the Confirm/Reschedule buttons in notifications\n\n' +
+            'Need assistance? Contact KDL office.',
         },
       ]);
     } else {
       await this.lineMessagingService.replyMessage(replyToken, [
         {
           type: 'text',
-          text: 'Thank you for your message! 😊\n\n' +
-                'For schedules and notifications, please tap "KDL Portal" below.\n\n' +
-                'Type "help" for more information.',
+          text:
+            'Thank you for your message! 😊\n\n' +
+            'For schedules and notifications, please tap "KDL Portal" below.\n\n' +
+            'Type "help" for more information.',
         },
       ]);
     }
@@ -195,10 +204,11 @@ export class LineController {
     }
 
     // Verify parent ownership before processing
-    const isAuthorized = await this.scheduleNotificationService.validateParentOwnership(
-      userId,
-      scheduleId,
-    );
+    const isAuthorized =
+      await this.scheduleNotificationService.validateParentOwnership(
+        userId,
+        scheduleId,
+      );
 
     if (!isAuthorized) {
       await this.lineMessagingService.replyMessage(replyToken, [
@@ -268,18 +278,20 @@ export class LineController {
         scheduleId,
       );
 
-      const richMessage = this.lineMessagingService.buildRescheduleSuccessFlexMessage({
-        studentName: result.studentName,
-        date: result.date,
-      });
+      const richMessage =
+        this.lineMessagingService.buildRescheduleSuccessFlexMessage({
+          studentName: result.studentName,
+          date: result.date,
+        });
       await this.lineMessagingService.replyMessage(replyToken, [richMessage]);
     } catch (error) {
       this.logger.error(`Failed to request reschedule: ${error.message}`);
-      
+
       // Send specific error message if available (e.g. "Class is already confirmed")
-      const errorMessage = error instanceof BadRequestException || error.status === 400
-        ? error.message
-        : 'Failed to submit reschedule request. Please contact KDL office directly.';
+      const errorMessage =
+        error instanceof BadRequestException || error.status === 400
+          ? error.message
+          : 'Failed to submit reschedule request. Please contact KDL office directly.';
 
       await this.lineMessagingService.replyMessage(replyToken, [
         {
@@ -296,7 +308,9 @@ export class LineController {
    * Call this endpoint once to upload images to existing menus
    */
   @Get('fix-rich-menu-images')
-  @ApiOperation({ summary: 'Upload images to existing rich menus (one-time fix)' })
+  @ApiOperation({
+    summary: 'Upload images to existing rich menus (one-time fix)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Rich menu images uploaded successfully',
@@ -307,7 +321,8 @@ export class LineController {
       await this.richMenuService.fixExistingMenus();
       return {
         success: true,
-        message: 'Rich menu images uploaded successfully! Try verifying a parent now.',
+        message:
+          'Rich menu images uploaded successfully! Try verifying a parent now.',
       };
     } catch (error) {
       this.logger.error(`Failed to fix rich menu images:`, error);
@@ -337,20 +352,22 @@ export class LineController {
     const menuIds = this.richMenuService.getMenuIds();
     return {
       ...menuIds,
-      instructions: 'Use these IDs in the upload-rich-menu-images.ts script or set them as environment variables: UNVERIFIED_MENU_ID and VERIFIED_MENU_ID',
+      instructions:
+        'Use these IDs in the upload-rich-menu-images.ts script or set them as environment variables: UNVERIFIED_MENU_ID and VERIFIED_MENU_ID',
     };
   }
 
   /**
    * Test notification endpoint - Send a test notification immediately
    * GET /api/v1/line/test-notification/:parentId/:scheduleId
-   * 
+   *
    * Use this to test if notifications are working without waiting for the cron job
    */
   @Get('test-notification/:parentId/:scheduleId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Send test notification to a parent for a specific schedule',
-    description: 'Manually trigger a schedule notification to test the notification system'
+    description:
+      'Manually trigger a schedule notification to test the notification system',
   })
   @ApiResponse({
     status: 200,
@@ -381,15 +398,16 @@ export class LineController {
   /**
    * Manually trigger the daily notification cron job
    * GET /api/v1/line/trigger-daily-notifications?daysOffset=3
-   * 
+   *
    * Use this to test the cron job logic without waiting for 9 AM
-   * 
+   *
    * @param daysOffset Number of days from today (0 = today, 3 = 3 days from now, default: 3)
    */
   @Get('trigger-daily-notifications')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Manually trigger the daily notification cron job',
-    description: 'Run the cron job that sends notifications for schedules. Use daysOffset=0 for today, daysOffset=3 for 3 days from now (default).'
+    description:
+      'Run the cron job that sends notifications for schedules. Use daysOffset=0 for today, daysOffset=3 for 3 days from now (default).',
   })
   @ApiResponse({
     status: 200,
@@ -397,8 +415,8 @@ export class LineController {
   })
   async triggerDailyNotifications(
     @Query('daysOffset') daysOffset?: string,
-  ): Promise<{ 
-    success: boolean; 
+  ): Promise<{
+    success: boolean;
     message: string;
     targetDate: string | null;
     daysOffset: number;
@@ -406,16 +424,26 @@ export class LineController {
     try {
       // Parse daysOffset, default to 3 if not provided
       const offset = daysOffset ? parseInt(daysOffset, 10) : 3;
-      
+
       if (isNaN(offset) || offset < 0) {
-        throw new BadRequestException('daysOffset must be a non-negative integer');
+        throw new BadRequestException(
+          'daysOffset must be a non-negative integer',
+        );
       }
 
-      const offsetLabel = offset === 0 ? 'today' : `${offset} day${offset > 1 ? 's' : ''} from now`;
-      this.logger.log(`Manually triggering notification job for ${offsetLabel}...`);
-      
-      const dateString = await this.scheduleNotificationService.sendNotificationsForDaysOffset(offset);
-      
+      const offsetLabel =
+        offset === 0
+          ? 'today'
+          : `${offset} day${offset > 1 ? 's' : ''} from now`;
+      this.logger.log(
+        `Manually triggering notification job for ${offsetLabel}...`,
+      );
+
+      const dateString =
+        await this.scheduleNotificationService.sendNotificationsForDaysOffset(
+          offset,
+        );
+
       return {
         success: true,
         message: `Notification job completed for ${offsetLabel}. Check logs for details.`,
@@ -423,7 +451,9 @@ export class LineController {
         daysOffset: offset,
       };
     } catch (error) {
-      this.logger.error(`Failed to trigger daily notifications: ${error.message}`);
+      this.logger.error(
+        `Failed to trigger daily notifications: ${error.message}`,
+      );
       return {
         success: false,
         message: `Failed: ${error.message}`,
@@ -433,4 +463,3 @@ export class LineController {
     }
   }
 }
-

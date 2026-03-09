@@ -38,15 +38,24 @@ export class NotificationEntity {
   isRead: boolean;
 
   @Column({ type: 'varchar', default: 'incoming' })
-  @ApiProperty({ description: 'Workflow status', enum: ['incoming', 'wip', 'resolved', 'ignored'] })
+  @ApiProperty({
+    description: 'Workflow status',
+    enum: ['incoming', 'wip', 'resolved', 'ignored'],
+  })
   workflowStatus: string;
 
   @Column({ type: 'varchar', nullable: true })
-  @ApiProperty({ description: 'Employee name handling this (WIP assignee)', required: false })
+  @ApiProperty({
+    description: 'Employee name handling this (WIP assignee)',
+    required: false,
+  })
   wipBy: string | null;
 
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Note or remark about this notification', required: false })
+  @ApiProperty({
+    description: 'Note or remark about this notification',
+    required: false,
+  })
   remark: string | null;
 
   @CreateDateColumn()

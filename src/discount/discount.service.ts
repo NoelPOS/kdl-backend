@@ -3,7 +3,7 @@ import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DiscountEntity } from './entities/discount.entity';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class DiscountService {

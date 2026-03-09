@@ -21,7 +21,7 @@ import { Schedule } from '../schedule/entities/schedule.entity';
       Invoice,
       Receipt,
       TeacherEntity,
-      Schedule
+      Schedule,
     ]),
   ],
   controllers: [AnalyticsController],

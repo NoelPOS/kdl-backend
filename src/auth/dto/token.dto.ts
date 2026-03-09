@@ -12,4 +12,4 @@ export class TokenDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   refreshToken: string;
-} 
+}

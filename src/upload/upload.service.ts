@@ -17,7 +17,9 @@ export class UploadService {
       region: this.configService.get<string>('AWS_REGION'),
       credentials: {
         accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+        secretAccessKey: this.configService.get<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
       },
     });
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
@@ -54,7 +56,7 @@ export class UploadService {
 
     try {
       await this.s3Client.send(command);
-      
+
       // Return the S3 URL
       const region = this.configService.get<string>('AWS_REGION');
       return `https://${this.bucketName}.s3.${region}.amazonaws.com/${uniqueFilename}`;
@@ -118,7 +120,12 @@ export class UploadService {
     const maxImageSize = 5 * 1024 * 1024; // 5MB
     const maxVideoSize = 50 * 1024 * 1024; // 50MB
 
-    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const allowedImageTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+    ];
     const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
 
     const isImage = allowedImageTypes.includes(mimetype);

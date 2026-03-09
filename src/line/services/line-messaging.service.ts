@@ -1,12 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as line from '@line/bot-sdk';
-import {
-  FlexMessage,
-  FlexBubble,
-  TextMessage,
-  Message,
-} from '@line/bot-sdk';
+import { FlexMessage, FlexBubble, TextMessage, Message } from '@line/bot-sdk';
 
 /**
  * LINE Messaging Service
@@ -179,7 +174,9 @@ export class LineMessagingService {
                 contents: [
                   {
                     type: 'image',
-                    url: scheduleData.studentImage || 'https://via.placeholder.com/300x300.png?text=Student',
+                    url:
+                      scheduleData.studentImage ||
+                      'https://via.placeholder.com/300x300.png?text=Student',
                     size: 'full',
                     aspectMode: 'cover',
                     aspectRatio: '1:1',
@@ -330,7 +327,10 @@ export class LineMessagingService {
     };
 
     // Send both messages
-    await this.client.pushMessage(userId, [studentCardMessage, reminderMessage]);
+    await this.client.pushMessage(userId, [
+      studentCardMessage,
+      reminderMessage,
+    ]);
     this.logger.log(
       `Sent schedule notification to ${userId} for schedule ${scheduleData.scheduleId}`,
     );
@@ -492,7 +492,9 @@ export class LineMessagingService {
         `Sent feedback notification to ${userId} for schedule ${data.scheduleId}`,
       );
     } catch (error) {
-      this.logger.error(`Failed to send feedback notification: ${error.message}`);
+      this.logger.error(
+        `Failed to send feedback notification: ${error.message}`,
+      );
       // Don't throw - we don't want to fail the verification just because notification failed
     }
   }

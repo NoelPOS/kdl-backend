@@ -76,7 +76,7 @@ export class TeacherEntity {
     length: 20,
     default: 'full-time',
   })
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Teacher type: full-time or part-time',
     default: 'full-time',
   })
@@ -101,8 +101,9 @@ export class TeacherEntity {
       },
     },
   })
-  @ApiProperty({ 
-    description: 'Working days for full-time teachers (e.g., ["Monday", "Tuesday", "Wednesday"])',
+  @ApiProperty({
+    description:
+      'Working days for full-time teachers (e.g., ["Monday", "Tuesday", "Wednesday"])',
     required: false,
     type: [String],
   })

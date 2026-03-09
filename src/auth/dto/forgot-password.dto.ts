@@ -19,4 +19,4 @@ export class ForgotPasswordDto {
   @IsEnum(UserRole)
   @IsNotEmpty()
   role: UserRole;
-} 
+}

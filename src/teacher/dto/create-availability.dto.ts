@@ -1,12 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsString, IsNotEmpty, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, Matches } from 'class-validator';
 
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export class CreateAvailabilityDto {
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ description: 'Day of week (Monday, Tuesday, etc.)', example: 'Monday' })
+  @ApiProperty({
+    description: 'Day of week (Monday, Tuesday, etc.)',
+    example: 'Monday',
+  })
   dayOfWeek: string;
 
   @IsString()

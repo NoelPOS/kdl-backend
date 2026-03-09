@@ -112,7 +112,7 @@ export class CoursePlusService {
     return this.coursePlusRepo.findOne({ where: { id } });
   }
 
-  update(id: number, updateCoursePlusDto: UpdateCoursePlusDto) {
+  update(id: number, _updateCoursePlusDto: UpdateCoursePlusDto) {
     return `This action updates a #${id} coursePlus`;
   }
 

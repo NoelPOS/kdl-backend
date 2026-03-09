@@ -22,11 +22,17 @@ export class CoursePackage {
   numberOfCourses: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  @ApiProperty({ description: 'Date when this package version becomes effective' })
+  @ApiProperty({
+    description: 'Date when this package version becomes effective',
+  })
   effectiveStartDate: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  @ApiProperty({ description: 'Date when this package version expires (null = currently active)', nullable: true })
+  @ApiProperty({
+    description:
+      'Date when this package version expires (null = currently active)',
+    nullable: true,
+  })
   effectiveEndDate: Date | null;
 
   @CreateDateColumn()

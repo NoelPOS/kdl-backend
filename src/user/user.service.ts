@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  NotFoundException,
-  BadRequestException,
-  Optional,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
 import { Repository } from 'typeorm';

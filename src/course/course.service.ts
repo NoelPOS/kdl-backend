@@ -3,7 +3,7 @@ import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CourseEntity } from './entities/course.entity';
-import { ILike, Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CourseService {
@@ -102,13 +102,19 @@ export class CourseService {
 
     // Add filters
     if (ageRange && ageRange !== 'all') {
-      queryBuilder = queryBuilder.andWhere('course.ageRange = :ageRange', { ageRange });
+      queryBuilder = queryBuilder.andWhere('course.ageRange = :ageRange', {
+        ageRange,
+      });
     }
     if (medium && medium !== 'all') {
-      queryBuilder = queryBuilder.andWhere('course.medium = :medium', { medium });
+      queryBuilder = queryBuilder.andWhere('course.medium = :medium', {
+        medium,
+      });
     }
     if (query && query.trim() !== '') {
-      queryBuilder = queryBuilder.andWhere('course.title ILIKE :query', { query: `%${query}%` });
+      queryBuilder = queryBuilder.andWhere('course.title ILIKE :query', {
+        query: `%${query}%`,
+      });
     }
 
     // Get total count for pagination

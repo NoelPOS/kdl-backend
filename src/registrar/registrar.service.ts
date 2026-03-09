@@ -34,7 +34,9 @@ export class RegistrarService {
     };
   }
 
-  async createRegistrar(createRegistrarDto: CreateRegistrarDto): Promise<RegistrarResponseDto> {
+  async createRegistrar(
+    createRegistrarDto: CreateRegistrarDto,
+  ): Promise<RegistrarResponseDto> {
     try {
       // Check if email already exists
       const existingUser = await this.userRepository.findOne({
@@ -47,7 +49,10 @@ export class RegistrarService {
 
       // Hash password
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(createRegistrarDto.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(
+        createRegistrarDto.password,
+        saltRounds,
+      );
 
       // Create new registrar with REGISTRAR role
       const registrar = this.userRepository.create({
@@ -76,8 +81,8 @@ export class RegistrarService {
   ): Promise<PaginatedRegistrarResponseDto> {
     try {
       const skip = (page - 1) * limit;
-      
-      let whereCondition: any = { role: UserRole.REGISTRAR };
+
+      const whereCondition: any = { role: UserRole.REGISTRAR };
       // If query is provided and not "All" (case-insensitive), apply name filter
       if (query && query.toLowerCase() !== 'all') {
         whereCondition.userName = Like(`%${query}%`);
@@ -88,10 +93,21 @@ export class RegistrarService {
         skip,
         take: limit,
         order: { createdAt: 'DESC' },
-        select: ['id', 'userName', 'email', 'role', 'createdAt', 'updatedAt', 'profilePicture', 'profileKey'],
+        select: [
+          'id',
+          'userName',
+          'email',
+          'role',
+          'createdAt',
+          'updatedAt',
+          'profilePicture',
+          'profileKey',
+        ],
       });
 
-      const registrars = users.map(user => this.mapUserToRegistrarResponse(user));
+      const registrars = users.map((user) =>
+        this.mapUserToRegistrarResponse(user),
+      );
 
       const totalPages = Math.ceil(totalCount / limit);
       const hasNext = page < totalPages;
@@ -114,8 +130,8 @@ export class RegistrarService {
 
   async searchRegistrars(query: string): Promise<RegistrarResponseDto[]> {
     try {
-      let whereCondition: any = { role: UserRole.REGISTRAR };
-      
+      const whereCondition: any = { role: UserRole.REGISTRAR };
+
       // If query is "All" (case-insensitive), return all registrars
       if (query.toLowerCase() !== 'all') {
         whereCondition.userName = Like(`%${query}%`);
@@ -124,10 +140,19 @@ export class RegistrarService {
       const users = await this.userRepository.find({
         where: whereCondition,
         order: { userName: 'ASC' },
-        select: ['id', 'userName', 'email', 'role', 'createdAt', 'updatedAt', 'profilePicture', 'profileKey'],
+        select: [
+          'id',
+          'userName',
+          'email',
+          'role',
+          'createdAt',
+          'updatedAt',
+          'profilePicture',
+          'profileKey',
+        ],
       });
 
-      return users.map(user => this.mapUserToRegistrarResponse(user));
+      return users.map((user) => this.mapUserToRegistrarResponse(user));
     } catch (error) {
       throw new InternalServerErrorException('Failed to search registrars');
     }
@@ -138,10 +163,19 @@ export class RegistrarService {
       const users = await this.userRepository.find({
         where: { role: UserRole.REGISTRAR },
         order: { userName: 'ASC' },
-        select: ['id', 'userName', 'email', 'role', 'createdAt', 'updatedAt', 'profilePicture', 'profileKey'],
+        select: [
+          'id',
+          'userName',
+          'email',
+          'role',
+          'createdAt',
+          'updatedAt',
+          'profilePicture',
+          'profileKey',
+        ],
       });
 
-      return users.map(user => this.mapUserToRegistrarResponse(user));
+      return users.map((user) => this.mapUserToRegistrarResponse(user));
     } catch (error) {
       throw new InternalServerErrorException('Failed to fetch all registrars');
     }
@@ -151,7 +185,16 @@ export class RegistrarService {
     try {
       const user = await this.userRepository.findOne({
         where: { id },
-        select: ['id', 'userName', 'email', 'role', 'createdAt', 'updatedAt', 'profilePicture', 'profileKey'],
+        select: [
+          'id',
+          'userName',
+          'email',
+          'role',
+          'createdAt',
+          'updatedAt',
+          'profilePicture',
+          'profileKey',
+        ],
       });
 
       if (!user) {
@@ -167,16 +210,29 @@ export class RegistrarService {
     }
   }
 
-  async findRegistrarByEmail(email: string): Promise<RegistrarResponseDto | null> {
+  async findRegistrarByEmail(
+    email: string,
+  ): Promise<RegistrarResponseDto | null> {
     try {
       const user = await this.userRepository.findOne({
         where: { email, role: UserRole.REGISTRAR },
-        select: ['id', 'userName', 'email', 'role', 'createdAt', 'updatedAt', 'profilePicture', 'profileKey'],
+        select: [
+          'id',
+          'userName',
+          'email',
+          'role',
+          'createdAt',
+          'updatedAt',
+          'profilePicture',
+          'profileKey',
+        ],
       });
 
       return user ? this.mapUserToRegistrarResponse(user) : null;
     } catch (error) {
-      throw new InternalServerErrorException('Failed to fetch registrar by email');
+      throw new InternalServerErrorException(
+        'Failed to fetch registrar by email',
+      );
     }
   }
 
@@ -188,7 +244,10 @@ export class RegistrarService {
       const registrar = await this.findRegistrarById(id);
 
       // Check if email is being updated and if it already exists
-      if (updateRegistrarDto.email && updateRegistrarDto.email !== registrar.email) {
+      if (
+        updateRegistrarDto.email &&
+        updateRegistrarDto.email !== registrar.email
+      ) {
         const existingUser = await this.userRepository.findOne({
           where: { email: updateRegistrarDto.email },
         });
@@ -218,7 +277,10 @@ export class RegistrarService {
 
       return await this.findRegistrarById(id);
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException
+      ) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to update registrar');

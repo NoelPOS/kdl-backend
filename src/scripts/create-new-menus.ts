@@ -15,7 +15,7 @@ async function createAndUploadMenus() {
 
   const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const liffId = process.env.LINE_LIFF_ID;
-  
+
   if (!channelAccessToken || !liffId) {
     console.error('❌ Missing required environment variables');
     process.exit(1);
@@ -31,20 +31,24 @@ async function createAndUploadMenus() {
     selected: true,
     name: 'Unverified Parent Menu',
     chatBarText: 'Please Login',
-    areas: [{
-      bounds: { x: 0, y: 0, width: 2500, height: 843 },
-      action: {
-        type: 'uri',
-        label: 'Login',
-        uri: `https://liff.line.me/${liffId}/verify`
-      }
-    }]
+    areas: [
+      {
+        bounds: { x: 0, y: 0, width: 2500, height: 843 },
+        action: {
+          type: 'uri',
+          label: 'Login',
+          uri: `https://liff.line.me/${liffId}/verify`,
+        },
+      },
+    ],
   });
   console.log(`✅ Created: ${unverifiedMenu}`);
 
   // Upload Unverified Image
   console.log('📤 Uploading unverified menu image...');
-  const unverifiedImage = fs.readFileSync(path.join(imageDir, 'unverified-menu.jpg'));
+  const unverifiedImage = fs.readFileSync(
+    path.join(imageDir, 'unverified-menu.jpg'),
+  );
   await client.setRichMenuImage(unverifiedMenu, unverifiedImage, 'image/jpeg');
   console.log('✅ Image uploaded\n');
 
@@ -55,20 +59,24 @@ async function createAndUploadMenus() {
     selected: true,
     name: 'Verified Parent Menu',
     chatBarText: 'KDL Portal',
-    areas: [{
-      bounds: { x: 0, y: 0, width: 2500, height: 843 },
-      action: {
-        type: 'uri',
-        label: 'My Portal',
-        uri: `https://liff.line.me/${liffId}/children`
-      }
-    }]
+    areas: [
+      {
+        bounds: { x: 0, y: 0, width: 2500, height: 843 },
+        action: {
+          type: 'uri',
+          label: 'My Portal',
+          uri: `https://liff.line.me/${liffId}/children`,
+        },
+      },
+    ],
   });
   console.log(`✅ Created: ${verifiedMenu}`);
 
   // Upload Verified Image
   console.log('📤 Uploading verified menu image...');
-  const verifiedImage = fs.readFileSync(path.join(imageDir, 'verified-menu.jpg'));
+  const verifiedImage = fs.readFileSync(
+    path.join(imageDir, 'verified-menu.jpg'),
+  );
   await client.setRichMenuImage(verifiedMenu, verifiedImage, 'image/jpeg');
   console.log('✅ Image uploaded\n');
 

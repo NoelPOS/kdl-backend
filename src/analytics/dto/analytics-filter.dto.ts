@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsDateString, IsNumber, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsNumber,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AnalyticsFilterDto {
@@ -19,18 +25,19 @@ export class AnalyticsFilterDto {
   @IsNumber()
   teacherId?: number;
 
-  @ApiPropertyOptional({ 
-    description: 'Count by timeslot (teacher perspective) or enrollment (student perspective)',
-    enum: ['timeslot', 'enrollment']
+  @ApiPropertyOptional({
+    description:
+      'Count by timeslot (teacher perspective) or enrollment (student perspective)',
+    enum: ['timeslot', 'enrollment'],
   })
   @IsOptional()
   @IsString()
   @IsIn(['timeslot', 'enrollment'])
   countBy?: 'timeslot' | 'enrollment';
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Filter by attendance status',
-    enum: ['completed', 'confirmed', 'pending', 'cancelled', 'absent']
+    enum: ['completed', 'confirmed', 'pending', 'cancelled', 'absent'],
   })
   @IsOptional()
   @IsString()

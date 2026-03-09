@@ -8,15 +8,17 @@ async function seedTbcCourse() {
     console.log('✅ Connected');
 
     const existing = await dataSource.query(
-      `SELECT id FROM courses WHERE title ILIKE '%TBC%' LIMIT 1`
+      `SELECT id FROM courses WHERE title ILIKE '%TBC%' LIMIT 1`,
     );
 
     if (existing.length > 0) {
-      console.log(`ℹ️  TBC course already exists (id=${existing[0].id}), nothing to do.`);
+      console.log(
+        `ℹ️  TBC course already exists (id=${existing[0].id}), nothing to do.`,
+      );
     } else {
       const result = await dataSource.query(
         `INSERT INTO courses (title, description, "ageRange", medium) VALUES ($1, $2, $3, $4) RETURNING id`,
-        ['TBC', '', '-', '-']
+        ['TBC', '', '-', '-'],
       );
       console.log(`✅ TBC course created (id=${result[0].id})`);
     }

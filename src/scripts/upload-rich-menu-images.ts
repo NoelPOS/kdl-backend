@@ -1,14 +1,14 @@
 /**
  * Rich Menu Image Upload Script
- * 
+ *
  * This script uploads images to existing LINE rich menus.
- * 
+ *
  * Usage:
  * 1. Place your images in the specified directory
  * 2. Update the IMAGE_PATHS below with your image file names
  * 3. Set your environment variables (LINE_CHANNEL_ACCESS_TOKEN)
  * 4. Run: node dist/scripts/upload-rich-menu-images.js
- * 
+ *
  * Required:
  * - Unverified menu image: 2500x843px (PNG or JPG)
  * - Verified menu image: 2500x843px (PNG or JPG)
@@ -30,13 +30,13 @@ const IMAGE_DIR = path.join(__dirname, '../../public/rich-menu-images');
 // Image file names (must be 2500x843px, PNG or JPG)
 const IMAGE_PATHS = {
   unverified: 'unverified-menu.jpg', // Image for unverified parents
-  verified: 'verified-menu.jpg',     // Image for verified parents
+  verified: 'verified-menu.jpg', // Image for verified parents
 };
 
 // Rich menu IDs (get these from LINE Developers Console or your logs)
 const MENU_IDS = {
   unverified: process.env.UNVERIFIED_MENU_ID || 'richmenu-XXXXXXXX', // Replace with actual ID
-  verified: process.env.VERIFIED_MENU_ID || 'richmenu-YYYYYYYY',     // Replace with actual ID
+  verified: process.env.VERIFIED_MENU_ID || 'richmenu-YYYYYYYY', // Replace with actual ID
 };
 
 // ===== END CONFIGURATION =====
@@ -47,7 +47,9 @@ async function uploadRichMenuImages() {
   // Validate environment variables
   const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   if (!channelAccessToken) {
-    console.error('❌ ERROR: LINE_CHANNEL_ACCESS_TOKEN not found in environment variables');
+    console.error(
+      '❌ ERROR: LINE_CHANNEL_ACCESS_TOKEN not found in environment variables',
+    );
     console.error('Please set it in your .env file or environment');
     process.exit(1);
   }
@@ -76,7 +78,7 @@ async function uploadRichMenuImages() {
     client,
     MENU_IDS.unverified,
     path.join(IMAGE_DIR, IMAGE_PATHS.unverified),
-    'Unverified Menu'
+    'Unverified Menu',
   );
 
   // Upload verified menu image
@@ -84,7 +86,7 @@ async function uploadRichMenuImages() {
     client,
     MENU_IDS.verified,
     path.join(IMAGE_DIR, IMAGE_PATHS.verified),
-    'Verified Menu'
+    'Verified Menu',
   );
 
   console.log('\n🎉 All images uploaded successfully!');
@@ -97,7 +99,7 @@ async function uploadImage(
   client: Client,
   menuId: string,
   imagePath: string,
-  menuName: string
+  menuName: string,
 ): Promise<void> {
   console.log(`\n📤 Uploading ${menuName}...`);
   console.log(`   Menu ID: ${menuId}`);
@@ -116,7 +118,9 @@ async function uploadImage(
   console.log(`   File size: ${fileSizeMB.toFixed(2)} MB`);
 
   if (fileSizeMB > 1) {
-    console.warn(`   ⚠️  WARNING: File size is large (${fileSizeMB.toFixed(2)} MB)`);
+    console.warn(
+      `   ⚠️  WARNING: File size is large (${fileSizeMB.toFixed(2)} MB)`,
+    );
     console.warn(`   LINE recommends images under 1MB for faster loading`);
   }
 
@@ -146,7 +150,7 @@ async function uploadImage(
   } catch (error: any) {
     console.error(`   ❌ ERROR: Failed to upload image`);
     console.error(`   Message: ${error.message}`);
-    
+
     if (error.message.includes('400')) {
       console.error(`   Possible causes:`);
       console.error(`   - Image dimensions not exactly 2500x843px`);

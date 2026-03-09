@@ -30,7 +30,7 @@ export class RoomService {
   }
 
   async update(id: number, updateRoomDto: UpdateRoomDto) {
-    const room = await this.findOne(id); // ensures the room exists
+    await this.findOne(id); // ensures the room exists
     await this.roomRepository.update(id, updateRoomDto);
     return this.findOne(id);
   }

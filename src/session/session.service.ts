@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CreatePackageDto } from './dto/create-package.dto';
@@ -24,7 +28,6 @@ import { Receipt } from '../receipt/entities/receipt.entity';
 // Import separated DTOs
 import { CreateInvoiceDto } from '../invoice/dto/create-invoice.dto';
 import { CreateReceiptDto } from '../receipt/dto/create-receipt.dto';
-import { InvoiceFilterDto } from '../invoice/dto/invoice-filter.dto';
 import { ReceiptFilterDto } from '../receipt/dto/receipt-filter.dto';
 // Import services for delegation
 import { ClassOptionService } from '../class-option/class-option.service';
@@ -125,7 +128,8 @@ export class SessionService {
     const session = this.sessionRepository.create(dto);
     session.createdAt = new Date();
     session.invoiceDone = false;
-    session.packageGroupId = dto.classOptionId === 11 ? Math.floor(Math.random() * 1000000) : null; 
+    session.packageGroupId =
+      dto.classOptionId === 11 ? Math.floor(Math.random() * 1000000) : null;
 
     return await this.sessionRepository.save(session);
   }
@@ -138,7 +142,9 @@ export class SessionService {
       });
 
       if (!coursePackage) {
-        throw new BadRequestException(`Course package with ID ${dto.packageId} not found`);
+        throw new BadRequestException(
+          `Course package with ID ${dto.packageId} not found`,
+        );
       }
 
       // 2. Find TBC course for both the package session and TBC sessions
@@ -147,7 +153,9 @@ export class SessionService {
       });
 
       if (!tbcCourse) {
-        throw new BadRequestException('TBC course not found. Please create a course titled "TBC" first.');
+        throw new BadRequestException(
+          'TBC course not found. Please create a course titled "TBC" first.',
+        );
       }
 
       // 3. Use the first available class option (or a default one)
@@ -157,7 +165,9 @@ export class SessionService {
       });
 
       if (!classOption) {
-        throw new BadRequestException('No class options found. Please create a class option first.');
+        throw new BadRequestException(
+          'No class options found. Please create a class option first.',
+        );
       }
 
       // 4. Create the main package session
@@ -176,7 +186,9 @@ export class SessionService {
         price: dto.price, // Store the custom price for invoice pre-fill
       });
 
-      const savedPackageSession = await manager.getRepository(Session).save(packageSession);
+      const savedPackageSession = await manager
+        .getRepository(Session)
+        .save(packageSession);
 
       // 5. Set the packageGroupId to its own ID for the package session
       await manager.getRepository(Session).update(savedPackageSession.id, {
@@ -225,7 +237,7 @@ export class SessionService {
     return this.dataSource.transaction(async (manager) => {
       // Check if the session being updated is a package session
       const session = await manager.getRepository(Session).findOne({
-        where: { id }
+        where: { id },
       });
 
       if (!session) {
@@ -238,13 +250,13 @@ export class SessionService {
         throw new BadRequestException(`Session with ID ${id} not found`);
       }
 
-      // If this is a package session (packageGroupId equals its own ID), 
+      // If this is a package session (packageGroupId equals its own ID),
       // update related TBC sessions as well
       if (session.packageGroupId === session.id) {
         // Update all TBC sessions linked to this package
         await manager.getRepository(Session).update(
           { packageGroupId: session.id, id: Not(session.id) }, // Not the package session itself
-          dto
+          dto,
         );
       }
 
@@ -368,7 +380,9 @@ export class SessionService {
       .leftJoinAndSelect('session.classOption', 'classOption')
       .leftJoinAndSelect('session.student', 'student')
       .where('session.studentId = :studentId', { studentId })
-      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)'); // Exclude package sessions
+      .andWhere(
+        '(session.packageGroupId IS NULL OR session.packageGroupId != session.id)',
+      ); // Exclude package sessions
 
     // Add subqueries to count completed schedules and total schedules
     queryBuilder
@@ -407,7 +421,9 @@ export class SessionService {
       ...session,
       courseId: session.courseId,
       completedCount: parseInt(result.raw[index].completedCount || '0'),
-      totalScheduledCount: parseInt(result.raw[index].totalScheduledCount || '0'),
+      totalScheduledCount: parseInt(
+        result.raw[index].totalScheduledCount || '0',
+      ),
       canceledCount: parseInt(result.raw[index].canceledCount || '0'),
     }));
   }
@@ -420,7 +436,9 @@ export class SessionService {
       .leftJoinAndSelect('session.classOption', 'classOption')
       .where('session.studentId = :studentId', { studentId })
       .andWhere('session.courseId = :courseId', { courseId })
-      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
+      .andWhere(
+        '(session.packageGroupId IS NULL OR session.packageGroupId != session.id)',
+      ) // Exclude package sessions
       .getOne();
   }
 
@@ -433,7 +451,9 @@ export class SessionService {
       .where('session.studentId = :studentId', { studentId })
       .andWhere('session.courseId = :courseId', { courseId })
       .andWhere('session.status = :status', { status: 'wip' })
-      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
+      .andWhere(
+        '(session.packageGroupId IS NULL OR session.packageGroupId != session.id)',
+      ) // Exclude package sessions
       .getOne();
 
     return !!session;
@@ -478,7 +498,7 @@ export class SessionService {
             // If we are swapping, we might want to continue numbering?
             // For now let's just use index + 1, user can adjust if needed or we can query count.
             // But usually 'classNumber' is for that specific schedule set.
-            classNumber: index + 1, 
+            classNumber: index + 1,
           });
         });
 
@@ -505,7 +525,9 @@ export class SessionService {
           });
       }, 'completedCount')
       .where('session.studentId = :studentId', { studentId })
-      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)') // Exclude package sessions
+      .andWhere(
+        '(session.packageGroupId IS NULL OR session.packageGroupId != session.id)',
+      ) // Exclude package sessions
       .getRawAndEntities();
 
     // Transform the result to match the expected format
@@ -539,7 +561,9 @@ export class SessionService {
       .leftJoinAndSelect('session.course', 'course')
       .leftJoinAndSelect('session.classOption', 'classOption')
       .where('session.studentId = :studentId', { studentId })
-      .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId != session.id)'); // Exclude package sessions
+      .andWhere(
+        '(session.packageGroupId IS NULL OR session.packageGroupId != session.id)',
+      ); // Exclude package sessions
 
     // Apply filters
     if (courseName) {
@@ -856,7 +880,9 @@ export class SessionService {
         .leftJoin('session.course', 'course')
         .leftJoin('session.teacher', 'teacher')
         .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
-        .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId = session.id)') // Exclude TBC sessions
+        .andWhere(
+          '(session.packageGroupId IS NULL OR session.packageGroupId = session.id)',
+        ); // Exclude TBC sessions
 
       applySessionFilters(sessionCountQuery);
 
@@ -883,7 +909,9 @@ export class SessionService {
           'classOption.tuitionFee as classOption_tuitionFee',
         ])
         .where('session.invoiceDone = :invoiceDone', { invoiceDone: false })
-        .andWhere('(session.packageGroupId IS NULL OR session.packageGroupId = session.id)') // Exclude TBC sessions
+        .andWhere(
+          '(session.packageGroupId IS NULL OR session.packageGroupId = session.id)',
+        ) // Exclude TBC sessions
         .orderBy('session.createdAt', 'DESC');
 
       applySessionFilters(sessionDataQuery);
@@ -943,7 +971,7 @@ export class SessionService {
     const totalPages = Math.ceil(totalCountWithExtras / limit);
 
     // Combine all data and sort by creation date
-    let allEnrollments = [];
+    const allEnrollments = [];
 
     // Add session enrollments
     if (sessionData.length > 0) {
@@ -992,11 +1020,12 @@ export class SessionService {
       session_createdat:
         enrollment.session_createdAt || enrollment.session_createdat,
       classoption_tuitionfee:
-        enrollment.session_price !== undefined && enrollment.session_price !== null 
-          ? enrollment.session_price 
-          : (enrollment.classOption_tuitionFee || enrollment.classoption_tuitionfee),
-      course_title:
-        enrollment.session_comment || enrollment.course_title,
+        enrollment.session_price !== undefined &&
+        enrollment.session_price !== null
+          ? enrollment.session_price
+          : enrollment.classOption_tuitionFee ||
+            enrollment.classoption_tuitionfee,
+      course_title: enrollment.session_comment || enrollment.course_title,
     }));
 
     console.log(
@@ -1086,7 +1115,10 @@ export class SessionService {
     if (session) {
       session.type = 'session'; // Add type for consistency
       session.course_title = session.session_comment || session.course_title;
-      session.classoption_tuitionfee = session.session_price !== null && session.session_price !== undefined ? session.session_price : session.classoption_tuitionfee;
+      session.classoption_tuitionfee =
+        session.session_price !== null && session.session_price !== undefined
+          ? session.session_price
+          : session.classoption_tuitionfee;
     }
     return session;
   }
@@ -1382,7 +1414,14 @@ export class SessionService {
   }
 
   async submitFeedback(dto: SubmitFeedbackDto) {
-    const { sessionId, studentId, feedback, timestamp, feedbackImages, feedbackVideos } = dto;
+    const {
+      sessionId,
+      studentId,
+      feedback,
+      timestamp,
+      feedbackImages,
+      feedbackVideos,
+    } = dto;
 
     // First, verify that the session exists and belongs to the student
     const session = await this.sessionRepository.findOne({
@@ -1495,7 +1534,3 @@ export class SessionService {
     return this.invoiceService.getNextDocumentId();
   }
 }
-function andWhere(arg0: string, arg1: { freeTrial: string; }) {
-  throw new Error('Function not implemented.');
-}
-

@@ -1,6 +1,11 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThanOrEqual, Not, IsNull } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Schedule } from '../../schedule/entities/schedule.entity';
 import { ParentEntity } from '../../parent/entities/parent.entity';
@@ -12,7 +17,7 @@ import { NotificationService } from '../../notification/notification.service';
 /**
  * Schedule Notification Service
  * Handles sending schedule notifications to parents via LINE
- * 
+ *
  * Features:
  * - Daily cron job to send notifications 3 days in advance
  * - Validate parent ownership before allowing actions
@@ -49,15 +54,20 @@ export class ScheduleNotificationService {
    * Send notifications for schedules N days from now (or today if daysOffset is 0)
    * @param daysOffset Number of days from today (0 = today, 3 = 3 days from now)
    */
-  async sendNotificationsForDaysOffset(daysOffset: number = 3): Promise<string> {
-    this.logger.log(`Starting schedule notification job for ${daysOffset === 0 ? 'today' : `${daysOffset} days from now`}...`);
+  async sendNotificationsForDaysOffset(
+    daysOffset: number = 3,
+  ): Promise<string> {
+    this.logger.log(
+      `Starting schedule notification job for ${daysOffset === 0 ? 'today' : `${daysOffset} days from now`}...`,
+    );
 
     try {
       // Calculate target date in Bangkok timezone (UTC+7)
       // toISOString() is always UTC — on the EC2 server (UTC), dates before 7AM Bangkok
       // would resolve to the previous calendar day. Using Bangkok locale avoids this.
-      const dateString = new Date(Date.now() + daysOffset * 86400000)
-        .toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // en-CA → YYYY-MM-DD
+      const dateString = new Date(
+        Date.now() + daysOffset * 86400000,
+      ).toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // en-CA → YYYY-MM-DD
 
       // Find schedules for target date with pending attendance
       const schedules = await this.scheduleRepository.find({
@@ -68,7 +78,9 @@ export class ScheduleNotificationService {
         relations: ['student', 'course', 'teacher', 'session'],
       });
 
-      this.logger.log(`Found ${schedules.length} schedules to notify for date ${dateString}`);
+      this.logger.log(
+        `Found ${schedules.length} schedules to notify for date ${dateString}`,
+      );
 
       // Group schedules by student (to avoid duplicate messages to same parent)
       const schedulesByStudent = new Map<number, Schedule[]>();
@@ -88,7 +100,10 @@ export class ScheduleNotificationService {
       this.logger.log(`Notification job completed for date ${dateString}`);
       return dateString;
     } catch (error) {
-      this.logger.error(`Failed to send notifications: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to send notifications: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -111,9 +126,7 @@ export class ScheduleNotificationService {
 
       // Only send to verified parents (those with lineId)
       if (!parent.lineId) {
-        this.logger.log(
-          `Skipping parent ${parent.id} - no LINE ID linked`,
-        );
+        this.logger.log(`Skipping parent ${parent.id} - no LINE ID linked`);
         continue;
       }
 
@@ -243,7 +256,9 @@ export class ScheduleNotificationService {
 
     // Check if already confirmed (Idempotency)
     if (schedule.attendance === 'confirmed') {
-      this.logger.log(`Schedule ${scheduleId} is already confirmed. Skipping update.`);
+      this.logger.log(
+        `Schedule ${scheduleId} is already confirmed. Skipping update.`,
+      );
       return {
         studentName: schedule.student.name,
         date: this.formatDate(schedule.date.toString()),
@@ -329,7 +344,9 @@ export class ScheduleNotificationService {
 
     // Check if already cancelled (Idempotency)
     if (schedule.attendance === 'cancelled') {
-      this.logger.log(`Schedule ${scheduleId} is already cancelled. Skipping update.`);
+      this.logger.log(
+        `Schedule ${scheduleId} is already cancelled. Skipping update.`,
+      );
       return {
         studentName: schedule.student.name,
         date: this.formatDate(schedule.date.toString()),
@@ -337,8 +354,13 @@ export class ScheduleNotificationService {
     }
 
     // Check if already confirmed or present
-    if (schedule.attendance === 'confirmed' || schedule.attendance === 'present') {
-      throw new BadRequestException('Class is already confirmed. Please contact admin to reschedule.');
+    if (
+      schedule.attendance === 'confirmed' ||
+      schedule.attendance === 'present'
+    ) {
+      throw new BadRequestException(
+        'Class is already confirmed. Please contact admin to reschedule.',
+      );
     }
 
     // Mark as cancelled with reschedule request
@@ -408,7 +430,10 @@ export class ScheduleNotificationService {
   /**
    * Manual trigger for testing (can be called via admin endpoint)
    */
-  async sendTestNotification(parentId: number, scheduleId: number): Promise<void> {
+  async sendTestNotification(
+    parentId: number,
+    scheduleId: number,
+  ): Promise<void> {
     const parent = await this.parentRepository.findOne({
       where: { id: parentId },
     });

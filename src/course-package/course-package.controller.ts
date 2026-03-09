@@ -48,7 +48,9 @@ export class CoursePackageController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Deactivate a course package version (set effectiveEndDate)' })
+  @ApiOperation({
+    summary: 'Deactivate a course package version (set effectiveEndDate)',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCoursePackageDto,

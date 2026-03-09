@@ -36,7 +36,9 @@ export default (): AppConfig => ({
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
 
   // CORS settings
-  CORS_ORIGINS: process.env.CORS_ORIGINS || 'https://kdl-frontend.vercel.app,http://localhost:3000,http://localhost:3001',
+  CORS_ORIGINS:
+    process.env.CORS_ORIGINS ||
+    'https://kdl-frontend.vercel.app,http://localhost:3000,http://localhost:3001',
 
   // LINE Bot settings
   LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',

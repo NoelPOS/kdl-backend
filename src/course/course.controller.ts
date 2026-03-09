@@ -26,7 +26,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CourseEntity } from './entities/course.entity';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
