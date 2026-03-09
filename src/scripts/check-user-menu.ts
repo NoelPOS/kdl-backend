@@ -12,15 +12,15 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 function askQuestion(query: string): Promise<string> {
-  return new Promise(resolve => rl.question(query, resolve));
+  return new Promise((resolve) => rl.question(query, resolve));
 }
 
 async function checkUserMenu() {
-  console.log('🔍 Checking user\'s rich menu assignment...\n');
+  console.log("🔍 Checking user's rich menu assignment...\n");
 
   const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const expectedUnverified = process.env.UNVERIFIED_MENU_ID;
@@ -34,20 +34,24 @@ async function checkUserMenu() {
   const client = new Client({ channelAccessToken });
 
   // Ask for user ID
-  const userId = await askQuestion('Enter your LINE User ID (from database or previous logs): ');
+  const userId = await askQuestion(
+    'Enter your LINE User ID (from database or previous logs): ',
+  );
   console.log();
 
   try {
     // Get user's assigned menu
     console.log(`📋 Checking menu for user: ${userId}\n`);
-    
+
     try {
       const assignedMenuId = await client.getRichMenuIdOfUser(userId);
       console.log(`Current assigned menu: ${assignedMenuId}\n`);
 
       // Check which menu it is
       if (assignedMenuId === expectedUnverified) {
-        console.log('📌 User has: UNVERIFIED menu (correct for unverified users)');
+        console.log(
+          '📌 User has: UNVERIFIED menu (correct for unverified users)',
+        );
       } else if (assignedMenuId === expectedVerified) {
         console.log('✅ User has: VERIFIED menu (correct for verified users)');
       } else {
@@ -60,9 +64,13 @@ async function checkUserMenu() {
       console.log(`   Verified: ${expectedVerified}`);
 
       if (assignedMenuId !== expectedVerified) {
-        console.log('\n💡 Solution: Manually assign verified menu to this user');
-        const assign = await askQuestion('\nWould you like to assign the verified menu now? (yes/no): ');
-        
+        console.log(
+          '\n💡 Solution: Manually assign verified menu to this user',
+        );
+        const assign = await askQuestion(
+          '\nWould you like to assign the verified menu now? (yes/no): ',
+        );
+
         if (assign.toLowerCase() === 'yes') {
           console.log('\n🔄 Assigning verified menu...');
           await client.linkRichMenuToUser(userId, expectedVerified!);
@@ -70,13 +78,14 @@ async function checkUserMenu() {
           console.log('📱 Close and reopen your LINE bot to see the change!');
         }
       }
-
     } catch (error: any) {
       if (error.message.includes('404')) {
         console.log('ℹ️  No menu assigned to this user');
         console.log('   User is seeing the default menu (unverified)\n');
-        
-        const assign = await askQuestion('Would you like to assign the verified menu? (yes/no): ');
+
+        const assign = await askQuestion(
+          'Would you like to assign the verified menu? (yes/no): ',
+        );
         if (assign.toLowerCase() === 'yes') {
           console.log('\n🔄 Assigning verified menu...');
           await client.linkRichMenuToUser(userId, expectedVerified!);
@@ -87,7 +96,6 @@ async function checkUserMenu() {
         throw error;
       }
     }
-
   } catch (error: any) {
     console.error('❌ Error:', error.message);
   } finally {

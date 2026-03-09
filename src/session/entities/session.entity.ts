@@ -60,7 +60,10 @@ export class Session {
   invoiceDone: boolean;
 
   @Column({ nullable: true, type: 'int' })
-  @ApiProperty({ description: 'Package group id for linking package and TBC sessions', required: false })
+  @ApiProperty({
+    description: 'Package group id for linking package and TBC sessions',
+    required: false,
+  })
   packageGroupId?: number;
 
   @Column({ nullable: true, type: 'text' })
@@ -68,7 +71,10 @@ export class Session {
   comment?: string;
 
   @Column({ nullable: true, type: 'decimal', precision: 10, scale: 2 })
-  @ApiProperty({ description: 'Custom price for package sessions set by admin', required: false })
+  @ApiProperty({
+    description: 'Custom price for package sessions set by admin',
+    required: false,
+  })
   price?: number;
 
   @CreateDateColumn()

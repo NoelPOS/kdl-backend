@@ -43,5 +43,3 @@ export class TeacherAbsence {
   @JoinColumn({ name: 'teacherId' })
   teacher: TeacherEntity;
 }
-
-

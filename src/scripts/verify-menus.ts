@@ -32,11 +32,13 @@ async function verifyMenus() {
   console.log(`📊 Total menus in LINE: ${allMenus.length}\n`);
 
   // Check unverified menu
-  const unverifiedMenu = allMenus.find(m => m.richMenuId === unverifiedId);
+  const unverifiedMenu = allMenus.find((m) => m.richMenuId === unverifiedId);
   console.log('Unverified Menu:');
   if (unverifiedMenu) {
     console.log(`  ✅ Exists: ${unverifiedMenu.name}`);
-    console.log(`  Size: ${unverifiedMenu.size.width}x${unverifiedMenu.size.height}px`);
+    console.log(
+      `  Size: ${unverifiedMenu.size.width}x${unverifiedMenu.size.height}px`,
+    );
     console.log(`  Chat Bar: ${unverifiedMenu.chatBarText}`);
     console.log(`  Areas: ${unverifiedMenu.areas.length}`);
   } else {
@@ -44,11 +46,13 @@ async function verifyMenus() {
   }
 
   // Check verified menu
-  const verifiedMenu = allMenus.find(m => m.richMenuId === verifiedId);
+  const verifiedMenu = allMenus.find((m) => m.richMenuId === verifiedId);
   console.log('\nVerified Menu:');
   if (verifiedMenu) {
     console.log(`  ✅ Exists: ${verifiedMenu.name}`);
-    console.log(`  Size: ${verifiedMenu.size.width}x${verifiedMenu.size.height}px`);
+    console.log(
+      `  Size: ${verifiedMenu.size.width}x${verifiedMenu.size.height}px`,
+    );
     console.log(`  Chat Bar: ${verifiedMenu.chatBarText}`);
     console.log(`  Areas: ${verifiedMenu.areas.length}`);
   } else {

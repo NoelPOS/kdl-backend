@@ -10,7 +10,6 @@ import { ParentStudentEntity } from './entities/parent-student.entity';
 import { StudentEntity } from '../student/entities/student.entity';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { UpdateParentDto } from './dto/update-parent.dto';
-import { ConnectParentStudentDto } from './dto/connect-parent-student.dto';
 import { PaginatedParentResponseDto } from './dto/paginated-parent-response.dto';
 import { PaginatedParentChildrenResponseDto } from './dto/paginated-parent-children-response.dto';
 import { AssignChildrenToParentDto } from './dto/assign-children-parent.dto';

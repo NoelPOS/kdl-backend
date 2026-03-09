@@ -102,13 +102,18 @@ export class TeacherService {
     return this.teacherCourseRepo.save(assignments);
   }
 
-  async removeCourseFromTeacher(teacherId: number, courseId: number): Promise<void> {
+  async removeCourseFromTeacher(
+    teacherId: number,
+    courseId: number,
+  ): Promise<void> {
     const teacherCourse = await this.teacherCourseRepo.findOne({
       where: { teacherId, courseId },
     });
 
     if (!teacherCourse) {
-      throw new NotFoundException(`Course ${courseId} is not assigned to teacher ${teacherId}`);
+      throw new NotFoundException(
+        `Course ${courseId} is not assigned to teacher ${teacherId}`,
+      );
     }
 
     await this.teacherCourseRepo.remove(teacherCourse);
@@ -145,9 +150,6 @@ export class TeacherService {
     if (!teacher) {
       throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
     }
-
-    // Build the where conditions
-    let whereConditions: any = { teacherId };
 
     // If we have a search query, we need to use a query builder
     if (query && query.trim()) {
@@ -344,7 +346,7 @@ export class TeacherService {
 
       // Build where clause
       const where: any = {
-        "role" : "teacher"
+        role: 'teacher',
       };
 
       if (query) {
@@ -556,7 +558,10 @@ export class TeacherService {
     return this.teacherAbsenceRepo.save(absence);
   }
 
-  async deleteTeacherAbsence(teacherId: number, absenceId: number): Promise<void> {
+  async deleteTeacherAbsence(
+    teacherId: number,
+    absenceId: number,
+  ): Promise<void> {
     const absence = await this.teacherAbsenceRepo.findOne({
       where: { id: absenceId, teacherId },
     });
@@ -573,7 +578,15 @@ export class TeacherService {
   // ==================== TEACHER AVAILABILITY CHECK ====================
 
   private getDayOfWeek(date: Date): string {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
     return days[date.getDay()];
   }
 
@@ -626,10 +639,11 @@ export class TeacherService {
             .createQueryBuilder('avail')
             .where('avail.teacherId = :teacherId', { teacherId })
             .getMany();
-            
-          const availableInfo = allSlots.length > 0 
-            ? ` (Available on: ${[...new Set(allSlots.map(s => s.dayOfWeek + ' ' + s.startTime + '-' + s.endTime))].join(', ')})`
-            : ' (No availability slots defined)';
+
+          const availableInfo =
+            allSlots.length > 0
+              ? ` (Available on: ${[...new Set(allSlots.map((s) => s.dayOfWeek + ' ' + s.startTime + '-' + s.endTime))].join(', ')})`
+              : ' (No availability slots defined)';
 
           return {
             available: false,
@@ -663,7 +677,9 @@ export class TeacherService {
         );
 
       if (excludeScheduleId) {
-        queryBuilder.andWhere('schedule.id != :excludeScheduleId', { excludeScheduleId });
+        queryBuilder.andWhere('schedule.id != :excludeScheduleId', {
+          excludeScheduleId,
+        });
       }
 
       const existingSchedule = await queryBuilder.getOne();
@@ -681,7 +697,9 @@ export class TeacherService {
 
   // ==================== TEACHER AVAILABILITY SLOTS (part-time) ====================
 
-  async getAvailabilitySlots(teacherId: number): Promise<TeacherAvailability[]> {
+  async getAvailabilitySlots(
+    teacherId: number,
+  ): Promise<TeacherAvailability[]> {
     await this.findTeacherById(teacherId); // throws if not found
     return this.teacherAvailabilityRepo.find({
       where: { teacherId },
@@ -709,7 +727,10 @@ export class TeacherService {
     return this.teacherAvailabilityRepo.save(slot);
   }
 
-  async removeAvailabilitySlot(teacherId: number, slotId: number): Promise<void> {
+  async removeAvailabilitySlot(
+    teacherId: number,
+    slotId: number,
+  ): Promise<void> {
     const slot = await this.teacherAvailabilityRepo.findOne({
       where: { id: slotId, teacherId },
     });
@@ -723,4 +744,3 @@ export class TeacherService {
     await this.teacherAvailabilityRepo.remove(slot);
   }
 }
-

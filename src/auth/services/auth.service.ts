@@ -12,19 +12,15 @@ import { UserEntity } from '../../user/entities/user.entity';
 import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { LoginDto } from '../dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
-import { MoreThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResendService } from 'nestjs-resend';
 import {
   PASSWORD_RESET_REQUEST_TEMPLATE,
   PASSWORD_RESET_SUCCESS_TEMPLATE,
-  VERIFICATION_EMAIL_TEMPLATE,
-  WELCOME_TEMPLATE,
 } from '../../config/emailTemplates';
-import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { TokenStorageService } from './token-storage.service';
 
@@ -155,7 +151,10 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(email: string, role: UserRole): Promise<{ message: string }> {
+  async forgotPassword(
+    email: string,
+    role: UserRole,
+  ): Promise<{ message: string }> {
     try {
       let user: UserEntity | TeacherEntity;
       let userName: string;
@@ -170,12 +169,12 @@ export class AuthService {
         if (!user) {
           throw new NotFoundException('User not found');
         }
-        
+
         // Verify that the user has the correct role
         if (user.role !== role) {
           throw new BadRequestException('Invalid role for this user');
         }
-        
+
         userName = (user as UserEntity).userName;
       }
 
@@ -205,7 +204,10 @@ export class AuthService {
       return { message: 'Password reset code sent to your email' };
     } catch (error) {
       this.logger.error(`Forgot password failed: ${error.message}`);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new BadRequestException(`Forgot password failed: ${error.message}`);
@@ -218,7 +220,11 @@ export class AuthService {
     role: UserRole,
   ): Promise<{ message: string }> {
     try {
-      const isValid = await this.tokenStorageService.verifyResetToken(email, role, token);
+      const isValid = await this.tokenStorageService.verifyResetToken(
+        email,
+        role,
+        token,
+      );
 
       if (!isValid) {
         throw new BadRequestException('Invalid or expired reset token');
@@ -230,7 +236,9 @@ export class AuthService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException(`Token verification failed: ${error.message}`);
+      throw new BadRequestException(
+        `Token verification failed: ${error.message}`,
+      );
     }
   }
 
@@ -242,7 +250,11 @@ export class AuthService {
   ): Promise<{ message: string }> {
     try {
       // Verify the token first
-      const isValid = await this.tokenStorageService.verifyResetToken(email, role, token);
+      const isValid = await this.tokenStorageService.verifyResetToken(
+        email,
+        role,
+        token,
+      );
 
       if (!isValid) {
         throw new BadRequestException('Invalid or expired reset token');
@@ -255,25 +267,27 @@ export class AuthService {
       if (role === UserRole.TEACHER) {
         user = await this.teacherService.findByEmail(email);
         userName = (user as TeacherEntity).name;
-        
+
         // Update teacher password
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(newPassword, salt);
-        await this.teacherRepository.update(user.id, { password: hashedPassword });
+        await this.teacherRepository.update(user.id, {
+          password: hashedPassword,
+        });
       } else {
         // For ADMIN and REGISTRAR roles, use UserEntity
         user = await this.usersService.findOne({ email });
         if (!user) {
           throw new NotFoundException('User not found');
         }
-        
+
         // Verify that the user has the correct role
         if (user.role !== role) {
           throw new BadRequestException('Invalid role for this user');
         }
-        
+
         userName = (user as UserEntity).userName;
-        
+
         // Update user password
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(newPassword, salt);
@@ -288,7 +302,7 @@ export class AuthService {
         '{{name}}',
         userName,
       );
-      
+
       await this.resendService.send({
         from: this.configService.get<string>('RESEND_FROM_EMAIL'),
         to: email,
@@ -299,7 +313,10 @@ export class AuthService {
       return { message: 'Password reset successfully' };
     } catch (error) {
       this.logger.error(`Reset password failed: ${error.message}`);
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
       throw new BadRequestException(`Reset password failed: ${error.message}`);

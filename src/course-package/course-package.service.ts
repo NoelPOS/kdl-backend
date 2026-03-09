@@ -18,7 +18,8 @@ export class CoursePackageService {
 
   async findOne(id: number): Promise<CoursePackage> {
     const pkg = await this.repo.findOne({ where: { id } });
-    if (!pkg) throw new NotFoundException(`Course package with ID ${id} not found`);
+    if (!pkg)
+      throw new NotFoundException(`Course package with ID ${id} not found`);
     return pkg;
   }
 
@@ -35,20 +36,27 @@ export class CoursePackageService {
       const newStart = new Date(dto.effectiveStartDate);
       const expiryDate = new Date(newStart);
       expiryDate.setDate(expiryDate.getDate() - 1);
-      await this.repo.update(existingActive.id, { effectiveEndDate: expiryDate });
+      await this.repo.update(existingActive.id, {
+        effectiveEndDate: expiryDate,
+      });
     }
 
     const pkg = this.repo.create({
       name: dto.name,
       numberOfCourses: dto.numberOfCourses,
       effectiveStartDate: new Date(dto.effectiveStartDate),
-      effectiveEndDate: dto.effectiveEndDate ? new Date(dto.effectiveEndDate) : null,
+      effectiveEndDate: dto.effectiveEndDate
+        ? new Date(dto.effectiveEndDate)
+        : null,
     });
     return this.repo.save(pkg);
   }
 
   // Only allows setting effectiveEndDate — name/numberOfCourses are immutable.
-  async update(id: number, dto: UpdateCoursePackageDto): Promise<CoursePackage> {
+  async update(
+    id: number,
+    dto: UpdateCoursePackageDto,
+  ): Promise<CoursePackage> {
     await this.findOne(id); // throws if not found
     if (dto.effectiveEndDate !== undefined) {
       await this.repo.update(id, {

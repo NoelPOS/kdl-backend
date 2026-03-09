@@ -75,8 +75,18 @@ export class InvoiceController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'documentId', required: false, type: String })
-  @ApiQuery({ name: 'student', required: false, type: String, description: 'Filter by student name' })
-  @ApiQuery({ name: 'course', required: false, type: String, description: 'Filter by course name' })
+  @ApiQuery({
+    name: 'student',
+    required: false,
+    type: String,
+    description: 'Filter by student name',
+  })
+  @ApiQuery({
+    name: 'course',
+    required: false,
+    type: String,
+    description: 'Filter by course name',
+  })
   @ApiQuery({
     name: 'receiptDone',
     required: false,

@@ -3,47 +3,27 @@ import { DataSource } from 'typeorm';
 import { UserEntity } from '../../user/entities/user.entity';
 import { StudentEntity } from '../../student/entities/student.entity';
 import { StudentService } from '../../student/student.service';
-import { TeacherEntity } from '../../teacher/entities/teacher.entity';
-import { ParentEntity } from '../../parent/entities/parent.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
 import { Session } from '../../session/entities/session.entity';
 import { ClassOption } from '../../class-option/entities/class-option.entity';
-import { Invoice } from '../../invoice/entities/invoice.entity';
-import { InvoiceItem } from '../../invoice/entities/invoice-item.entity';
-import { Receipt } from '../../receipt/entities/receipt.entity';
-import { Schedule } from '../../schedule/entities/schedule.entity';
-import { CoursePlus } from '../../course-plus/entities/course-plus.entity';
 import { RoomEntity } from '../../room/entities/room.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from '../../common/enums/user-role.enum';
-import { DiscountEntity } from '../../discount/entities/discount.entity';
+import { ParentEntity } from '../../parent/entities/parent.entity';
+import { ParentStudentEntity } from '../../parent/entities/parent-student.entity';
+import { StudentCounter } from '../../student/entities/student-counter.entity';
 
 export class DataSeeder {
   private studentService: StudentService;
 
   constructor(private dataSource: DataSource) {
-    // Minimal ConfigService mock
-    class ConfigServiceMock {
-      get(key: string) {
-        return true;
-      }
-    }
     this.studentService = new StudentService(
       this.dataSource.getRepository(StudentEntity),
-      this.dataSource.getRepository(
-        require('../../session/entities/session.entity').Session,
-      ),
-      this.dataSource.getRepository(
-        require('../../parent/entities/parent.entity').ParentEntity,
-      ),
-      this.dataSource.getRepository(
-        require('../../parent/entities/parent-student.entity')
-          .ParentStudentEntity,
-      ),
+      this.dataSource.getRepository(Session),
+      this.dataSource.getRepository(ParentEntity),
+      this.dataSource.getRepository(ParentStudentEntity),
       {} as any, // Pass empty object as configService
-      this.dataSource.getRepository(
-        require('../../student/entities/student-counter.entity').StudentCounter,
-      ),
+      this.dataSource.getRepository(StudentCounter),
     );
   }
 
@@ -58,9 +38,9 @@ export class DataSeeder {
     // const students = await this.createStudents();
     // const teachers = await this.createTeachers();
     // const parents = await this.createParents();
-    const courses = await this.createCourses();
-    const rooms = await this.createRooms();
-    const classOptions = await this.createClassOptions();
+    await this.createCourses();
+    await this.createRooms();
+    await this.createClassOptions();
 
     // Create teacher-course relationships
     // await this.createTeacherCourseRelations(teachers, courses);
@@ -243,62 +223,332 @@ export class DataSeeder {
     const courses = [];
 
     const courseData = [
-      { title: 'Tinkamo Tinkerer Begineer', description: '', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'TInkamo Tinkerer Intermediate I', description: '', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'Tinkamo TInkerer Intermediate II', description: '', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'Fun Coding and AR with Botzees', description: '', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'Fun Coding with Botzees Intermediate', description: '', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'Fun Coding with mTIny', description: '', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'Fun Coding with Lego Boost', description: '', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'Codey Rocky Champion Beginner', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Codey Rocky Champion Intermediate', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Fun Coding with mBot Beginner', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Fun Coding with mBot Intermediate I', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Fun Coding with mBot Intermediate II', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Minecraft Education (Scratch)', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Creativity with 3D Modeling (Tinkercad)', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Creativity with 3D Modeling Project', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Animation and Game Creator', description: '', ageRange: '7-8 yrs', medium: 'iPad' },
-      { title: 'Fun Coding with mBot Beginner', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Fun Coding with mBot Intermediate I, II', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Fun Coding with mBot Advanced', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'VEX Robotics Starter (VEX IQ)', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'VEX IQ Roboticcs Competition I,II', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'ANimation and Game Creator', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Mastering Halocode Beginner', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Advanced Game Creator', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: '2 Players Game Creator', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Creativity with 3D Modeling (Tinkercad)', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Creativity with 3D Modeling Project', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Minecraft Education (Scratch/Python)', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Application Design (MIT App Inventor)', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Game Design Roblox Studio Beginner', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Game Design Roblox Studio Intermediate', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Everyday Electronics', description: '', ageRange: '9-12 yrs', medium: 'Computer' },
-      { title: 'Application Design (MIT App Inventor)', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Web Design Development', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Pure Python I', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Python Project Based', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Game Development with Python I', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Game Development with Python II', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Pure Python II', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Data Handling/ Data Science', description: '', ageRange: '13+ yrs', medium: 'Pure Coding' },
-      { title: 'Creativity with 3D Modeling (Shapr3D)', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
-      { title: 'Creativity with 3D Modeling Project', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
-      { title: 'Everyday Electronics', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
-      { title: 'Exploring Arduino with Python I', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
-      { title: 'Exploring Arduino with Python II', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
-      { title: 'Challenge with Application Project', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
-      { title: 'Welcome to World of IoT (ESP32)', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
-      { title: 'Getting to know a Robot Arm', description: '', ageRange: '13+ yrs', medium: 'Hardware' },
+      {
+        title: 'Tinkamo Tinkerer Begineer',
+        description: '',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'TInkamo Tinkerer Intermediate I',
+        description: '',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Tinkamo TInkerer Intermediate II',
+        description: '',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding and AR with Botzees',
+        description: '',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding with Botzees Intermediate',
+        description: '',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding with mTIny',
+        description: '',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding with Lego Boost',
+        description: '',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Codey Rocky Champion Beginner',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Codey Rocky Champion Intermediate',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding with mBot Beginner',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding with mBot Intermediate I',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding with mBot Intermediate II',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Minecraft Education (Scratch)',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Creativity with 3D Modeling (Tinkercad)',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Creativity with 3D Modeling Project',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Animation and Game Creator',
+        description: '',
+        ageRange: '7-8 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Fun Coding with mBot Beginner',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Fun Coding with mBot Intermediate I, II',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Fun Coding with mBot Advanced',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'VEX Robotics Starter (VEX IQ)',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'VEX IQ Roboticcs Competition I,II',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'ANimation and Game Creator',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Mastering Halocode Beginner',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Advanced Game Creator',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: '2 Players Game Creator',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Creativity with 3D Modeling (Tinkercad)',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Creativity with 3D Modeling Project',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Minecraft Education (Scratch/Python)',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Application Design (MIT App Inventor)',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Game Design Roblox Studio Beginner',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Game Design Roblox Studio Intermediate',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Everyday Electronics',
+        description: '',
+        ageRange: '9-12 yrs',
+        medium: 'Computer',
+      },
+      {
+        title: 'Application Design (MIT App Inventor)',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Web Design Development',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Pure Python I',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Python Project Based',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Game Development with Python I',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Game Development with Python II',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Pure Python II',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Data Handling/ Data Science',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Pure Coding',
+      },
+      {
+        title: 'Creativity with 3D Modeling (Shapr3D)',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
+      {
+        title: 'Creativity with 3D Modeling Project',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
+      {
+        title: 'Everyday Electronics',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
+      {
+        title: 'Exploring Arduino with Python I',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
+      {
+        title: 'Exploring Arduino with Python II',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
+      {
+        title: 'Challenge with Application Project',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
+      {
+        title: 'Welcome to World of IoT (ESP32)',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
+      {
+        title: 'Getting to know a Robot Arm',
+        description: '',
+        ageRange: '13+ yrs',
+        medium: 'Hardware',
+      },
       { title: 'Free Trial', description: '', ageRange: '-', medium: '-' },
-      { title: '4 courses package', description: '', ageRange: '-', medium: '-' },
-      { title: '10 courses package', description: '', ageRange: '-', medium: '-' },
-      { title: '2 courses package', description: '', ageRange: '-', medium: '-' },
+      {
+        title: '4 courses package',
+        description: '',
+        ageRange: '-',
+        medium: '-',
+      },
+      {
+        title: '10 courses package',
+        description: '',
+        ageRange: '-',
+        medium: '-',
+      },
+      {
+        title: '2 courses package',
+        description: '',
+        ageRange: '-',
+        medium: '-',
+      },
       { title: 'TBC', description: '', ageRange: '-', medium: '-' },
-      { title: 'Test course', description: 'Test Description', ageRange: '5-6 yrs', medium: 'iPad' },
-      { title: 'Robomaster', description: 'Using dji robotic to learn', ageRange: '13+ yrs', medium: 'Physical Materials' },
-      { title: 'ISAD', description: 'isad descripttion', ageRange: '13+ yrs', medium: 'Computer' },
+      {
+        title: 'Test course',
+        description: 'Test Description',
+        ageRange: '5-6 yrs',
+        medium: 'iPad',
+      },
+      {
+        title: 'Robomaster',
+        description: 'Using dji robotic to learn',
+        ageRange: '13+ yrs',
+        medium: 'Physical Materials',
+      },
+      {
+        title: 'ISAD',
+        description: 'isad descripttion',
+        ageRange: '13+ yrs',
+        medium: 'Computer',
+      },
     ];
 
     for (const data of courseData) {
@@ -326,7 +576,7 @@ export class DataSeeder {
       'Small',
       '-',
       'Zoom Acc1',
-      'Zoom Acc2'
+      'Zoom Acc2',
     ];
 
     for (const name of roomNames) {
@@ -344,46 +594,46 @@ export class DataSeeder {
     const classOptions = [];
 
     const optionData = [
-      { 
-        classMode: '12 times fixed', 
-        classLimit: 12, 
+      {
+        classMode: '12 times fixed',
+        classLimit: 12,
         tuitionFee: 14700,
       },
-      { 
-        classMode: '12 times check', 
-        classLimit: 12, 
+      {
+        classMode: '12 times check',
+        classLimit: 12,
         tuitionFee: 14700,
       },
-      { 
-        classMode: '5 days camp', 
-        classLimit: 5, 
+      {
+        classMode: '5 days camp',
+        classLimit: 5,
         tuitionFee: 15000,
       },
-      { 
-        classMode: '2 days camp', 
-        classLimit: 2, 
+      {
+        classMode: '2 days camp',
+        classLimit: 2,
         tuitionFee: 6000,
       },
-      { 
-        classMode: '10 courses package', 
-        classLimit: 0, 
+      {
+        classMode: '10 courses package',
+        classLimit: 0,
         tuitionFee: 100000,
       },
-      { 
-        classMode: '4 courses package', 
-        classLimit: 0, 
+      {
+        classMode: '4 courses package',
+        classLimit: 0,
         tuitionFee: 50000,
       },
-      { 
-        classMode: '2 courses package', 
-        classLimit: 0, 
+      {
+        classMode: '2 courses package',
+        classLimit: 0,
         tuitionFee: 27000,
       },
-      { 
-        classMode: '1 times check', 
-        classLimit: 1, 
+      {
+        classMode: '1 times check',
+        classLimit: 1,
         tuitionFee: 0,
-      }
+      },
     ];
 
     for (const data of optionData) {
@@ -392,7 +642,9 @@ export class DataSeeder {
       option.classLimit = data.classLimit;
       option.tuitionFee = data.tuitionFee;
       option.effectiveStartDate = new Date();
-      option.effectiveEndDate = new Date(new Date().setFullYear(new Date().getFullYear() + 10));
+      option.effectiveEndDate = new Date(
+        new Date().setFullYear(new Date().getFullYear() + 10),
+      );
       classOptions.push(option);
     }
 

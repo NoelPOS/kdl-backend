@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from 'src/app/app.module';
-import { ParentService } from 'src/parent/parent.service';
 import { ParentEntity } from 'src/parent/entities/parent.entity';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -20,7 +19,9 @@ async function bootstrap() {
 
   for (const parent of parents) {
     if (parent.password) {
-      console.log(`Parent ${parent.id} (${parent.name}) already has a password. Skipping.`);
+      console.log(
+        `Parent ${parent.id} (${parent.name}) already has a password. Skipping.`,
+      );
       continue;
     }
 

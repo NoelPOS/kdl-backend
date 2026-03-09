@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Schedule } from './entities/schedule.entity';
 import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { TeacherAbsence } from '../teacher/entities/teacher-absence.entity';
-import { UserEntity } from '../user/entities/user.entity';
 import { NotificationModule } from '../notification/notification.module';
 import { ParentModule } from '../parent/parent.module';
 import { LineModule } from '../line/line.module';

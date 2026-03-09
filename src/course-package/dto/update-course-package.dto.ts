@@ -6,6 +6,9 @@ import { IsDateString, IsOptional } from 'class-validator';
 export class UpdateCoursePackageDto {
   @IsOptional()
   @IsDateString()
-  @ApiPropertyOptional({ description: 'Set to deactivate this package version', example: '2026-12-31' })
+  @ApiPropertyOptional({
+    description: 'Set to deactivate this package version',
+    example: '2026-12-31',
+  })
   effectiveEndDate?: string;
 }

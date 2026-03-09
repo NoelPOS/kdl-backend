@@ -16,7 +16,6 @@ import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { TeacherAbsence } from '../teacher/entities/teacher-absence.entity';
 import { CheckScheduleConflictDto } from './dto/check-schedule-conflict.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
-import { time } from 'console';
 import { NotificationService } from '../notification/notification.service';
 import { ParentService } from '../parent/parent.service';
 import { LineMessagingService } from '../line/services/line-messaging.service';
@@ -47,26 +46,27 @@ export class ScheduleService {
   }
 
   async findOne(id: number) {
-    return this.scheduleRepo.findOne({ 
+    return this.scheduleRepo.findOne({
       where: { id },
-      relations: ['student', 'teacher', 'course', 'session', 'session.classOption']
+      relations: [
+        'student',
+        'teacher',
+        'course',
+        'session',
+        'session.classOption',
+      ],
     });
   }
 
-  async updateSchedule(
-    id: number,
-    dto: UpdateScheduleDto,
-    user?: any,
-  ) {
+  async updateSchedule(id: number, dto: UpdateScheduleDto, user?: any) {
+    console.log('This is the update schedule dto: ', dto);
+    console.log('DTO feedbackImages:', dto.feedbackImages);
+    console.log('DTO feedbackVideos:', dto.feedbackVideos);
 
-    console.log("This is the update schedule dto: ", dto);
-    console.log("DTO feedbackImages:", dto.feedbackImages);
-    console.log("DTO feedbackVideos:", dto.feedbackVideos);
-    
     // First, get the current schedule to check permissions
-    const existingSchedule = await this.scheduleRepo.findOne({ 
+    const existingSchedule = await this.scheduleRepo.findOne({
       where: { id },
-      relations: ['student', 'teacher', 'course'] 
+      relations: ['student', 'teacher', 'course'],
     });
     if (!existingSchedule) {
       throw new BadRequestException(`Schedule with ID ${id} not found`);
@@ -77,10 +77,12 @@ export class ScheduleService {
     // Validate teacherId if provided
     if (dto.teacherId !== undefined && dto.teacherId !== null) {
       const teacherExists = await this.teacherRepo.findOne({
-        where: { id: dto.teacherId }
+        where: { id: dto.teacherId },
       });
       if (!teacherExists) {
-        throw new BadRequestException(`Teacher with ID ${dto.teacherId} not found. For free trials without a teacher, use null.`);
+        throw new BadRequestException(
+          `Teacher with ID ${dto.teacherId} not found. For free trials without a teacher, use null.`,
+        );
       }
     }
 
@@ -113,14 +115,18 @@ export class ScheduleService {
           : new Date();
         // Add media fields for teachers (empty arrays clear the field)
         if (dto.feedbackImages !== undefined) {
-          updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
+          updateFields.feedbackImages =
+            dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
         }
         if (dto.feedbackVideos !== undefined) {
-          updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
+          updateFields.feedbackVideos =
+            dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
         }
-        
+
         // Notify Registrar and Admin about new feedback
-        const parents = await this.parentService.getParentsByStudentId(existingSchedule.studentId);
+        const parents = await this.parentService.getParentsByStudentId(
+          existingSchedule.studentId,
+        );
         const primaryParent = parents[0] ?? null;
 
         const rolesToNotify = ['registrar', 'admin'];
@@ -139,7 +145,7 @@ export class ScheduleService {
               parentName: primaryParent?.name ?? null,
               parentPhone: primaryParent?.contactNo ?? null,
               parentLine: primaryParent?.lineId ?? null,
-            }
+            },
           );
         }
 
@@ -149,15 +155,17 @@ export class ScheduleService {
         updateFields.feedback = dto.feedback;
         updateFields.feedbackModifiedByName = user.name || user.userName;
         updateFields.feedbackModifiedAt = new Date();
-        
+
         // Add media fields for admin/registrar (empty arrays clear the field)
         if (dto.feedbackImages !== undefined) {
-          updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
+          updateFields.feedbackImages =
+            dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
         }
         if (dto.feedbackVideos !== undefined) {
-          updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
+          updateFields.feedbackVideos =
+            dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
         }
-        
+
         if (dto.feedbackDate) {
           updateFields.feedbackDate = new Date(dto.feedbackDate);
         }
@@ -168,12 +176,14 @@ export class ScheduleService {
         updateFields.feedback = dto.feedback;
         // Add media fields for other users (empty arrays clear the field)
         if (dto.feedbackImages !== undefined) {
-          updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
+          updateFields.feedbackImages =
+            dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
         }
         if (dto.feedbackVideos !== undefined) {
-          updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
+          updateFields.feedbackVideos =
+            dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
         }
-        
+
         if (dto.feedbackDate) {
           updateFields.feedbackDate = new Date(dto.feedbackDate);
         }
@@ -194,7 +204,8 @@ export class ScheduleService {
     }
 
     // Check if attendance is being changed to 'cancelled'
-    const isBeingCancelled = dto.attendance === 'cancelled' && prevAttendance !== 'cancelled';
+    const isBeingCancelled =
+      dto.attendance === 'cancelled' && prevAttendance !== 'cancelled';
 
     const result = await this.scheduleRepo.update(id, updateFields);
     if (result.affected === 0) {
@@ -231,11 +242,13 @@ export class ScheduleService {
         feedback: '', // Default to empty string
         verifyFb: false, // Default value
         classNumber: cancelledSchedule.classNumber, // Keep the same class number
-        warning: "", // Default to empty string
+        warning: '', // Default to empty string
       });
 
       await this.scheduleRepo.save(replacementSchedule);
-      console.log(`Created replacement schedule for cancelled schedule ID: ${cancelledSchedule.id}`);
+      console.log(
+        `Created replacement schedule for cancelled schedule ID: ${cancelledSchedule.id}`,
+      );
     } catch (error) {
       console.error('Error creating replacement schedule:', error);
       // Don't throw error to prevent blocking the main update operation
@@ -281,7 +294,12 @@ export class ScheduleService {
 
     for (const schedule of potentiallyConflicted) {
       // Skip schedules with null date, startTime, endTime, or room
-      if (!schedule.date || !schedule.startTime || !schedule.endTime || !schedule.room) {
+      if (
+        !schedule.date ||
+        !schedule.startTime ||
+        !schedule.endTime ||
+        !schedule.room
+      ) {
         continue;
       }
 
@@ -336,10 +354,12 @@ export class ScheduleService {
 
     // Add media arrays if provided (empty arrays clear the field)
     if (dto.feedbackImages !== undefined) {
-      updateFields.feedbackImages = dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
+      updateFields.feedbackImages =
+        dto.feedbackImages.length > 0 ? dto.feedbackImages : null;
     }
     if (dto.feedbackVideos !== undefined) {
-      updateFields.feedbackVideos = dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
+      updateFields.feedbackVideos =
+        dto.feedbackVideos.length > 0 ? dto.feedbackVideos : null;
     }
 
     const result = await this.scheduleRepo.update(id, updateFields);
@@ -350,17 +370,23 @@ export class ScheduleService {
 
     // Send LINE notification to parent(s) about verified feedback
     try {
-      const parents = await this.parentService.getParentsByStudentId(existingSchedule.studentId);
-      const verifiedParents = parents.filter(p => p.lineId); // Only notify verified parents
-      
+      const parents = await this.parentService.getParentsByStudentId(
+        existingSchedule.studentId,
+      );
+      const verifiedParents = parents.filter((p) => p.lineId); // Only notify verified parents
+
       for (const parent of verifiedParents) {
         await this.lineMessagingService.sendFeedbackAvailableNotification(
           parent.lineId,
           {
             studentName: existingSchedule.student?.name || 'Student',
             courseName: existingSchedule.course?.title || 'Course',
-            date: existingSchedule.date 
-              ? new Date(existingSchedule.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            date: existingSchedule.date
+              ? new Date(existingSchedule.date).toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
               : 'N/A',
             scheduleId: id,
             feedbackPreview: dto.feedback?.substring(0, 100),
@@ -444,7 +470,7 @@ export class ScheduleService {
       teacherName,
       startDate,
       endDate,
-      status,
+      status: _status,
       page = 1,
       limit = 10,
     } = filterDto;
@@ -467,7 +493,6 @@ export class ScheduleService {
       .andWhere('schedule.feedback != :emptyFeedback', { emptyFeedback: '' })
       .andWhere('schedule.verifyFb = :verifyFb', { verifyFb: false }) // Always fetch unverified feedbacks
       .orderBy('schedule.feedbackDate', 'DESC');
-
 
     // Apply filters
     if (studentName) {
@@ -520,7 +545,7 @@ export class ScheduleService {
         feedbackImagesType: typeof schedule.feedbackImages,
         feedbackVideosType: typeof schedule.feedbackVideos,
       });
-      
+
       return {
         id: schedule.id.toString(),
         scheduleId: schedule.id.toString(),
@@ -542,7 +567,9 @@ export class ScheduleService {
             : '',
         // Add modification tracking fields
         feedbackModifiedByName: schedule.feedbackModifiedByName || '',
-        feedbackModifiedAt: schedule.feedbackModifiedAt ? schedule.feedbackModifiedAt.toISOString() : '',
+        feedbackModifiedAt: schedule.feedbackModifiedAt
+          ? schedule.feedbackModifiedAt.toISOString()
+          : '',
         // Add media fields - transformer already converts to arrays
         feedbackImages: schedule.feedbackImages || [],
         feedbackVideos: schedule.feedbackVideos || [],
@@ -585,27 +612,42 @@ export class ScheduleService {
 
   // Helper function to get day of week
   private getDayOfWeek(date: Date): string {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
     return days[date.getDay()];
   }
 
   async checkConflict(dto: CheckScheduleConflictDto) {
     const { date, startTime, endTime, room, teacherId, studentId, excludeId } =
       dto;
-    
-    console.log('checkConflict called with excludeId:', excludeId, 'type:', typeof excludeId);
+
+    console.log(
+      'checkConflict called with excludeId:',
+      excludeId,
+      'type:',
+      typeof excludeId,
+    );
 
     // ===== STEP 1: Check teacher availability (working days & absences for full-time teachers) =====
     if (teacherId) {
-      const teacher = await this.teacherRepo.findOne({ where: { id: teacherId } });
-      
+      const teacher = await this.teacherRepo.findOne({
+        where: { id: teacherId },
+      });
+
       if (teacher && teacher.teacherType === 'full-time') {
         const checkDate = new Date(date);
-        
+
         // Check 1: Is it a working day?
         const dayOfWeek = this.getDayOfWeek(checkDate);
         const workingDays = teacher.workingDays || [];
-        
+
         if (workingDays.length > 0 && !workingDays.includes(dayOfWeek)) {
           return {
             conflictType: 'teacher_unavailable' as const,
@@ -619,12 +661,12 @@ export class ScheduleService {
             unavailableReason: `${teacher.name} does not work on ${dayOfWeek}s`,
           };
         }
-        
+
         // Check 2: Is there an absence on this date?
         const absence = await this.teacherAbsenceRepo.findOne({
           where: { teacherId, absenceDate: checkDate },
         });
-        
+
         if (absence) {
           return {
             conflictType: 'teacher_unavailable' as const,
@@ -667,8 +709,11 @@ export class ScheduleService {
     }
 
     const existing = await queryBuilder.getOne();
-    
-    console.log('Conflict query result:', existing ? `Found schedule ID: ${existing.id}` : 'No conflict found');
+
+    console.log(
+      'Conflict query result:',
+      existing ? `Found schedule ID: ${existing.id}` : 'No conflict found',
+    );
 
     if (existing) {
       const isRoomConflict = existing.room === room;
@@ -910,17 +955,21 @@ export class ScheduleService {
 
     // Transform feedbackImages and feedbackVideos from comma-separated strings to arrays
     // getRawMany bypasses entity transformers, so we need to do this manually
-    const schedules = rawSchedules.map(schedule => ({
+    const schedules = rawSchedules.map((schedule) => ({
       ...schedule,
       schedule_feedbackImages: schedule.schedule_feedbackImages
-        ? (typeof schedule.schedule_feedbackImages === 'string'
-            ? schedule.schedule_feedbackImages.split(',').filter(url => url.trim().length > 0)
-            : schedule.schedule_feedbackImages)
+        ? typeof schedule.schedule_feedbackImages === 'string'
+          ? schedule.schedule_feedbackImages
+              .split(',')
+              .filter((url) => url.trim().length > 0)
+          : schedule.schedule_feedbackImages
         : [],
       schedule_feedbackVideos: schedule.schedule_feedbackVideos
-        ? (typeof schedule.schedule_feedbackVideos === 'string'
-            ? schedule.schedule_feedbackVideos.split(',').filter(url => url.trim().length > 0)
-            : schedule.schedule_feedbackVideos)
+        ? typeof schedule.schedule_feedbackVideos === 'string'
+          ? schedule.schedule_feedbackVideos
+              .split(',')
+              .filter((url) => url.trim().length > 0)
+          : schedule.schedule_feedbackVideos
         : [],
     }));
 
@@ -963,7 +1012,7 @@ export class ScheduleService {
     if (studentName) {
       queryBuilder.andWhere(
         '(student.name ILIKE :studentName OR student.nickname ILIKE :studentName)',
-        { studentName: `%${studentName}%` }
+        { studentName: `%${studentName}%` },
       );
     }
 
@@ -1010,7 +1059,8 @@ export class ScheduleService {
     if (sort) {
       // Expected format: "field:direction" (e.g., "date:asc")
       const [sortField, sortDirection] = sort.split(':');
-      const direction = sortDirection?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+      const direction =
+        sortDirection?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
       // Map frontend sort fields to database columns
       const fieldMap = {
@@ -1045,7 +1095,7 @@ export class ScheduleService {
       .getManyAndCount();
 
     // Transform to flat snake_case format matching ClassSchedule type
-    const transformedSchedules = data.map(schedule => ({
+    const transformedSchedules = data.map((schedule) => ({
       schedule_id: schedule.id?.toString() || '',
       schedule_date: schedule.date?.toString() || '',
       schedule_startTime: schedule.startTime || '',
@@ -1059,7 +1109,8 @@ export class ScheduleService {
       schedule_feedbackVideos: schedule.feedbackVideos || [],
       schedule_verifyFb: schedule.verifyFb || false,
       schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
-      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_feedbackModifiedAt:
+        schedule.feedbackModifiedAt?.toString() || '',
       schedule_classNumber: schedule.classNumber || 0,
       schedule_warning: schedule.warning || '',
       schedule_courseId: schedule.courseId?.toString() || '',
@@ -1084,7 +1135,7 @@ export class ScheduleService {
       },
     };
   }
-  
+
   /**
    * Get all schedules for a student (used by LIFF \"All Courses\" calendar view)
    * Returns the same flat snake_case structure as getSchedulesBySession so
@@ -1093,7 +1144,13 @@ export class ScheduleService {
   async getSchedulesByStudent(studentId: number) {
     const schedules = await this.scheduleRepo.find({
       where: { studentId },
-      relations: ['session', 'session.classOption', 'student', 'course', 'teacher'],
+      relations: [
+        'session',
+        'session.classOption',
+        'student',
+        'course',
+        'teacher',
+      ],
       order: { date: 'ASC' },
     });
 
@@ -1111,7 +1168,8 @@ export class ScheduleService {
       schedule_feedbackVideos: schedule.feedbackVideos || [],
       schedule_verifyFb: schedule.verifyFb || false,
       schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
-      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_feedbackModifiedAt:
+        schedule.feedbackModifiedAt?.toString() || '',
       schedule_classNumber: schedule.classNumber || 0,
       schedule_warning: schedule.warning || '',
       schedule_courseId: schedule.courseId?.toString() || '',
@@ -1129,12 +1187,18 @@ export class ScheduleService {
   async getSchedulesByStudentAndSession(sessionId: number, studentId: number) {
     const schedules = await this.scheduleRepo.find({
       where: { sessionId, studentId },
-      relations: ['session', 'session.classOption', 'student', 'course', 'teacher'],
-      order: { date: 'ASC' }
+      relations: [
+        'session',
+        'session.classOption',
+        'student',
+        'course',
+        'teacher',
+      ],
+      order: { date: 'ASC' },
     });
 
     // Transform to flat snake_case format matching ClassSchedule type
-    return schedules.map(schedule => ({
+    return schedules.map((schedule) => ({
       schedule_id: schedule.id?.toString() || '',
       schedule_date: schedule.date?.toString() || '',
       schedule_startTime: schedule.startTime || '',
@@ -1148,7 +1212,8 @@ export class ScheduleService {
       schedule_feedbackVideos: schedule.feedbackVideos || [],
       schedule_verifyFb: schedule.verifyFb || false,
       schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
-      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_feedbackModifiedAt:
+        schedule.feedbackModifiedAt?.toString() || '',
       schedule_classNumber: schedule.classNumber || 0,
       schedule_warning: schedule.warning || '',
       schedule_courseId: schedule.courseId?.toString() || '',
@@ -1166,12 +1231,18 @@ export class ScheduleService {
   async getSchedulesBySession(sessionId: number) {
     const schedules = await this.scheduleRepo.find({
       where: { sessionId },
-      relations: ['session', 'session.classOption', 'student', 'course', 'teacher'],
-      order: { date: 'ASC' }
+      relations: [
+        'session',
+        'session.classOption',
+        'student',
+        'course',
+        'teacher',
+      ],
+      order: { date: 'ASC' },
     });
 
     // Transform to flat snake_case format matching ClassSchedule type
-    return schedules.map(schedule => ({
+    return schedules.map((schedule) => ({
       schedule_id: schedule.id?.toString() || '',
       schedule_date: schedule.date?.toString() || '',
       schedule_startTime: schedule.startTime || '',
@@ -1185,7 +1256,8 @@ export class ScheduleService {
       schedule_feedbackVideos: schedule.feedbackVideos || [],
       schedule_verifyFb: schedule.verifyFb || false,
       schedule_feedbackModifiedByName: schedule.feedbackModifiedByName || '',
-      schedule_feedbackModifiedAt: schedule.feedbackModifiedAt?.toString() || '',
+      schedule_feedbackModifiedAt:
+        schedule.feedbackModifiedAt?.toString() || '',
       schedule_classNumber: schedule.classNumber || 0,
       schedule_warning: schedule.warning || '',
       schedule_courseId: schedule.courseId?.toString() || '',

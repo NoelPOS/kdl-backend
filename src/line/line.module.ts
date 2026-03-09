@@ -27,7 +27,7 @@ import { InvoiceModule } from '../invoice/invoice.module';
 
 /**
  * LINE Integration Module
- * 
+ *
  * Provides:
  * - LINE Bot messaging (push messages, flex messages)
  * - Rich menu management (verified vs unverified states)
@@ -35,11 +35,11 @@ import { InvoiceModule } from '../invoice/invoice.module';
  * - Schedule notifications (cron job runs daily at 9 AM)
  * - Webhook handling (follow events, postback events)
  * - Parent Portal API for LIFF app
- * 
+ *
  * Dependencies:
  * - @line/bot-sdk (LINE Bot SDK)
  * - @nestjs/schedule (Cron jobs)
- * 
+ *
  * Environment variables required:
  * - LINE_CHANNEL_ACCESS_TOKEN
  * - LINE_CHANNEL_SECRET
@@ -49,7 +49,7 @@ import { InvoiceModule } from '../invoice/invoice.module';
   imports: [
     // Import schedule module for cron jobs
     NestScheduleModule.forRoot(),
-    
+
     // TypeORM entities
     TypeOrmModule.forFeature([
       ParentEntity,
@@ -58,17 +58,14 @@ import { InvoiceModule } from '../invoice/invoice.module';
       Session,
     ]),
     NotificationModule,
-    
+
     // External modules
     ParentModule,
     SessionModule,
     forwardRef(() => ScheduleModule),
     InvoiceModule,
   ],
-  controllers: [
-    LineController,
-    ParentPortalController,
-  ],
+  controllers: [LineController, ParentPortalController],
   providers: [
     LineMessagingService,
     RichMenuService,
@@ -88,7 +85,7 @@ export class LineModule implements OnModuleInit {
   /**
    * Initialize rich menus when module starts
    * This creates the unverified and verified rich menus
-   * 
+   *
    * Note: Menu images must be uploaded manually via LINE Developers Console
    * or you can use the LINE Bot SDK to upload images programmatically
    */

@@ -40,14 +40,13 @@ async function setDefaultMenu() {
     // Verify
     const newDefault = await client.getDefaultRichMenuId();
     console.log(`✅ Verified - New default: ${newDefault}`);
-    
+
     console.log('\n🎉 Success! The unverified menu is now the default.');
     console.log('📱 Try opening your LINE bot now - you should see the menu!');
-
   } catch (error: any) {
     console.error('❌ Failed to set default menu');
     console.error(`Error: ${error.message}`);
-    
+
     if (error.response) {
       console.error('Response:', error.response.data);
     }

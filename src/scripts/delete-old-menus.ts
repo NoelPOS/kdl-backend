@@ -22,7 +22,7 @@ async function deleteExistingMenus() {
 
   const menuIdsToDelete = [
     process.env.UNVERIFIED_MENU_ID,
-    process.env.VERIFIED_MENU_ID
+    process.env.VERIFIED_MENU_ID,
   ].filter(Boolean);
 
   console.log(`Found ${menuIdsToDelete.length} menus to delete:\n`);

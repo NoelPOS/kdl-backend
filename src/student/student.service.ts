@@ -154,12 +154,15 @@ export class StudentService {
 
       // Filters query is for both name and nickname
       if (query) {
-  queryBuilder.andWhere(
-    new Brackets((qb) => {
-      qb.where('student.name ILIKE :query', { query: `%${query}%` })
-        .orWhere('student.nickname ILIKE :query', { query: `%${query}%` });
-    })
-  );
+        queryBuilder.andWhere(
+          new Brackets((qb) => {
+            qb.where('student.name ILIKE :query', {
+              query: `%${query}%`,
+            }).orWhere('student.nickname ILIKE :query', {
+              query: `%${query}%`,
+            });
+          }),
+        );
       }
 
       if (active === 'active') {
@@ -411,7 +414,7 @@ export class StudentService {
 
       // Remove parentId from updateStudentDto before updating student entity
       // since it's not a direct field on the student entity
-      const { parentId, ...studentUpdateData } = updateStudentDto;
+      const { parentId: _parentId, ...studentUpdateData } = updateStudentDto;
 
       // Update only the fields that are provided
       Object.assign(student, studentUpdateData);

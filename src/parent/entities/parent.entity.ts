@@ -30,7 +30,9 @@ export class ParentEntity {
   contactNo: string;
 
   @Column({ nullable: true })
-  @ApiProperty({ description: 'Parent LINE user ID (linked after verification)' })
+  @ApiProperty({
+    description: 'Parent LINE user ID (linked after verification)',
+  })
   lineId: string;
 
   @Column()

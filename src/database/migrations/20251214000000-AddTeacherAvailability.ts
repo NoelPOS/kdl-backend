@@ -42,13 +42,19 @@ export class AddTeacherAvailability1734142000000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop indexes
     await queryRunner.query(`DROP INDEX IF EXISTS idx_teacher_absences_date`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_teacher_absences_teacher_id`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_teacher_absences_teacher_id`,
+    );
 
     // Drop teacher_absences table
     await queryRunner.query(`DROP TABLE IF EXISTS teacher_absences`);
 
     // Remove columns from teachers table
-    await queryRunner.query(`ALTER TABLE teachers DROP COLUMN IF EXISTS working_days`);
-    await queryRunner.query(`ALTER TABLE teachers DROP COLUMN IF EXISTS teacher_type`);
+    await queryRunner.query(
+      `ALTER TABLE teachers DROP COLUMN IF EXISTS working_days`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE teachers DROP COLUMN IF EXISTS teacher_type`,
+    );
   }
 }

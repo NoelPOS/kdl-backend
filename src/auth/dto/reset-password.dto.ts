@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  IsEnum,
+} from 'class-validator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
 export class ResetPasswordDto {
@@ -37,4 +43,4 @@ export class ResetPasswordDto {
   @IsEnum(UserRole)
   @IsNotEmpty()
   role: UserRole;
-} 
+}

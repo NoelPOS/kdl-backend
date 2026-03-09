@@ -10,6 +10,8 @@ import { setupSwagger } from './common/docs/swagger';
 import { HttpExceptionFilter } from './common/exception/http-exception.filter';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import cookieParser from 'cookie-parser';
+import * as express from 'express';
 
 declare const module: any;
 
@@ -19,13 +21,11 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Enable cookie parser for HttpOnly cookies
-  // Use require for CommonJS compatibility in production builds
-  const cookieParser = require('cookie-parser');
   app.use(cookieParser());
 
   // Set body size limits for file uploads (images up to 10MB, videos up to 100MB)
-  app.use(require('express').json({ limit: '100mb' }));
-  app.use(require('express').urlencoded({ limit: '100mb', extended: true }));
+  app.use(express.json({ limit: '100mb' }));
+  app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
   // Express v5 compatibility - support complex query strings
   app.set('query parser', 'extended');
@@ -83,14 +83,22 @@ async function bootstrap() {
   }
 
   // CORS
-  const corsOrigins = configService.get<string>('CORS_ORIGINS', 'https://kdl-frontend.vercel.app ,http://localhost:3000,http://54.221.191.226');
-  const allowedOrigins = corsOrigins.split(',').map(origin => origin.trim());
-  
+  const corsOrigins = configService.get<string>(
+    'CORS_ORIGINS',
+    'https://kdl-frontend.vercel.app ,http://localhost:3000,http://54.221.191.226',
+  );
+  const allowedOrigins = corsOrigins.split(',').map((origin) => origin.trim());
+
   app.enableCors({
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+    ],
     exposedHeaders: ['Set-Cookie'],
   });
 

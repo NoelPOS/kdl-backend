@@ -1,6 +1,6 @@
 /**
  * Set Default Rich Menu Script
- * 
+ *
  * Sets the unverified menu as the default for all new users who add the bot
  */
 
@@ -35,20 +35,25 @@ async function setDefaultRichMenu() {
     // Set default rich menu
     console.log(`📋 Setting default rich menu to: ${unverifiedMenuId}\n`);
     await client.setDefaultRichMenu(unverifiedMenuId);
-    
+
     console.log('✅ Default rich menu set successfully!');
     console.log('\n📌 What this means:');
-    console.log('   - All new users who add your bot will see the unverified menu');
-    console.log('   - Existing users need to block/unblock or have the menu assigned manually');
+    console.log(
+      '   - All new users who add your bot will see the unverified menu',
+    );
+    console.log(
+      '   - Existing users need to block/unblock or have the menu assigned manually',
+    );
     console.log('\n💡 To apply to YOUR account right now:');
     console.log('   1. Block your bot in LINE');
     console.log('   2. Unblock/Re-add your bot');
     console.log('   3. The unverified menu should appear!\n');
-
   } catch (error: any) {
     console.error('❌ ERROR:', error.message);
     if (error.message.includes('404')) {
-      console.error('\n💡 This menu ID does not exist or has no image uploaded');
+      console.error(
+        '\n💡 This menu ID does not exist or has no image uploaded',
+      );
       console.error('   Run: npm run upload-rich-menu-images');
     }
     process.exit(1);

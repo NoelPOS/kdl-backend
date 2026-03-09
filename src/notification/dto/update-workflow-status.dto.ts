@@ -9,11 +9,15 @@ export class UpdateWorkflowStatusDto {
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ description: 'Employee name handling this (required when wip)' })
+  @ApiPropertyOptional({
+    description: 'Employee name handling this (required when wip)',
+  })
   wipBy?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ description: 'Note or remark about this notification' })
+  @ApiPropertyOptional({
+    description: 'Note or remark about this notification',
+  })
   remark?: string;
 }

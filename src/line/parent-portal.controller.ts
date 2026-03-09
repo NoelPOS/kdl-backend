@@ -7,7 +7,6 @@ import {
   ParseIntPipe,
   Query,
   DefaultValuePipe,
-  UseGuards,
   BadRequestException,
 } from '@nestjs/common';
 import {
@@ -31,7 +30,7 @@ import { LineMessagingService } from './services/line-messaging.service';
 /**
  * Parent Portal Controller
  * API endpoints for LINE LIFF app
- * 
+ *
  * Endpoints:
  * - POST /parent-portal/verify - Verify and link LINE account
  * - GET /parent-portal/profile - Get parent profile by LINE user ID
@@ -39,7 +38,7 @@ import { LineMessagingService } from './services/line-messaging.service';
  * - GET /parent-portal/students/:id/sessions - Get student's sessions (courses)
  * - GET /parent-portal/sessions/:id/schedules - Get session's schedules
  * - GET /parent-portal/:id/invoices - Get parent's invoices
- * 
+ *
  * Note: No authentication required - validates LINE user ID instead
  */
 @ApiTags('Parent Portal (LIFF)')
@@ -244,7 +243,10 @@ export class ParentPortalController {
         const room = roomRaw && roomRaw !== '-' ? roomRaw : null;
         const dateStr = schedule?.date
           ? new Date(schedule.date).toLocaleDateString('en-US', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
             })
           : '';
         const locationText = room ? ` in ${room}` : '';
@@ -279,7 +281,8 @@ export class ParentPortalController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Reschedule requested - schedule cancelled and replacement created',
+    description:
+      'Reschedule requested - schedule cancelled and replacement created',
   })
   async rescheduleSchedule(
     @Param('scheduleId', ParseIntPipe) scheduleId: number,
@@ -300,14 +303,20 @@ export class ParentPortalController {
       try {
         const dateStr = schedule.date
           ? new Date(schedule.date).toLocaleDateString('en-US', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
             })
           : '';
-        const richMessage = this.lineMessagingService.buildRescheduleSuccessFlexMessage({
-          studentName: schedule?.student?.name ?? 'Your child',
-          date: dateStr,
-        });
-        await this.lineMessagingService.pushMessages(body.lineUserId, [richMessage]);
+        const richMessage =
+          this.lineMessagingService.buildRescheduleSuccessFlexMessage({
+            studentName: schedule?.student?.name ?? 'Your child',
+            date: dateStr,
+          });
+        await this.lineMessagingService.pushMessages(body.lineUserId, [
+          richMessage,
+        ]);
       } catch (e) {
         // Non-fatal: log but don't fail the HTTP response
       }
@@ -315,7 +324,8 @@ export class ParentPortalController {
 
     return {
       success: true,
-      message: 'Schedule cancelled and replacement schedule created. Our team will contact you to arrange a new time.',
+      message:
+        'Schedule cancelled and replacement schedule created. Our team will contact you to arrange a new time.',
       schedule: result,
     };
   }
@@ -338,11 +348,12 @@ export class ParentPortalController {
   })
   async unlinkLineAccount(@Body('lineUserId') lineUserId: string) {
     // Get parent by LINE ID to get their ID
-    const parent = await this.parentVerificationService.getParentByLineId(lineUserId);
-    
+    const parent =
+      await this.parentVerificationService.getParentByLineId(lineUserId);
+
     // Unlink logic is in service
     await this.parentVerificationService.unlinkLineAccount(parent.id);
-    
+
     return {
       success: true,
       message: 'Account unlinked successfully',
@@ -362,25 +373,33 @@ export class ParentPortalController {
   @ApiResponse({ status: 400, description: 'Invalid current password' })
   async changePassword(@Body() dto: ChangePasswordDto) {
     // 1. Get parent by LINE ID
-    const parent = await this.parentVerificationService.getParentByLineId(dto.lineUserId);
+    const parent = await this.parentVerificationService.getParentByLineId(
+      dto.lineUserId,
+    );
 
     // 2. Verify current password
     // For now, we trust the LIFF context or if they provide current password?
     // User requested: "Enter Current Password (To confirm it's really them)"
-    
+
     if (dto.currentPassword) {
-      const isMatch = await bcrypt.compare(dto.currentPassword, parent.password);
+      const isMatch = await bcrypt.compare(
+        dto.currentPassword,
+        parent.password,
+      );
       if (!isMatch) {
-         throw new BadRequestException('Current password does not match');
+        throw new BadRequestException('Current password does not match');
       }
     } else {
-       // If no current password provided, maybe we should require it?
-       // Let's require it for security.
-       throw new BadRequestException('Current password is required');
+      // If no current password provided, maybe we should require it?
+      // Let's require it for security.
+      throw new BadRequestException('Current password is required');
     }
 
     // 3. Change password
-    await this.parentVerificationService.changePassword(parent.id, dto.newPassword);
+    await this.parentVerificationService.changePassword(
+      parent.id,
+      dto.newPassword,
+    );
 
     return {
       success: true,
@@ -402,18 +421,17 @@ export class ParentPortalController {
     status: 200,
     description: 'List of invoices',
   })
-  async getParentInvoices(
-    @Param('parentId', ParseIntPipe) parentId: number,
-  ) {
+  async getParentInvoices(@Param('parentId', ParseIntPipe) parentId: number) {
     // 1. Get all students linked to this parent
-    const childrenResponse = await this.parentService.getParentChildren(parentId);
+    const childrenResponse =
+      await this.parentService.getParentChildren(parentId);
     const children = childrenResponse.children; // Access the children array from paginated response
-    
+
     if (!children || children.length === 0) {
       return [];
     }
 
-    const studentIds = children.map(child => child.studentId);
+    const studentIds = children.map((child) => child.studentId);
 
     // 2. Get invoices for these students
     return this.invoiceService.findByStudentIds(studentIds);

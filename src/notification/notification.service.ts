@@ -49,13 +49,13 @@ export class NotificationService {
   ) {
     // Find all users with this role
     const users = await this.userRepo.find({ where: { role: role as any } });
-    
+
     if (users.length === 0) {
       this.logger.warn(`No users found with role ${role} to notify.`);
       return;
     }
 
-    const notifications = users.map(user => 
+    const notifications = users.map((user) =>
       this.notificationRepo.create({
         userId: user.id,
         title,
@@ -63,11 +63,13 @@ export class NotificationService {
         type,
         data,
         isRead: false,
-      })
+      }),
     );
 
     await this.notificationRepo.save(notifications);
-    this.logger.log(`Created notifications for ${users.length} users with role ${role}`);
+    this.logger.log(
+      `Created notifications for ${users.length} users with role ${role}`,
+    );
   }
 
   /**
@@ -89,7 +91,8 @@ export class NotificationService {
       workflowStatus?: string;
     },
   ) {
-    const queryBuilder = this.notificationRepo.createQueryBuilder('notification');
+    const queryBuilder =
+      this.notificationRepo.createQueryBuilder('notification');
 
     queryBuilder
       .where('notification.userId = :userId', { userId })
@@ -98,22 +101,30 @@ export class NotificationService {
       .take(limit);
 
     if (filters?.startDate) {
-      queryBuilder.andWhere('notification.createdAt >= :startDate', { startDate: filters.startDate });
+      queryBuilder.andWhere('notification.createdAt >= :startDate', {
+        startDate: filters.startDate,
+      });
     }
 
     if (filters?.endDate) {
       // Add one day to include the end date fully
       const endDate = new Date(filters.endDate);
       endDate.setDate(endDate.getDate() + 1);
-      queryBuilder.andWhere('notification.createdAt < :endDate', { endDate: endDate.toISOString() });
+      queryBuilder.andWhere('notification.createdAt < :endDate', {
+        endDate: endDate.toISOString(),
+      });
     }
 
     if (filters?.type && filters.type !== 'all') {
-      queryBuilder.andWhere('notification.type = :type', { type: filters.type });
+      queryBuilder.andWhere('notification.type = :type', {
+        type: filters.type,
+      });
     }
 
     if (filters?.isRead !== undefined) {
-      queryBuilder.andWhere('notification.isRead = :isRead', { isRead: filters.isRead });
+      queryBuilder.andWhere('notification.isRead = :isRead', {
+        isRead: filters.isRead,
+      });
     }
 
     if (filters?.search) {
@@ -173,7 +184,7 @@ export class NotificationService {
   async markAllAsRead(userId: number) {
     await this.notificationRepo.update(
       { userId, isRead: false },
-      { isRead: true }
+      { isRead: true },
     );
     return { success: true };
   }
@@ -181,9 +192,16 @@ export class NotificationService {
   /**
    * Update workflow status of a notification
    */
-  async updateWorkflowStatus(id: number, userId: number, dto: UpdateWorkflowStatusDto) {
-    const notification = await this.notificationRepo.findOne({ where: { id, userId } });
-    if (!notification) throw new NotFoundException(`Notification ${id} not found`);
+  async updateWorkflowStatus(
+    id: number,
+    userId: number,
+    dto: UpdateWorkflowStatusDto,
+  ) {
+    const notification = await this.notificationRepo.findOne({
+      where: { id, userId },
+    });
+    if (!notification)
+      throw new NotFoundException(`Notification ${id} not found`);
 
     notification.workflowStatus = dto.workflowStatus;
     notification.wipBy = dto.wipBy ?? notification.wipBy;

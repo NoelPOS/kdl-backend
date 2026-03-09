@@ -28,6 +28,9 @@ export class ClassOption {
   effectiveEndDate: Date;
 
   @Column({ type: 'varchar', default: 'check' })
-  @ApiProperty({ description: 'Option type: camp, fixed, or check', enum: ['camp', 'fixed', 'check'] })
+  @ApiProperty({
+    description: 'Option type: camp, fixed, or check',
+    enum: ['camp', 'fixed', 'check'],
+  })
   optionType: string;
 }

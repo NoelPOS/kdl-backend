@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, ILike, Not } from 'typeorm';
+import { Repository, DataSource, Not } from 'typeorm';
 import { Invoice } from './entities/invoice.entity';
 import { InvoiceItem } from './entities/invoice-item.entity';
 import { DocumentCounter } from './entities/document-counter.entity';
@@ -123,21 +123,21 @@ export class InvoiceService {
           if (transactionType === 'course') {
             const sessionRepo = manager.getRepository(Session);
             const sessionId = parseInt(actualId);
-            
+
             // Update the main session
             await sessionRepo.update(sessionId, { invoiceDone: true });
-            
+
             // Check if this is a package session and update related TBC sessions
             const session = await sessionRepo.findOne({
               where: { id: sessionId },
-              select: ['id', 'packageGroupId']
+              select: ['id', 'packageGroupId'],
             });
-            
+
             if (session && session.packageGroupId === session.id) {
               // This is a package session, update all related TBC sessions
               await sessionRepo.update(
                 { packageGroupId: session.id, id: Not(session.id) },
-                { invoiceDone: true }
+                { invoiceDone: true },
               );
             }
           } else if (transactionType === 'courseplus') {
@@ -221,24 +221,24 @@ export class InvoiceService {
             // Mark session as paid
             const sessionRepo = manager.getRepository(Session);
             const sessionId = parseInt(actualId);
-            
+
             // Update the main session
             await sessionRepo.update(sessionId, {
               payment: 'Paid',
             });
             updatedSessionCount++;
-            
+
             // Check if this is a package session and update related TBC sessions
             const session = await sessionRepo.findOne({
               where: { id: sessionId },
-              select: ['id', 'packageGroupId']
+              select: ['id', 'packageGroupId'],
             });
-            
+
             if (session && session.packageGroupId === session.id) {
               // This is a package session, update all related TBC sessions
               const updatedTbcSessions = await sessionRepo.update(
                 { packageGroupId: session.id, id: Not(session.id) },
-                { payment: 'Paid' }
+                { payment: 'Paid' },
               );
               updatedSessionCount += updatedTbcSessions.affected || 0;
             }
@@ -319,7 +319,7 @@ export class InvoiceService {
     if (student) {
       queryBuilder.andWhere(
         '(invoice.studentName ILIKE :student OR student.nickname ILIKE :student)',
-        { student: `%${student}%` }
+        { student: `%${student}%` },
       );
     }
 
@@ -450,25 +450,25 @@ export class InvoiceService {
             // Revert session back to unpaid and invoiceDone = false
             const sessionRepo = manager.getRepository(Session);
             const sessionId = parseInt(actualId);
-            
+
             // Update the main session
             await sessionRepo.update(sessionId, {
               payment: 'Unpaid',
               invoiceDone: false,
             });
             updatedSessionCount++;
-            
+
             // Check if this is a package session and revert related TBC sessions
             const session = await sessionRepo.findOne({
               where: { id: sessionId },
-              select: ['id', 'packageGroupId']
+              select: ['id', 'packageGroupId'],
             });
-            
+
             if (session && session.packageGroupId === session.id) {
               // This is a package session, revert all related TBC sessions
               const updatedTbcSessions = await sessionRepo.update(
                 { packageGroupId: session.id, id: Not(session.id) },
-                { payment: 'Unpaid', invoiceDone: false }
+                { payment: 'Unpaid', invoiceDone: false },
               );
               updatedSessionCount += updatedTbcSessions.affected || 0;
             }
@@ -500,14 +500,13 @@ export class InvoiceService {
       };
     });
   }
-  async findByStudentIds(
-    studentIds: number[],
-  ): Promise<Invoice[]> {
+  async findByStudentIds(studentIds: number[]): Promise<Invoice[]> {
     if (!studentIds || studentIds.length === 0) {
       return [];
     }
 
-    return this.invoiceRepository.createQueryBuilder('invoice')
+    return this.invoiceRepository
+      .createQueryBuilder('invoice')
       .leftJoinAndSelect('invoice.items', 'items')
       .where('invoice.studentId IN (:...studentIds)', { studentIds })
       .orderBy('invoice.createdAt', 'DESC')

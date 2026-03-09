@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Observable, throwError, timer } from 'rxjs';
-import { catchError, retry, retryWhen, delayWhen } from 'rxjs/operators';
+import { catchError, retryWhen, delayWhen } from 'rxjs/operators';
 
 /**
  * Database Error Interceptor

@@ -1,5 +1,10 @@
 import { Controller, Get, UseGuards, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
 import { DashboardOverviewDto } from './dto/dashboard-overview.dto';
 import { AnalyticsFilterDto } from './dto/analytics-filter.dto';
@@ -23,7 +28,9 @@ export class AnalyticsController {
     description: 'Dashboard overview data',
     type: DashboardOverviewDto,
   })
-  async getDashboardOverview(@Query() filter: AnalyticsFilterDto): Promise<DashboardOverviewDto> {
+  async getDashboardOverview(
+    @Query() filter: AnalyticsFilterDto,
+  ): Promise<DashboardOverviewDto> {
     return this.analyticsService.getDashboardOverview(filter);
   }
 }

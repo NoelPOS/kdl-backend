@@ -15,7 +15,7 @@ import { RichMenuService } from './rich-menu.service';
 /**
  * Parent Verification Service
  * Handles the process of linking LINE user IDs to parent accounts
- * 
+ *
  * Security Flow:
  * 1. Parent provides email OR phone number
  * 2. System checks if parent exists in database
@@ -37,7 +37,7 @@ export class ParentVerificationService {
 
   /**
    * Verify parent identity and link LINE user ID
-   * 
+   *
    * @param dto - Contains lineUserId and either email or contactNo
    * @returns Success message with parent info
    * @throws NotFoundException if parent not found
@@ -111,10 +111,15 @@ export class ParentVerificationService {
         // For now, if no password in DB, we can't verify by password.
         // But since we want to enforce it, we should fail or handle it.
         // Let's assume script ran and everyone has password.
-        throw new BadRequestException('Account not set up for password login. Please contact admin.');
+        throw new BadRequestException(
+          'Account not set up for password login. Please contact admin.',
+        );
       }
 
-      const isPasswordValid = await bcrypt.compare(dto.password, parent.password);
+      const isPasswordValid = await bcrypt.compare(
+        dto.password,
+        parent.password,
+      );
       if (!isPasswordValid) {
         throw new BadRequestException('Invalid password');
       }

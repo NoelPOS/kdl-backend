@@ -42,7 +42,11 @@ async function bootstrap() {
 
     switch (command) {
       case 'test':
-        await testSingleNotification(scheduleNotificationService, dataSource, args);
+        await testSingleNotification(
+          scheduleNotificationService,
+          dataSource,
+          args,
+        );
         break;
       case 'cron':
         await testCronJob(scheduleNotificationService, dataSource);
@@ -72,26 +76,29 @@ async function seedInAppNotifications(
   dataSource: DataSource,
   args: string[],
 ) {
-  const userId = args[1] ? parseInt(args[1], 10) : 1; 
+  const userId = args[1] ? parseInt(args[1], 10) : 1;
   console.log(`🌱 Seeding in-app notifications for User ID: ${userId}...\n`);
 
   // Check if user exists
-  const user = await dataSource.query('SELECT id, "userName" as name, role FROM users WHERE id = $1', [userId]);
+  const user = await dataSource.query(
+    'SELECT id, "userName" as name, role FROM users WHERE id = $1',
+    [userId],
+  );
   if (!user.length) {
-     console.error(`❌ User ID ${userId} not found.`);
-     return;
+    console.error(`❌ User ID ${userId} not found.`);
+    return;
   }
   console.log(`👤 Target User: ${user[0].name} (${user[0].role})`);
 
   // Create notifications
   console.log('Creation 3 notifications...');
-  
+
   await service.create(
     userId,
     'Schedule Confirmed',
     'Student John Doe confirmed attendance for Math Class on 2023-10-25 at 10:00.',
     'schedule_confirmed',
-    { scheduleId: 123, studentId: 1, sessionId: 125 }
+    { scheduleId: 123, studentId: 1, sessionId: 125 },
   );
 
   await service.create(
@@ -99,7 +106,7 @@ async function seedInAppNotifications(
     'Schedule Cancelled',
     'Parent requested to reschedule Science Class on 2023-10-26.',
     'schedule_cancelled',
-    { scheduleId: 124, oldDate: '2023-10-26', studentId: 1, sessionId: 125 }
+    { scheduleId: 124, oldDate: '2023-10-26', studentId: 1, sessionId: 125 },
   );
 
   await service.create(
@@ -107,7 +114,7 @@ async function seedInAppNotifications(
     'Feedback Submitted',
     'Teacher Jane Smith submitted feedback for English Class.',
     'feedback_submitted',
-    { scheduleId: 125, teacherId: 42, studentId: 1, sessionId: 125 }
+    { scheduleId: 125, teacherId: 42, studentId: 1, sessionId: 125 },
   );
 
   console.log('✅ In-app notifications seeded successfully!');
@@ -123,7 +130,9 @@ async function testSingleNotification(
   const scheduleId = parseInt(args[2], 10);
 
   if (!parentId || !scheduleId) {
-    console.error('❌ Usage: npm run test-notification test <parentId> <scheduleId>');
+    console.error(
+      '❌ Usage: npm run test-notification test <parentId> <scheduleId>',
+    );
     return;
   }
 
@@ -179,7 +188,7 @@ async function testSingleNotification(
 
   await service.sendTestNotification(parentId, scheduleId);
   console.log('✅ Test notification sent successfully!');
-  console.log('📱 Check the parent\'s LINE app\n');
+  console.log("📱 Check the parent's LINE app\n");
 }
 
 async function testCronJob(
@@ -205,14 +214,22 @@ async function testCronJob(
   console.log(`📋 Found ${schedules.length} eligible schedules:\n`);
 
   if (schedules.length === 0) {
-    console.log('⚠️  No schedules found for 3 days from now with pending attendance');
-    console.log('   Create a test schedule with: npm run test-notification create\n');
+    console.log(
+      '⚠️  No schedules found for 3 days from now with pending attendance',
+    );
+    console.log(
+      '   Create a test schedule with: npm run test-notification create\n',
+    );
     return;
   }
 
   for (const schedule of schedules) {
-    console.log(`   - Schedule #${schedule.id}: ${schedule.studentName} - ${schedule.course}`);
-    console.log(`     Date: ${schedule.date}, Time: ${schedule.startTime} - ${schedule.endTime}`);
+    console.log(
+      `   - Schedule #${schedule.id}: ${schedule.studentName} - ${schedule.course}`,
+    );
+    console.log(
+      `     Date: ${schedule.date}, Time: ${schedule.startTime} - ${schedule.endTime}`,
+    );
     console.log(`     Room: ${schedule.room}\n`);
   }
 
@@ -252,7 +269,9 @@ async function listEligibleSchedules(dataSource: DataSource) {
     console.log(`   - Date: ${dateString} (3 days from now)`);
     console.log('   - Attendance: pending');
     console.log('   - Student has parent with LINE linked\n');
-    console.log('Create a test schedule with: npm run test-notification create\n');
+    console.log(
+      'Create a test schedule with: npm run test-notification create\n',
+    );
     return;
   }
 
@@ -260,7 +279,9 @@ async function listEligibleSchedules(dataSource: DataSource) {
 
   for (const schedule of schedules) {
     console.log(`📋 Schedule #${schedule.id}`);
-    console.log(`   Student: ${schedule.studentName} (ID: ${schedule.studentId})`);
+    console.log(
+      `   Student: ${schedule.studentName} (ID: ${schedule.studentId})`,
+    );
     console.log(`   Course: ${schedule.course}`);
     console.log(`   Date: ${schedule.date}`);
     console.log(`   Time: ${schedule.startTime} - ${schedule.endTime}`);
@@ -275,7 +296,7 @@ async function listEligibleSchedules(dataSource: DataSource) {
   console.log(`   npm run test-notification test <parentId> <scheduleId>\n`);
 }
 
-async function createTestSchedule(dataSource: DataSource, args: string[]) {
+async function createTestSchedule(dataSource: DataSource, _args: string[]) {
   console.log('🔨 Creating test schedule...\n');
 
   // Get first parent with LINE linked
@@ -299,9 +320,13 @@ async function createTestSchedule(dataSource: DataSource, args: string[]) {
   console.log(`   Student: ${parent.studentName} (ID: ${parent.studentId})\n`);
 
   // Get a course and session
-  const courses = await dataSource.query('SELECT id, title FROM courses LIMIT 1');
+  const courses = await dataSource.query(
+    'SELECT id, title FROM courses LIMIT 1',
+  );
   const sessions = await dataSource.query('SELECT id FROM sessions LIMIT 1');
-  const teachers = await dataSource.query('SELECT id, name FROM teachers LIMIT 1');
+  const teachers = await dataSource.query(
+    'SELECT id, name FROM teachers LIMIT 1',
+  );
 
   if (!courses.length || !sessions.length) {
     console.error('❌ No courses or sessions found');
@@ -361,11 +386,21 @@ function printHelp() {
   console.log('📨 Notification Testing Commands\n');
   console.log('Usage: npm run test-notification <command> [args]\n');
   console.log('Commands:');
-  console.log('  test <parentId> <scheduleId>  - Send test notification to specific parent');
-  console.log('  cron                          - Trigger the daily notification cron job');
-  console.log('  list                          - List all eligible schedules (3 days from now)');
-  console.log('  create                        - Create a test schedule for testing');
-  console.log('  seed [userId]                 - Seed in-app notifications (default user: 1)\n');
+  console.log(
+    '  test <parentId> <scheduleId>  - Send test notification to specific parent',
+  );
+  console.log(
+    '  cron                          - Trigger the daily notification cron job',
+  );
+  console.log(
+    '  list                          - List all eligible schedules (3 days from now)',
+  );
+  console.log(
+    '  create                        - Create a test schedule for testing',
+  );
+  console.log(
+    '  seed [userId]                 - Seed in-app notifications (default user: 1)\n',
+  );
   console.log('Examples:');
   console.log('  npm run test-notification test 1 42');
   console.log('  npm run test-notification cron');

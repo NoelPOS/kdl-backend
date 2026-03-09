@@ -18,7 +18,11 @@ import { PasswordResetTokenEntity } from './entities/password-reset-token.entity
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([UserEntity, TeacherEntity, PasswordResetTokenEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      TeacherEntity,
+      PasswordResetTokenEntity,
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -34,7 +38,12 @@ import { PasswordResetTokenEntity } from './entities/password-reset-token.entity
     CommonModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokenStorageService, AuthCleanupService, JwtStrategy],
+  providers: [
+    AuthService,
+    TokenStorageService,
+    AuthCleanupService,
+    JwtStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

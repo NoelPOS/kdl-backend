@@ -1,6 +1,6 @@
 /**
  * Cleanup Rich Menus Script
- * 
+ *
  * Deletes all rich menus EXCEPT the ones specified in .env
  */
 
@@ -14,11 +14,11 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 function askQuestion(query: string): Promise<string> {
-  return new Promise(resolve => rl.question(query, resolve));
+  return new Promise((resolve) => rl.question(query, resolve));
 }
 
 async function cleanupRichMenus() {
@@ -35,7 +35,9 @@ async function cleanupRichMenus() {
   }
 
   if (!keepUnverified || !keepVerified) {
-    console.error('❌ ERROR: UNVERIFIED_MENU_ID or VERIFIED_MENU_ID not found in .env');
+    console.error(
+      '❌ ERROR: UNVERIFIED_MENU_ID or VERIFIED_MENU_ID not found in .env',
+    );
     process.exit(1);
   }
 
@@ -45,20 +47,20 @@ async function cleanupRichMenus() {
   try {
     // Get all rich menus
     const richMenus = await client.getRichMenuList();
-    
+
     console.log(`📋 Found ${richMenus.length} total rich menus\n`);
-    
+
     // Filter menus to keep vs delete
-    const menusToKeep = richMenus.filter(m => 
-      m.richMenuId === keepUnverified || m.richMenuId === keepVerified
+    const menusToKeep = richMenus.filter(
+      (m) => m.richMenuId === keepUnverified || m.richMenuId === keepVerified,
     );
-    
-    const menusToDelete = richMenus.filter(m => 
-      m.richMenuId !== keepUnverified && m.richMenuId !== keepVerified
+
+    const menusToDelete = richMenus.filter(
+      (m) => m.richMenuId !== keepUnverified && m.richMenuId !== keepVerified,
     );
 
     console.log(`✅ Keeping ${menusToKeep.length} menus:`);
-    menusToKeep.forEach(m => {
+    menusToKeep.forEach((m) => {
       console.log(`   - ${m.name} (${m.richMenuId})`);
     });
 
@@ -71,8 +73,10 @@ async function cleanupRichMenus() {
     }
 
     // Ask for confirmation
-    const answer = await askQuestion(`⚠️  Are you sure you want to delete ${menusToDelete.length} menus? (yes/no): `);
-    
+    const answer = await askQuestion(
+      `⚠️  Are you sure you want to delete ${menusToDelete.length} menus? (yes/no): `,
+    );
+
     if (answer.toLowerCase() !== 'yes') {
       console.log('\n❌ Cancelled - no menus were deleted');
       rl.close();
@@ -88,10 +92,14 @@ async function cleanupRichMenus() {
       try {
         await client.deleteRichMenu(menu.richMenuId);
         deleted++;
-        process.stdout.write(`\r✅ Deleted: ${deleted}/${menusToDelete.length}`);
+        process.stdout.write(
+          `\r✅ Deleted: ${deleted}/${menusToDelete.length}`,
+        );
       } catch (error: any) {
         failed++;
-        console.log(`\n⚠️  Failed to delete ${menu.richMenuId}: ${error.message}`);
+        console.log(
+          `\n⚠️  Failed to delete ${menu.richMenuId}: ${error.message}`,
+        );
       }
     }
 
@@ -101,7 +109,6 @@ async function cleanupRichMenus() {
     console.log(`   Remaining: ${menusToKeep.length}\n`);
 
     rl.close();
-
   } catch (error: any) {
     console.error('❌ ERROR:', error.message);
     rl.close();

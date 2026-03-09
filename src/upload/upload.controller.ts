@@ -55,12 +55,8 @@ export class UploadController {
     }
 
     // Separate images and videos
-    const images = files.filter((file) =>
-      file.mimetype.startsWith('image/'),
-    );
-    const videos = files.filter((file) =>
-      file.mimetype.startsWith('video/'),
-    );
+    const images = files.filter((file) => file.mimetype.startsWith('image/'));
+    const videos = files.filter((file) => file.mimetype.startsWith('video/'));
 
     const uploadPromises: Promise<string>[] = [];
 

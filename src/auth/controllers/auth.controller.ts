@@ -23,13 +23,10 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { UserEntity } from '../../user/entities/user.entity';
-import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { RegisterDto } from '../dto/register.dto';
-import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { VerifyResetTokenDto } from '../dto/verify-reset-token.dto';
-import { TokenDto } from '../dto/token.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -111,7 +108,10 @@ export class AuthController {
     description: 'Email address not found.',
   })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(forgotPasswordDto.email, forgotPasswordDto.role);
+    return this.authService.forgotPassword(
+      forgotPasswordDto.email,
+      forgotPasswordDto.role,
+    );
   }
 
   @Post('verify-reset-token')

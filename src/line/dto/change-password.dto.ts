@@ -3,7 +3,8 @@ import { IsString, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {
   @ApiProperty({
-    description: 'Current password for verification (or phone number if first time)',
+    description:
+      'Current password for verification (or phone number if first time)',
     example: '123456',
   })
   @IsString()

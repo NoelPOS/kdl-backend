@@ -1,15 +1,21 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class InitialCreateAllTables20250914005103 implements MigrationInterface {
-    name = 'InitialCreateAllTables20250914005103'
+export class InitialCreateAllTables20250914005103
+  implements MigrationInterface
+{
+  name = 'InitialCreateAllTables20250914005103';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // Create enum types
-        await queryRunner.query(`CREATE TYPE "public"."users_role_enum" AS ENUM('admin', 'registrar', 'teacher')`);
-        await queryRunner.query(`CREATE TYPE "public"."teachers_role_enum" AS ENUM('admin', 'registrar', 'teacher')`);
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Create enum types
+    await queryRunner.query(
+      `CREATE TYPE "public"."users_role_enum" AS ENUM('admin', 'registrar', 'teacher')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."teachers_role_enum" AS ENUM('admin', 'registrar', 'teacher')`,
+    );
 
-        // Create users table
-        await queryRunner.query(`
+    // Create users table
+    await queryRunner.query(`
             CREATE TABLE "users" (
                 "id" SERIAL NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
@@ -25,8 +31,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create students table
-        await queryRunner.query(`
+    // Create students table
+    await queryRunner.query(`
             CREATE TABLE "students" (
                 "id" SERIAL NOT NULL,
                 "studentId" character varying,
@@ -48,8 +54,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create teachers table
-        await queryRunner.query(`
+    // Create teachers table
+    await queryRunner.query(`
             CREATE TABLE "teachers" (
                 "id" SERIAL NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
@@ -67,8 +73,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create courses table
-        await queryRunner.query(`
+    // Create courses table
+    await queryRunner.query(`
             CREATE TABLE "courses" (
                 "id" SERIAL NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
@@ -80,8 +86,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create class_options table
-        await queryRunner.query(`
+    // Create class_options table
+    await queryRunner.query(`
             CREATE TABLE "class_options" (
                 "id" SERIAL NOT NULL,
                 "classMode" character varying NOT NULL,
@@ -93,8 +99,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create parents table
-        await queryRunner.query(`
+    // Create parents table
+    await queryRunner.query(`
             CREATE TABLE "parents" (
                 "id" SERIAL NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
@@ -109,8 +115,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create rooms table
-        await queryRunner.query(`
+    // Create rooms table
+    await queryRunner.query(`
             CREATE TABLE "rooms" (
                 "id" SERIAL NOT NULL,
                 "name" character varying NOT NULL,
@@ -118,8 +124,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create discounts table
-        await queryRunner.query(`
+    // Create discounts table
+    await queryRunner.query(`
             CREATE TABLE "discounts" (
                 "id" SERIAL NOT NULL,
                 "title" character varying NOT NULL,
@@ -131,8 +137,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create sessions table
-        await queryRunner.query(`
+    // Create sessions table
+    await queryRunner.query(`
             CREATE TABLE "sessions" (
                 "id" SERIAL NOT NULL,
                 "studentId" integer NOT NULL,
@@ -150,8 +156,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create schedules table
-        await queryRunner.query(`
+    // Create schedules table
+    await queryRunner.query(`
             CREATE TABLE "schedules" (
                 "id" SERIAL NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
@@ -175,8 +181,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create invoices table
-        await queryRunner.query(`
+    // Create invoices table
+    await queryRunner.query(`
             CREATE TABLE "invoices" (
                 "id" SERIAL NOT NULL,
                 "documentId" character varying NOT NULL,
@@ -193,8 +199,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create invoice_items table
-        await queryRunner.query(`
+    // Create invoice_items table
+    await queryRunner.query(`
             CREATE TABLE "invoice_items" (
                 "id" SERIAL NOT NULL,
                 "invoiceId" integer NOT NULL,
@@ -204,8 +210,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create course_plus table
-        await queryRunner.query(`
+    // Create course_plus table
+    await queryRunner.query(`
             CREATE TABLE "course_plus" (
                 "id" SERIAL NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -219,8 +225,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create receipts table
-        await queryRunner.query(`
+    // Create receipts table
+    await queryRunner.query(`
             CREATE TABLE "receipts" (
                 "id" SERIAL NOT NULL,
                 "invoiceId" integer NOT NULL,
@@ -230,8 +236,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create parent_students table (junction table for parent-student relationship)
-        await queryRunner.query(`
+    // Create parent_students table (junction table for parent-student relationship)
+    await queryRunner.query(`
             CREATE TABLE "parent_students" (
                 "id" SERIAL NOT NULL,
                 "parentId" integer NOT NULL,
@@ -241,8 +247,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create teacher_courses table (junction table for teacher-course relationship)
-        await queryRunner.query(`
+    // Create teacher_courses table (junction table for teacher-course relationship)
+    await queryRunner.query(`
             CREATE TABLE "teacher_courses" (
                 "id" SERIAL NOT NULL,
                 "teacherId" integer NOT NULL,
@@ -252,8 +258,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create student_counters table (for student ID generation)
-        await queryRunner.query(`
+    // Create student_counters table (for student ID generation)
+    await queryRunner.query(`
             CREATE TABLE "student_counters" (
                 "id" SERIAL NOT NULL,
                 "year" integer NOT NULL,
@@ -263,8 +269,8 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Create document_counters table (for document ID generation)
-        await queryRunner.query(`
+    // Create document_counters table (for document ID generation)
+    await queryRunner.query(`
             CREATE TABLE "document_counters" (
                 "id" SERIAL NOT NULL,
                 "year" integer NOT NULL,
@@ -275,141 +281,191 @@ export class InitialCreateAllTables20250914005103 implements MigrationInterface 
             )
         `);
 
-        // Add foreign key constraints
-        await queryRunner.query(`
+    // Add foreign key constraints
+    await queryRunner.query(`
             ALTER TABLE "sessions" 
             ADD CONSTRAINT "FK_sessions_courseId" FOREIGN KEY ("courseId") REFERENCES "courses"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "sessions" 
             ADD CONSTRAINT "FK_sessions_studentId" FOREIGN KEY ("studentId") REFERENCES "students"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "sessions" 
             ADD CONSTRAINT "FK_sessions_teacherId" FOREIGN KEY ("teacherId") REFERENCES "teachers"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "sessions" 
             ADD CONSTRAINT "FK_sessions_classOptionId" FOREIGN KEY ("classOptionId") REFERENCES "class_options"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "schedules" 
             ADD CONSTRAINT "FK_schedules_sessionId" FOREIGN KEY ("sessionId") REFERENCES "sessions"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "schedules" 
             ADD CONSTRAINT "FK_schedules_courseId" FOREIGN KEY ("courseId") REFERENCES "courses"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "schedules" 
             ADD CONSTRAINT "FK_schedules_studentId" FOREIGN KEY ("studentId") REFERENCES "students"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "schedules" 
             ADD CONSTRAINT "FK_schedules_teacherId" FOREIGN KEY ("teacherId") REFERENCES "teachers"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "invoice_items" 
             ADD CONSTRAINT "FK_invoice_items_invoiceId" FOREIGN KEY ("invoiceId") REFERENCES "invoices"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "receipts" 
             ADD CONSTRAINT "FK_receipts_invoiceId" FOREIGN KEY ("invoiceId") REFERENCES "invoices"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "course_plus" 
             ADD CONSTRAINT "FK_course_plus_sessionId" FOREIGN KEY ("sessionId") REFERENCES "sessions"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "parent_students" 
             ADD CONSTRAINT "FK_parent_students_parentId" FOREIGN KEY ("parentId") REFERENCES "parents"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "parent_students" 
             ADD CONSTRAINT "FK_parent_students_studentId" FOREIGN KEY ("studentId") REFERENCES "students"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "teacher_courses" 
             ADD CONSTRAINT "FK_teacher_courses_teacherId" FOREIGN KEY ("teacherId") REFERENCES "teachers"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "teacher_courses" 
             ADD CONSTRAINT "FK_teacher_courses_courseId" FOREIGN KEY ("courseId") REFERENCES "courses"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
 
-        // Create indexes for better performance
-        await queryRunner.query(`CREATE INDEX "idx_schedules_room_date_time" ON "schedules" ("room", "date", "startTime", "endTime")`);
-        await queryRunner.query(`CREATE INDEX "idx_schedules_teacher_date_time" ON "schedules" ("teacherId", "date", "startTime", "endTime")`);
-        await queryRunner.query(`CREATE INDEX "idx_schedules_student_date_time" ON "schedules" ("studentId", "date", "startTime", "endTime")`);
-        await queryRunner.query(`CREATE INDEX "idx_schedules_date" ON "schedules" ("date")`);
-        await queryRunner.query(`CREATE INDEX "idx_schedules_studentId" ON "schedules" ("studentId")`);
-        await queryRunner.query(`CREATE INDEX "idx_schedules_teacherId" ON "schedules" ("teacherId")`);
-        await queryRunner.query(`CREATE INDEX "idx_schedules_room" ON "schedules" ("room")`);
-    }
+    // Create indexes for better performance
+    await queryRunner.query(
+      `CREATE INDEX "idx_schedules_room_date_time" ON "schedules" ("room", "date", "startTime", "endTime")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_schedules_teacher_date_time" ON "schedules" ("teacherId", "date", "startTime", "endTime")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_schedules_student_date_time" ON "schedules" ("studentId", "date", "startTime", "endTime")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_schedules_date" ON "schedules" ("date")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_schedules_studentId" ON "schedules" ("studentId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_schedules_teacherId" ON "schedules" ("teacherId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_schedules_room" ON "schedules" ("room")`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        // Drop indexes
-        await queryRunner.query(`DROP INDEX "public"."idx_schedules_room"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_schedules_teacherId"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_schedules_studentId"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_schedules_date"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_schedules_student_date_time"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_schedules_teacher_date_time"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_schedules_room_date_time"`);
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // Drop indexes
+    await queryRunner.query(`DROP INDEX "public"."idx_schedules_room"`);
+    await queryRunner.query(`DROP INDEX "public"."idx_schedules_teacherId"`);
+    await queryRunner.query(`DROP INDEX "public"."idx_schedules_studentId"`);
+    await queryRunner.query(`DROP INDEX "public"."idx_schedules_date"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."idx_schedules_student_date_time"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."idx_schedules_teacher_date_time"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."idx_schedules_room_date_time"`,
+    );
 
-        // Drop foreign key constraints
-        await queryRunner.query(`ALTER TABLE "teacher_courses" DROP CONSTRAINT "FK_teacher_courses_courseId"`);
-        await queryRunner.query(`ALTER TABLE "teacher_courses" DROP CONSTRAINT "FK_teacher_courses_teacherId"`);
-        await queryRunner.query(`ALTER TABLE "parent_students" DROP CONSTRAINT "FK_parent_students_studentId"`);
-        await queryRunner.query(`ALTER TABLE "parent_students" DROP CONSTRAINT "FK_parent_students_parentId"`);
-        await queryRunner.query(`ALTER TABLE "course_plus" DROP CONSTRAINT "FK_course_plus_sessionId"`);
-        await queryRunner.query(`ALTER TABLE "receipts" DROP CONSTRAINT "FK_receipts_invoiceId"`);
-        await queryRunner.query(`ALTER TABLE "invoice_items" DROP CONSTRAINT "FK_invoice_items_invoiceId"`);
-        await queryRunner.query(`ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_teacherId"`);
-        await queryRunner.query(`ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_studentId"`);
-        await queryRunner.query(`ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_courseId"`);
-        await queryRunner.query(`ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_sessionId"`);
-        await queryRunner.query(`ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_classOptionId"`);
-        await queryRunner.query(`ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_teacherId"`);
-        await queryRunner.query(`ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_studentId"`);
-        await queryRunner.query(`ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_courseId"`);
+    // Drop foreign key constraints
+    await queryRunner.query(
+      `ALTER TABLE "teacher_courses" DROP CONSTRAINT "FK_teacher_courses_courseId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teacher_courses" DROP CONSTRAINT "FK_teacher_courses_teacherId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "parent_students" DROP CONSTRAINT "FK_parent_students_studentId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "parent_students" DROP CONSTRAINT "FK_parent_students_parentId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "course_plus" DROP CONSTRAINT "FK_course_plus_sessionId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "receipts" DROP CONSTRAINT "FK_receipts_invoiceId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "invoice_items" DROP CONSTRAINT "FK_invoice_items_invoiceId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_teacherId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_studentId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_courseId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "schedules" DROP CONSTRAINT "FK_schedules_sessionId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_classOptionId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_teacherId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_studentId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions" DROP CONSTRAINT "FK_sessions_courseId"`,
+    );
 
-        // Drop tables
-        await queryRunner.query(`DROP TABLE "document_counters"`);
-        await queryRunner.query(`DROP TABLE "student_counters"`);
-        await queryRunner.query(`DROP TABLE "teacher_courses"`);
-        await queryRunner.query(`DROP TABLE "parent_students"`);
-        await queryRunner.query(`DROP TABLE "receipts"`);
-        await queryRunner.query(`DROP TABLE "course_plus"`);
-        await queryRunner.query(`DROP TABLE "invoice_items"`);
-        await queryRunner.query(`DROP TABLE "invoices"`);
-        await queryRunner.query(`DROP TABLE "schedules"`);
-        await queryRunner.query(`DROP TABLE "sessions"`);
-        await queryRunner.query(`DROP TABLE "discounts"`);
-        await queryRunner.query(`DROP TABLE "rooms"`);
-        await queryRunner.query(`DROP TABLE "parents"`);
-        await queryRunner.query(`DROP TABLE "class_options"`);
-        await queryRunner.query(`DROP TABLE "courses"`);
-        await queryRunner.query(`DROP TABLE "teachers"`);
-        await queryRunner.query(`DROP TABLE "students"`);
-        await queryRunner.query(`DROP TABLE "users"`);
+    // Drop tables
+    await queryRunner.query(`DROP TABLE "document_counters"`);
+    await queryRunner.query(`DROP TABLE "student_counters"`);
+    await queryRunner.query(`DROP TABLE "teacher_courses"`);
+    await queryRunner.query(`DROP TABLE "parent_students"`);
+    await queryRunner.query(`DROP TABLE "receipts"`);
+    await queryRunner.query(`DROP TABLE "course_plus"`);
+    await queryRunner.query(`DROP TABLE "invoice_items"`);
+    await queryRunner.query(`DROP TABLE "invoices"`);
+    await queryRunner.query(`DROP TABLE "schedules"`);
+    await queryRunner.query(`DROP TABLE "sessions"`);
+    await queryRunner.query(`DROP TABLE "discounts"`);
+    await queryRunner.query(`DROP TABLE "rooms"`);
+    await queryRunner.query(`DROP TABLE "parents"`);
+    await queryRunner.query(`DROP TABLE "class_options"`);
+    await queryRunner.query(`DROP TABLE "courses"`);
+    await queryRunner.query(`DROP TABLE "teachers"`);
+    await queryRunner.query(`DROP TABLE "students"`);
+    await queryRunner.query(`DROP TABLE "users"`);
 
-        // Drop enum types
-        await queryRunner.query(`DROP TYPE "public"."teachers_role_enum"`);
-        await queryRunner.query(`DROP TYPE "public"."users_role_enum"`);
-    }
+    // Drop enum types
+    await queryRunner.query(`DROP TYPE "public"."teachers_role_enum"`);
+    await queryRunner.query(`DROP TYPE "public"."users_role_enum"`);
+  }
 }
