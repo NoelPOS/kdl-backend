@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsInt, IsNotEmpty, Min, IsDateString, IsOptional } from 'class-validator';
+import { IsString, IsInt, IsNotEmpty, Min, IsDateString, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateCoursePackageDto {
   @IsString()
@@ -11,6 +11,11 @@ export class CreateCoursePackageDto {
   @Min(1)
   @ApiProperty({ description: 'Number of classes in the package', example: 5 })
   numberOfCourses: number;
+
+  @IsNumber()
+  @Min(0)
+  @ApiProperty({ description: 'Package price', example: 5000 })
+  price: number;
 
   @IsDateString()
   @ApiProperty({ description: 'Date when this package version becomes effective', example: '2026-03-01' })

@@ -141,6 +141,12 @@ export class SessionService {
         throw new BadRequestException(`Course package with ID ${dto.packageId} not found`);
       }
 
+      if (coursePackage.price == null) {
+        throw new BadRequestException(
+          `Course package "${coursePackage.name}" has no price configured. Please set a price on the package before assigning it.`,
+        );
+      }
+
       // 2. Find TBC course for both the package session and TBC sessions
       const tbcCourse = await this.courseRepo.findOne({
         where: { title: ILike('%TBC%') },
@@ -173,7 +179,7 @@ export class SessionService {
         createdAt: new Date(),
         packageGroupId: null, // Will be set after saving
         comment: coursePackage.name, // Store package name for display in invoice list
-        price: dto.price, // Store the custom price for invoice pre-fill
+        price: Number(coursePackage.price), // Read price from package template
       });
 
       const savedPackageSession = await manager.getRepository(Session).save(packageSession);
@@ -511,6 +517,7 @@ export class SessionService {
     // Transform the result to match the expected format
     return result.entities.map((session, index) => ({
       sessionId: session.id,
+      studentId: session.studentId,
       courseId: session.courseId,
       courseTitle: session.course?.title,
       courseDescription: session.course?.description,
@@ -632,6 +639,7 @@ export class SessionService {
 
       return {
         sessionId: session.id,
+        studentId: session.studentId,
         courseId: session.courseId,
         courseTitle: session.course?.title,
         courseDescription: session.course?.description,
@@ -753,6 +761,7 @@ export class SessionService {
 
       return {
         sessionId: session.id,
+        studentId: session.studentId,
         courseId: session.courseId,
         courseTitle: session.course?.title,
         courseDescription: session.course?.description,

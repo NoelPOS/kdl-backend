@@ -1,0 +1,20 @@
+services:
+  postgres-test:
+    image: postgres:15
+    container_name: kdl-test-postgres
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: kdl_test
+    ports:
+      - '54329:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U test -d kdl_test']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - kdl_test_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  kdl_test_postgres_data:

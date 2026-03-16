@@ -38,6 +38,12 @@ export class SessionOverview {
   sessionId: number;
 
   @ApiProperty({
+    description: 'Student ID',
+    example: 45,
+  })
+  studentId: number;
+
+  @ApiProperty({
     description: 'Course description',
     example: 'Advanced mathematics course for students',
   })
