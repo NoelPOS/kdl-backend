@@ -41,6 +41,7 @@ export class CoursePackageService {
     const pkg = this.repo.create({
       name: dto.name,
       numberOfCourses: dto.numberOfCourses,
+      price: dto.price,
       effectiveStartDate: new Date(dto.effectiveStartDate),
       effectiveEndDate: dto.effectiveEndDate ? new Date(dto.effectiveEndDate) : null,
     });

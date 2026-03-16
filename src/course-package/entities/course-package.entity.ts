@@ -25,6 +25,10 @@ export class CoursePackage {
   @ApiProperty({ description: 'Date when this package version becomes effective' })
   effectiveStartDate: Date;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @ApiProperty({ description: 'Package price (null for legacy rows pending backfill)', nullable: true, example: 5000 })
+  price: number | null;
+
   @Column({ type: 'timestamp', nullable: true })
   @ApiProperty({ description: 'Date when this package version expires (null = currently active)', nullable: true })
   effectiveEndDate: Date | null;

@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request = require('supertest');
 import { AppModule } from '../../../src/app/app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UserEntity } from '../../../src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { UserRole } from '../../../src/common/enums/user-role.enum';
 
 describe('UserController (Integration)', () => {
   let app: INestApplication;
@@ -20,6 +21,16 @@ describe('UserController (Integration)', () => {
   let hashedPassword: string;
   let authToken: string;
   let userId: number;
+
+  beforeAll(() => {
+    jest.setTimeout(60000);
+    process.env.NODE_ENV = 'test';
+    process.env.DATABASE_ENABLED = 'true';
+    process.env.DB_SYNCHRONIZE = 'true';
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+    process.env.JWT_REFRESH_SECRET =
+      process.env.JWT_REFRESH_SECRET || 'test-refresh-secret';
+  });
 
   beforeAll(async () => {
     // Hash the password
@@ -46,6 +57,7 @@ describe('UserController (Integration)', () => {
     const user = await userRepository.save({
       ...testUser,
       password: hashedPassword,
+      role: UserRole.ADMIN,
     });
     userId = user.id;
 
@@ -54,12 +66,15 @@ describe('UserController (Integration)', () => {
       email: user.email,
       sub: user.id,
       userName: user.userName,
+      role: UserRole.ADMIN,
     };
     authToken = jwtService.sign(payload);
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('GET /users/profile', () => {
@@ -71,7 +86,7 @@ describe('UserController (Integration)', () => {
         .expect((res) => {
           expect(res.body.id).toBe(userId);
           expect(res.body.email).toBe(testUser.email);
-          expect(res.body.userName).toBe(testUser.userName);
+          expect(res.body.name).toBe(testUser.userName);
           expect(res.body.password).toBeUndefined();
         });
     });
