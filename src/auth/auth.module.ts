@@ -14,11 +14,12 @@ import { UserEntity } from '../user/entities/user.entity';
 import { TeacherEntity } from '../teacher/entities/teacher.entity';
 import { TeacherModule } from '../teacher/teacher.module';
 import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
+import { ParentEntity } from '../parent/entities/parent.entity';
 
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([UserEntity, TeacherEntity, PasswordResetTokenEntity]),
+    TypeOrmModule.forFeature([UserEntity, TeacherEntity, PasswordResetTokenEntity, ParentEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

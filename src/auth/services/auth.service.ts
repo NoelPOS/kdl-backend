@@ -27,6 +27,7 @@ import {
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { TokenStorageService } from './token-storage.service';
+import { ParentEntity } from '../../parent/entities/parent.entity';
 
 @Injectable()
 export class AuthService {
@@ -44,6 +45,9 @@ export class AuthService {
 
     @InjectRepository(TeacherEntity)
     private teacherRepository: Repository<TeacherEntity>,
+
+    @InjectRepository(ParentEntity)
+    private parentRepository: Repository<ParentEntity>,
   ) {}
 
   async register(
@@ -157,13 +161,20 @@ export class AuthService {
 
   async forgotPassword(email: string, role: UserRole): Promise<{ message: string }> {
     try {
-      let user: UserEntity | TeacherEntity;
+      let user: UserEntity | TeacherEntity | ParentEntity;
       let userName: string;
 
       // Find user based on role
       if (role === UserRole.TEACHER) {
         user = await this.teacherService.findByEmail(email);
         userName = (user as TeacherEntity).name;
+      } else if (role === UserRole.PARENT) {
+        const parent = await this.parentRepository.findOneBy({ email });
+        if (!parent) {
+          throw new NotFoundException('Parent not found');
+        }
+        user = parent;
+        userName = parent.name;
       } else {
         // For ADMIN and REGISTRAR roles, use UserEntity
         user = await this.usersService.findOne({ email });
@@ -248,7 +259,7 @@ export class AuthService {
         throw new BadRequestException('Invalid or expired reset token');
       }
 
-      let user: UserEntity | TeacherEntity;
+      let user: UserEntity | TeacherEntity | ParentEntity;
       let userName: string;
 
       // Find and update user based on role
@@ -260,6 +271,18 @@ export class AuthService {
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(newPassword, salt);
         await this.teacherRepository.update(user.id, { password: hashedPassword });
+      } else if (role === UserRole.PARENT) {
+        const parent = await this.parentRepository.findOneBy({ email });
+        if (!parent) {
+          throw new NotFoundException('Parent not found');
+        }
+        user = parent;
+        userName = parent.name;
+
+        // Update parent password
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await this.parentRepository.update(parent.id, { password: hashedPassword });
       } else {
         // For ADMIN and REGISTRAR roles, use UserEntity
         user = await this.usersService.findOne({ email });
