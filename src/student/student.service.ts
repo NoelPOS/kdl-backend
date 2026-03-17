@@ -407,6 +407,12 @@ export class StudentService {
           );
         }
         // If connection already exists and is already primary, no action needed
+      } else if (updateStudentDto.parentId === null) {
+        // Unset the primary parent — keep the connection but mark isPrimary = false
+        await this.parentStudentRepository.update(
+          { studentId: id, isPrimary: true },
+          { isPrimary: false },
+        );
       }
 
       // Remove parentId from updateStudentDto before updating student entity

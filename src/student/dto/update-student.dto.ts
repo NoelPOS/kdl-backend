@@ -10,6 +10,7 @@ import {
   MinLength,
   MaxLength,
   IsIn,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpdateStudentDto {
@@ -121,12 +122,14 @@ export class UpdateStudentDto {
 
   @ApiProperty({
     example: 33,
-    description: "Parent's ID of the student",
+    description: "Parent's ID of the student. Send null to remove parent assignment.",
     required: false,
+    nullable: true,
   })
+  @ValidateIf((o) => o.parentId !== null)
   @IsNumber()
   @IsOptional()
-  parentId?: number;
+  parentId?: number | null;
 
   @ApiProperty({
     example: '+1234567890',
