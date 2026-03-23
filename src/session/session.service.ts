@@ -447,6 +447,28 @@ export class SessionService {
 
   async swapSessionType(id: number, dto: SwapSessionTypeDto) {
     return this.dataSource.transaction(async (manager) => {
+      const normalizeText = (
+        value: string | undefined,
+        fallback: string,
+      ): string => {
+        const trimmed = value?.trim();
+        return trimmed ? trimmed : fallback;
+      };
+
+      const normalizeDate = (value?: string): string | null => {
+        const trimmed = value?.trim();
+        if (!trimmed || trimmed.toUpperCase() === 'TBD') return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+
+        const parsed = new Date(trimmed);
+        if (Number.isNaN(parsed.getTime())) return null;
+
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const session = await manager.getRepository(Session).findOne({
         where: { id },
       });
@@ -470,14 +492,23 @@ export class SessionService {
       // 3. Create new schedules
       if (dto.newSchedules && dto.newSchedules.length > 0) {
         const newSchedules = dto.newSchedules.map((scheduleDto, index) => {
+          const normalizedDate = normalizeDate(scheduleDto.date);
+          const fallbackTeacherId = session.teacherId ?? null;
+
           return manager.getRepository(Schedule).create({
-            ...scheduleDto,
             sessionId: id,
             courseId: session.courseId,
             studentId: session.studentId,
             // Use provided teacherId or fallback to session teacher (if any)
-            teacherId: scheduleDto.teacherId || session.teacherId,
+            teacherId: scheduleDto.teacherId ?? fallbackTeacherId,
+            date: normalizedDate,
+            startTime: normalizeText(scheduleDto.startTime, 'TBD'),
+            endTime: normalizeText(scheduleDto.endTime, 'TBD'),
+            room: normalizeText(scheduleDto.room, 'TBD'),
+            remark: scheduleDto.remark ?? '',
             attendance: 'pending',
+            warning: scheduleDto.warning ?? '',
+            feedback: scheduleDto.feedback ?? '',
             verifyFb: false,
             // Use current existing completed count + index + 1 ?
             // Or just index + 1?
